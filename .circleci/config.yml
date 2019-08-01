@@ -145,6 +145,10 @@ workflows:
  version: 2
  "test, build and release":
   jobs:
+   - aloha:
+      filters:
+       tags:
+        only: /.*/
 #   ENABLE IT once controller with make target will be created
 #   - build:
 #      filters:
