@@ -9,7 +9,9 @@ Reference is used to identify in which kubernetes secret are stored mentioned pr
 By default controller should be deployed in the same pod as hydra. Service discovery will come in place in the future.
 
 
-It is represented in the diagram ![diagram](./assets/workflow.svg)
+It is represented in the diagram 
+
+![diagram](./assets/workflow.svg)
 
 ## Synchronization mode
 
