@@ -8,7 +8,7 @@ Client Id, Client Secret and Identifier of the client in hydra are be stored in 
 Reference is used to identify in which kubernetes secret are stored mentioned properties. Secret iscreated in the same namespace of applied CR.
 By default controller should be deployed in the same pod as hydra. Service discovery will come in place in the future.
 
-Custom Resource should be Namespace scoped.
+Custom Resource should be Namespace scoped to enable isolation in k8s.
 It is represented in the diagram 
 
 ![diagram](./assets/workflow.svg)
