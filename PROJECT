@@ -1,0 +1,7 @@
+version: "2"
+domain: ory.sh
+repo: github.com/ory/hydra-maester
+resources:
+- group: hydra
+  version: v1alpha1
+  kind: OAuth2Client

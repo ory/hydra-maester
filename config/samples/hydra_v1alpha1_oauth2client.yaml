@@ -1,0 +1,7 @@
+apiVersion: hydra.ory.sh/v1alpha1
+kind: OAuth2Client
+metadata:
+  name: oauth2client-sample
+spec:
+  # Add fields here
+  foo: bar
