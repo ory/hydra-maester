@@ -16,61 +16,114 @@ limitations under the License.
 package v1alpha1
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"fmt"
+	"path/filepath"
+	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/envtest"
 )
 
-// These tests are written in BDD-style using Ginkgo framework. Refer to
-// http://onsi.github.io/ginkgo to learn more.
+var (
+	k8sClient                    client.Client
+	cfg                          *rest.Config
+	testEnv                      *envtest.Environment
+	key                          types.NamespacedName
+	created, fetched             *OAuth2Client
+	createErr, getErr, deleteErr error
+)
 
-var _ = Describe("OAuth2Client", func() {
-	var (
-		key              types.NamespacedName
-		created, fetched *OAuth2Client
-	)
+func TestCreateAPI(t *testing.T) {
 
-	BeforeEach(func() {
-		// Add any setup steps that needs to be executed before each test
-	})
+	runEnv(t)
+	defer stopEnv(t)
 
-	AfterEach(func() {
-		// Add any teardown steps that needs to be executed after each test
-	})
+	t.Run("should handle an object properly", func(t *testing.T) {
 
-	// Add Tests for OpenAPI validation (or additonal CRD features) specified in
-	// your API definition.
-	// Avoid adding tests for vanilla CRUD operations because they would
-	// test Kubernetes API server, which isn't the goal here.
-	Context("Create API", func() {
+		key = types.NamespacedName{
+			Name:      "foo",
+			Namespace: "default",
+		}
 
-		It("should create an object successfully", func() {
+		t.Run("by creating an API object if it meets CRD requirements", func(t *testing.T) {
 
-			key = types.NamespacedName{
-				Name:      "foo",
-				Namespace: "default",
-			}
-			created = &OAuth2Client{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "foo",
-					Namespace: "default",
-				}}
+			resetTestClient()
 
-			By("creating an API obj")
-			Expect(k8sClient.Create(context.TODO(), created)).To(Succeed())
+			createErr = k8sClient.Create(context.TODO(), created)
+			require.NoError(t, createErr)
 
 			fetched = &OAuth2Client{}
-			Expect(k8sClient.Get(context.TODO(), key, fetched)).To(Succeed())
-			Expect(fetched).To(Equal(created))
+			getErr = k8sClient.Get(context.TODO(), key, fetched)
+			require.NoError(t, getErr)
+			assert.Equal(t, created, fetched)
 
-			By("deleting the created object")
-			Expect(k8sClient.Delete(context.TODO(), created)).To(Succeed())
-			Expect(k8sClient.Get(context.TODO(), key, created)).ToNot(Succeed())
+			deleteErr = k8sClient.Delete(context.TODO(), created)
+			require.NoError(t, deleteErr)
+
+			getErr = k8sClient.Get(context.TODO(), key, created)
+			require.Error(t, getErr)
 		})
 
-	})
+		t.Run("by failing if the requested object doesn't meet CRD requirements", func(t *testing.T) {
 
-})
+			for desc, modifyClient := range map[string]func(){
+				"invalid grant type":    func() { created.Spec.GrantTypes = []GrantType{"invalid"} },
+				"invalid response type": func() { created.Spec.ResponseTypes = []ResponseType{"invalid"} },
+				"invalid scope":         func() { created.Spec.Scope = "" },
+			} {
+				t.Run(fmt.Sprintf("case=%s", desc), func(t *testing.T) {
+
+					resetTestClient()
+					modifyClient()
+					createErr = k8sClient.Create(context.TODO(), created)
+					require.Error(t, createErr)
+				})
+			}
+		})
+	})
+}
+
+func runEnv(t *testing.T) {
+
+	testEnv = &envtest.Environment{
+		CRDDirectoryPaths: []string{filepath.Join("..", "..", "config", "crd", "bases")},
+	}
+
+	err := SchemeBuilder.AddToScheme(scheme.Scheme)
+	require.NoError(t, err)
+
+	cfg, err = testEnv.Start()
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	require.NoError(t, err)
+	require.NotNil(t, k8sClient)
+
+}
+
+func stopEnv(t *testing.T) {
+	err := testEnv.Stop()
+	require.NoError(t, err)
+}
+
+func resetTestClient() {
+	created = &OAuth2Client{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "foo",
+			Namespace: "default",
+		},
+		Spec: OAuth2ClientSpec{
+			GrantTypes:    []GrantType{"implicit", "client_credentials", "authorization_code", "refresh_token"},
+			ResponseTypes: []ResponseType{"id_token", "code", "token"},
+			Scope:         "read,write",
+		},
+	}
+}
