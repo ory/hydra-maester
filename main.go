@@ -54,7 +54,7 @@ func main() {
 	var enableLeaderElection bool
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&hydraURL, "hydra-url", "http://ory-hydra-admin.kyma-system.svc.cluster.local", "The address of ORY Hydra")
+	flag.StringVar(&hydraURL, "hydra-url", "", "The address of ORY Hydra")
 	flag.IntVar(&port, "port", 4445, "Port ORY Hydra is listening on")
 	flag.StringVar(&endpoint, "endpoint", "/clients", "ORY Hydra's client endpoint")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
@@ -70,6 +70,11 @@ func main() {
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
+		os.Exit(1)
+	}
+
+	if hydraURL == "" {
+		setupLog.Error(fmt.Errorf("hydra service address can't be empty"), "unable to create controller", "controller", "OAuth2Client")
 		os.Exit(1)
 	}
 

@@ -13,7 +13,7 @@ test: generate fmt vet manifests
 # Run integration tests on local KIND cluster
 # TODO: modify once integration tests have been implemented
 test-integration:
-	echo "no tests yet"
+	ginkgo -v ./controllers/...
 
 # Build manager binary
 manager: generate fmt vet
