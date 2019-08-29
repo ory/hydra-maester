@@ -27,6 +27,7 @@ spec:
         - /manager
         args:
         - --enable-leader-election
+        - --hydra-url=http://use.actual.hydra.fqdn #change it to your ORY Hydra address
         image: controller:latest
         name: manager
         resources:
