@@ -1,9 +1,5 @@
 version: 2
 jobs:
- aloha:
-  machine: true
-  steps:
-   - run: echo "Aloha! ;-)"
  build:
   docker:
    - image: circleci/golang:1.12
@@ -145,36 +141,31 @@ workflows:
  version: 2
  "test, build and release":
   jobs:
-   - aloha:
+   - build:
       filters:
        tags:
         only: /.*/
-#   ENABLE IT once controller with make target will be created
-#   - build:
-#      filters:
-#       tags:
-#        only: /.*/
-#   - test-integration:
-#      filters:
-#       tags:
-#        only: /.*/
-#   - test:
-#      filters:
-#       tags:
-#        only: /.*/
-#   - release:
-#      requires:
-#       - test
-#      filters:
-#       tags:
-#        only: /.*/
-#       branches:
-#        ignore: /.*/
-#   - release-changelog:
-#      requires:
-#       - release
-#      filters:
-#       tags:
-#        only: /.*/
-#       branches:
-#        ignore: /.*/
+   - test-integration:
+      filters:
+       tags:
+        only: /.*/
+   - test:
+      filters:
+       tags:
+        only: /.*/
+   - release:
+      requires:
+       - test
+      filters:
+       tags:
+        only: /.*/
+       branches:
+        ignore: /.*/
+   - release-changelog:
+      requires:
+       - release
+      filters:
+       tags:
+        only: /.*/
+       branches:
+        ignore: /.*/
