@@ -1,7 +1,16 @@
 apiVersion: hydra.ory.sh/v1alpha1
 kind: OAuth2Client
 metadata:
-  name: oauth2client-sample
+  name: my-oauth2-client
+  namespace: default
 spec:
-  # Add fields here
-  foo: bar
+  grantTypes:
+    - client_credentials
+    - implicit
+    - authorization_code
+    - refresh_token
+  responseTypes:
+    - id_token
+    - code
+    - token
+  scope: "read write"

@@ -49,13 +49,13 @@ func init() {
 func main() {
 	var metricsAddr string
 	var hydraURL string
-	var port int
+	var hydraPort int
 	var endpoint string
 	var enableLeaderElection bool
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&hydraURL, "hydra-url", "", "The address of ORY Hydra")
-	flag.IntVar(&port, "port", 4445, "Port ORY Hydra is listening on")
+	flag.IntVar(&hydraPort, "hydra-port", 4445, "Port ORY Hydra is listening on")
 	flag.StringVar(&endpoint, "endpoint", "/clients", "ORY Hydra's client endpoint")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
@@ -74,11 +74,11 @@ func main() {
 	}
 
 	if hydraURL == "" {
-		setupLog.Error(fmt.Errorf("hydra service address can't be empty"), "unable to create controller", "controller", "OAuth2Client")
+		setupLog.Error(fmt.Errorf("hydra URL can't be empty"), "unable to create controller", "controller", "OAuth2Client")
 		os.Exit(1)
 	}
 
-	u, err := url.Parse(fmt.Sprintf("%s:%d", hydraURL, port))
+	u, err := url.Parse(fmt.Sprintf("%s:%d", hydraURL, hydraPort))
 	if err != nil {
 		setupLog.Error(err, "unable to parse ORY Hydra's URL", "controller", "OAuth2Client")
 		os.Exit(1)
