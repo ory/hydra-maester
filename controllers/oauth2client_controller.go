@@ -115,14 +115,16 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, clien
 		},
 	}
 
-	err = r.Create(ctx, &clientSecret)
-	if err != nil {
-		return err
-	}
-
-	client.Status.Secret = &clientSecret.Name
 	client.Status.ClientID = created.ClientID
 	client.Status.ObservedGeneration = client.Generation
+
+	err = r.Create(ctx, &clientSecret)
+	if err != nil {
+		r.Log.Error(err, fmt.Sprintf("registering client %s/%s failed", client.Name, client.Namespace), "oauth2client", "register")
+	} else {
+		client.Status.Secret = &clientSecret.Name
+	}
+
 	return r.Status().Update(ctx, client)
 }
 
