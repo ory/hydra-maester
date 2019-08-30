@@ -29,3 +29,10 @@ Take a look at [Design Readme](./docs/README.md).
 - `export HYDRA_URL={HYDRA_SERVICE_URL} && make run` to run the controller
 
 To deploy the controller, edit the value of the ```--hydra-url``` argument in the [manager.yaml](config/manager/manager.yaml) file and run ```make deploy```.
+
+### Command-line flags
+
+| Name            | Required | Description                  | Default value | Example values                                       |
+|-----------------|----------|------------------------------|---------------|------------------------------------------------------|
+| **hydra-url**   | yes      | ORY Hydra's service address  | -             | ` ory-hydra-admin.ory.svc.cluster.local`             |
+| **hydra-port**  | no       | ORY Hydra's service port     | `4445`        | `4445`                                               |
