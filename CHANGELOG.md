@@ -3,6 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Change Log](#change-log)
+  - [v0.0.3 (2019-08-30)](#v003-2019-08-30)
   - [v0.0.2-test2 (2019-08-30)](#v002-test2-2019-08-30)
   - [v0.0.2-test1 (2019-08-30)](#v002-test1-2019-08-30)
   - [v0.0.2 (2019-08-30)](#v002-2019-08-30)
@@ -11,6 +12,13 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Change Log
+
+## [v0.0.3](https://github.com/ory/hydra-maester/tree/v0.0.3) (2019-08-30)
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.2-test2...v0.0.3)
+
+**Merged pull requests:**
+
+- Extend readme: command-line flags [\#15](https://github.com/ory/hydra-maester/pull/15) ([jakkab](https://github.com/jakkab))
 
 ## [v0.0.2-test2](https://github.com/ory/hydra-maester/tree/v0.0.2-test2) (2019-08-30)
 [Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.2-test1...v0.0.2-test2)

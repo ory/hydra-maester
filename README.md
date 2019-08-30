@@ -6,6 +6,7 @@
   - [Prerequisites](#prerequisites)
   - [Design](#design)
   - [How to use it](#how-to-use-it)
+    - [Command-line flags](#command-line-flags)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
