@@ -12,8 +12,9 @@
 # Hydra-maester
 
 
-This project contains a Kubernetes controller that uses Custom Resources to manage Hydra Oauth2 clients.
-ORY Hydra Maester watches for instances of `oauth2clients.oathkeeper.ory.sh/v1alpha1` and creates, updates, or deletes corresponding OAuth2 clients by communicating with ORY Hydra API.
+This project contains a Kubernetes controller that uses Custom Resources (CR) to manage Hydra Oauth2 clients. ORY Hydra Maester watches for instances of `oauth2clients.oathkeeper.ory.sh/v1alpha1` CR and creates, updates, or deletes corresponding OAuth2 clients by communicating with ORY Hydra's API.
+
+Visit Hydra-maester's [chart documentation](https://github.com/ory/k8s/blob/master/docs/helm/hydra-maester.md) and view a [sample OAuth2 client resource](./config/samples/hydra_v1alpha1_oauth2client.yaml) to learn more about the `oauth2clients.oathkeeper.ory.sh/v1alpha1` CR. 
 
 The project is based on [Kubebuilder](https://github.com/kubernetes-sigs/kubebuilder).
 
@@ -40,3 +41,10 @@ Take a look at [Design Readme](./docs/README.md).
 - `export HYDRA_URL={HYDRA_SERVICE_URL} && make run` to run the controller
 
 To deploy the controller, edit the value of the ```--hydra-url``` argument in the [manager.yaml](config/manager/manager.yaml) file and run ```make deploy```.
+
+### Command-line flags
+
+| Name            | Required | Description                  | Default value | Example values                                       |
+|-----------------|----------|------------------------------|---------------|------------------------------------------------------|
+| **hydra-url**   | yes      | ORY Hydra's service address  | -             | ` ory-hydra-admin.ory.svc.cluster.local`             |
+| **hydra-port**  | no       | ORY Hydra's service port     | `4445`        | `4445`                                               |
