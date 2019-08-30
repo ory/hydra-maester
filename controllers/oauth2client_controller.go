@@ -120,7 +120,7 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, clien
 
 	err = r.Create(ctx, &clientSecret)
 	if err != nil {
-		r.Log.Error(err, fmt.Sprintf("registering client %s/%s failed", client.Name, client.Namespace), "oauth2client", "register")
+		r.Log.Error(err, fmt.Sprintf("error creating secret for client %s/%s ", client.Name, client.Namespace), "oauth2client", "register")
 	} else {
 		client.Status.Secret = &clientSecret.Name
 	}
