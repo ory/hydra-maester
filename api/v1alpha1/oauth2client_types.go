@@ -65,16 +65,16 @@ type OAuth2ClientStatus struct {
 	// ClientID is the id for this client.
 	ClientID *string `json:"clientID,omitempty"`
 	// ObservedGeneration represents the most recent generation observed by the daemon set controller.
-	ObservedGeneration  int64 `json:"observedGeneration,omitempty"`
-	ReconciliationError ReconciliationError
+	ObservedGeneration  int64               `json:"observedGeneration,omitempty"`
+	ReconciliationError ReconciliationError `json:"reconciliationError,omitempty"`
 }
 
 // ReconciliationError represents an error that occurred during the reconciliation process
 type ReconciliationError struct {
 	// Code is the status code of the reconciliation error
-	Code StatusCode
+	Code StatusCode `json:"statusCode,omitempty"`
 	// Description is the description of the reconciliation error
-	Description string
+	Description string `json:"description,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -3,9 +3,10 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/ory/hydra-maester/controllers/mocks"
 	"github.com/pkg/errors"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -209,7 +210,6 @@ var _ = Describe("OAuth2Client Controller", func() {
 				close(stopMgr)
 				mgrStopped.Wait()
 			}()
-
 
 			//ensure conflicting entry exists
 			secret := apiv1.Secret{

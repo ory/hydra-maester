@@ -432,6 +432,16 @@ spec:
                 observed by the daemon set controller.
               format: int64
               type: integer
+            reconciliationError:
+              properties:
+                description:
+                  description: Description is the description of the reconciliation
+                    error
+                  type: string
+                statusCode:
+                  description: Code is the status code of the reconciliation error
+                  type: string
+              type: object
             secret:
               description: Secret points to the K8s secret that contains this client's
                 id and password
