@@ -107,10 +107,11 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, clien
 			Description: err.Error(),
 		}
 		if updateErr := r.Status().Update(ctx, client); updateErr != nil {
-			return err
+			r.Log.Error(err, fmt.Sprintf("error registring client %s/%s ", client.Name, client.Namespace), "oauth2client", "register")
+			return updateErr
 		}
 
-		return err
+		return nil
 	}
 
 	clientSecret := apiv1.Secret{
