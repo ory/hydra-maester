@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ory/hydra-maester/controllers/mocks"
+	"github.com/pkg/errors"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
 	"github.com/ory/hydra-maester/controllers"
 	"github.com/ory/hydra-maester/hydra"
+	. "github.com/stretchr/testify/mock"
 	apiv1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,19 +28,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-const timeout = time.Second * 5
+const (
+	timeout      = time.Second * 5
+	tstNamespace = "default"
+	tstScopes    = "a b c"
+)
+
+var tstClientID = "testClientID"
+var tstSecret = "testSecret"
 
 var _ = Describe("OAuth2Client Controller", func() {
 	Context("in a happy-path scenario", func() {
 
-		var tstName = "test"
-		var tstNamespace = "default"
-		var tstScopes = "a b c"
-		var tstClientID = "testClientID"
-		var tstSecret = "testSecret"
-
-		var expectedRequest = reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 		It("should call create OAuth2 client in Hydra and a Secret", func() {
+
+			tstName := "test"
+			expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
 			s := scheme.Scheme
 			err := hydrav1alpha1.AddToScheme(s)
@@ -48,12 +55,21 @@ var _ = Describe("OAuth2Client Controller", func() {
 			Expect(err).NotTo(HaveOccurred())
 			c := mgr.GetClient()
 
-			mch := (&mockHydraClient{}).
-				withSecret(tstSecret).
-				withClientID(tstClientID)
+			mch := mocks.HydraClientInterface{}
+			mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
+				return &hydra.OAuth2ClientJSON{
+					ClientID:      &tstClientID,
+					Secret:        &tstSecret,
+					Name:          o.Name,
+					GrantTypes:    o.GrantTypes,
+					ResponseTypes: o.ResponseTypes,
+					Scope:         o.Scope,
+				}
+			}, func(o *hydra.OAuth2ClientJSON) error {
+				return nil
+			})
 
-			recFn, requests := SetupTestReconcile(getAPIReconciler(mgr, mch))
-			//_, requests := SetupTestReconcile(getApiReconciler(mgr))
+			recFn, requests := SetupTestReconcile(getAPIReconciler(mgr, &mch))
 
 			Expect(add(mgr, recFn)).To(Succeed())
 
@@ -66,7 +82,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				mgrStopped.Wait()
 			}()
 
-			instance := testInstance(tstName, tstNamespace, tstScopes)
+			instance := testInstance(tstName)
 			err = c.Create(context.TODO(), instance)
 			// The instance object may not be a valid object because it might be missing some required fields.
 			// Please modify the instance object by adding required fields and then remove the following if statement.
@@ -76,7 +92,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 			}
 			Expect(err).NotTo(HaveOccurred())
 			defer c.Delete(context.TODO(), instance)
-			Eventually(requests, timeout).Should(Receive(Equal(expectedRequest)))
+			Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
 
 			//Verify the created CR instance status
 			var retrieved hydrav1alpha1.OAuth2Client
@@ -92,6 +108,142 @@ var _ = Describe("OAuth2Client Controller", func() {
 			k8sClient.Get(context.TODO(), ok, &createdSecret)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(createdSecret.Data["client_secret"]).To(Equal([]byte(tstSecret)))
+		})
+
+		It("should call create OAuth2 client in Hydra and update object status if the call failed", func() {
+
+			tstName := "test2"
+			expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
+
+			s := scheme.Scheme
+			err := hydrav1alpha1.AddToScheme(s)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
+			// channel when it is finished.
+			mgr, err := manager.New(cfg, manager.Options{Scheme: s})
+			Expect(err).NotTo(HaveOccurred())
+			c := mgr.GetClient()
+
+			mch := mocks.HydraClientInterface{}
+			mch.On("PostOAuth2Client", Anything).Return(nil, errors.New("error"))
+
+			recFn, requests := SetupTestReconcile(getAPIReconciler(mgr, &mch))
+
+			Expect(add(mgr, recFn)).To(Succeed())
+
+			//Start the manager and the controller
+			stopMgr, mgrStopped := StartTestManager(mgr)
+
+			//Ensure manager is stopped properly
+			defer func() {
+				close(stopMgr)
+				mgrStopped.Wait()
+			}()
+
+			instance := testInstance(tstName)
+			err = c.Create(context.TODO(), instance)
+			// The instance object may not be a valid object because it might be missing some required fields.
+			// Please modify the instance object by adding required fields and then remove the following if statement.
+			if apierrors.IsInvalid(err) {
+				Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
+				return
+			}
+			Expect(err).NotTo(HaveOccurred())
+			defer c.Delete(context.TODO(), instance)
+			Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+			//Verify the created CR instance status
+			var retrieved hydrav1alpha1.OAuth2Client
+			ok := client.ObjectKey{Name: tstName, Namespace: tstNamespace}
+			err = c.Get(context.TODO(), ok, &retrieved)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(retrieved.Status.ClientID).To(BeNil())
+			Expect(retrieved.Status.Secret).To(BeNil())
+			Expect(retrieved.Status.ReconciliationError).NotTo(BeNil())
+			Expect(retrieved.Status.ReconciliationError.Code).To(Equal(hydrav1alpha1.StatusRegistrationFailed))
+			Expect(retrieved.Status.ReconciliationError.Description).To(Equal("error"))
+
+		})
+
+		tstClientID = "testClientID2"
+
+		It("should call create OAuth2 client in Hydra, create Secret and update object status if Secret creation failed", func() {
+
+			tstName := "test3"
+			expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
+
+			s := scheme.Scheme
+			err := hydrav1alpha1.AddToScheme(s)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
+			// channel when it is finished.
+			mgr, err := manager.New(cfg, manager.Options{Scheme: s})
+			Expect(err).NotTo(HaveOccurred())
+			c := mgr.GetClient()
+
+			mch := mocks.HydraClientInterface{}
+			mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
+				return &hydra.OAuth2ClientJSON{
+					ClientID:      &tstClientID,
+					Secret:        &tstSecret,
+					Name:          o.Name,
+					GrantTypes:    o.GrantTypes,
+					ResponseTypes: o.ResponseTypes,
+					Scope:         o.Scope,
+				}
+			}, func(o *hydra.OAuth2ClientJSON) error {
+				return nil
+			})
+
+			recFn, requests := SetupTestReconcile(getAPIReconciler(mgr, &mch))
+
+			Expect(add(mgr, recFn)).To(Succeed())
+
+			//Start the manager and the controller
+			stopMgr, mgrStopped := StartTestManager(mgr)
+
+			//Ensure manager is stopped properly
+			defer func() {
+				close(stopMgr)
+				mgrStopped.Wait()
+			}()
+
+			//ensure conflicting entry exists
+			secret := apiv1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      tstName,
+					Namespace: tstNamespace,
+				},
+			}
+			err = c.Create(context.TODO(), &secret)
+			Expect(err).NotTo(HaveOccurred())
+
+			instance := testInstance(tstName)
+			err = c.Create(context.TODO(), instance)
+			// The instance object may not be a valid object because it might be missing some required fields.
+			// Please modify the instance object by adding required fields and then remove the following if statement.
+			if apierrors.IsInvalid(err) {
+				Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
+				return
+			}
+			Expect(err).NotTo(HaveOccurred())
+			defer c.Delete(context.TODO(), instance)
+			Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+			//Verify the created CR instance status
+			var retrieved hydrav1alpha1.OAuth2Client
+			ok := client.ObjectKey{Name: tstName, Namespace: tstNamespace}
+			err = c.Get(context.TODO(), ok, &retrieved)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(retrieved.Status.ClientID).NotTo(BeNil())
+			Expect(retrieved.Status.Secret).To(BeNil())
+			Expect(retrieved.Status.ReconciliationError).NotTo(BeNil())
+			Expect(retrieved.Status.ReconciliationError.Code).To(Equal(hydrav1alpha1.StatusCreateSecretFailed))
+			Expect(retrieved.Status.ReconciliationError.Description).To(Equal(`secrets "test3" already exists`))
 		})
 	})
 })
@@ -123,7 +275,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-func getAPIReconciler(mgr ctrl.Manager, mock *mockHydraClient) reconcile.Reconciler {
+func getAPIReconciler(mgr ctrl.Manager, mock controllers.HydraClientInterface) reconcile.Reconciler {
 	return &controllers.OAuth2ClientReconciler{
 		Client:      mgr.GetClient(),
 		Log:         ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
@@ -131,67 +283,16 @@ func getAPIReconciler(mgr ctrl.Manager, mock *mockHydraClient) reconcile.Reconci
 	}
 }
 
-func testInstance(name, namespace, scopes string) *hydrav1alpha1.OAuth2Client {
+func testInstance(name string) *hydrav1alpha1.OAuth2Client {
 
 	return &hydrav1alpha1.OAuth2Client{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: namespace,
+			Namespace: tstNamespace,
 		},
 		Spec: hydrav1alpha1.OAuth2ClientSpec{
 			GrantTypes:    []hydrav1alpha1.GrantType{"client_credentials"},
 			ResponseTypes: []hydrav1alpha1.ResponseType{"token"},
-			Scope:         scopes,
+			Scope:         tstScopes,
 		}}
-}
-
-//TODO: Replace with full-fledged mocking framework (mockery/go-mock)
-type mockHydraClient struct {
-	resSecret   string
-	resClientID string
-	postedData  *hydra.OAuth2ClientJSON
-}
-
-func (m *mockHydraClient) withSecret(secret string) *mockHydraClient {
-	m.resSecret = secret
-	return m
-}
-
-func (m *mockHydraClient) withClientID(clientID string) *mockHydraClient {
-	m.resClientID = clientID
-	return m
-}
-
-//Returns the data previously "stored" by PostOAuth2Client
-func (m *mockHydraClient) GetOAuth2Client(id string) (*hydra.OAuth2ClientJSON, bool, error) {
-	res := &hydra.OAuth2ClientJSON{
-		ClientID:      &m.resClientID,
-		Secret:        &m.resSecret,
-		Name:          m.postedData.Name,
-		GrantTypes:    m.postedData.GrantTypes,
-		ResponseTypes: m.postedData.ResponseTypes,
-		Scope:         m.postedData.Scope,
-	}
-	return res, true, nil
-}
-
-func (m *mockHydraClient) PostOAuth2Client(o *hydra.OAuth2ClientJSON) (*hydra.OAuth2ClientJSON, error) {
-	m.postedData = o
-	res := &hydra.OAuth2ClientJSON{
-		ClientID:      &m.resClientID,
-		Secret:        &m.resSecret,
-		Name:          o.Name,
-		GrantTypes:    o.GrantTypes,
-		ResponseTypes: o.ResponseTypes,
-		Scope:         o.Scope,
-	}
-	return res, nil
-}
-
-func (m *mockHydraClient) DeleteOAuth2Client(id string) error {
-	panic("Should not be invoked!")
-}
-
-func (m *mockHydraClient) PutOAuth2Client(o *hydra.OAuth2ClientJSON) (*hydra.OAuth2ClientJSON, error) {
-	panic("Should not be invoked!")
 }

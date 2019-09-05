@@ -27,6 +27,7 @@ The project is based on [Kubebuilder](https://github.com/kubernetes-sigs/kubebui
 - kustomize
 - [ginkgo](https://onsi.github.io/ginkgo/) for local integration testing
 - access to K8s environment: minikube or a remote K8s cluster
+- [mockery](https://github.com/vektra/mockery) to generate mocks for testing purposes
 
 
 
@@ -49,3 +50,12 @@ To deploy the controller, edit the value of the ```--hydra-url``` argument in th
 |-----------------|----------|------------------------------|---------------|------------------------------------------------------|
 | **hydra-url**   | yes      | ORY Hydra's service address  | -             | ` ory-hydra-admin.ory.svc.cluster.local`             |
 | **hydra-port**  | no       | ORY Hydra's service port     | `4445`        | `4445`                                               |
+
+## Development
+
+### Testing
+
+Use mockery to generate mock types that implement existing interfaces. To generate a mock type for an interface, navigate to the directory containing that interface and run this command:
+```
+mockery -name={INTERFACE_NAME}
+```

@@ -20,6 +20,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type StatusCode string
+
+const (
+	StatusRegistrationFailed StatusCode = "CLIENT_REGISTRATION_FAILED"
+	StatusCreateSecretFailed StatusCode = "SECRET_CREATION_FAILED"
+)
+
 // OAuth2ClientSpec defines the desired state of OAuth2Client
 type OAuth2ClientSpec struct {
 	// +kubebuilder:validation:MaxItems=4
@@ -58,7 +65,16 @@ type OAuth2ClientStatus struct {
 	// ClientID is the id for this client.
 	ClientID *string `json:"clientID,omitempty"`
 	// ObservedGeneration represents the most recent generation observed by the daemon set controller.
-	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+	ObservedGeneration  int64               `json:"observedGeneration,omitempty"`
+	ReconciliationError ReconciliationError `json:"reconciliationError,omitempty"`
+}
+
+// ReconciliationError represents an error that occurred during the reconciliation process
+type ReconciliationError struct {
+	// Code is the status code of the reconciliation error
+	Code StatusCode `json:"statusCode,omitempty"`
+	// Description is the description of the reconciliation error
+	Description string `json:"description,omitempty"`
 }
 
 // +kubebuilder:object:root=true

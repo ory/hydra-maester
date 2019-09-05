@@ -101,7 +101,17 @@ func (r *OAuth2ClientReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, client *hydrav1alpha1.OAuth2Client) error {
 	created, err := r.HydraClient.PostOAuth2Client(client.ToOAuth2ClientJSON())
 	if err != nil {
-		return err
+		client.Status.ObservedGeneration = client.Generation
+		client.Status.ReconciliationError = hydrav1alpha1.ReconciliationError{
+			Code:        hydrav1alpha1.StatusRegistrationFailed,
+			Description: err.Error(),
+		}
+		if updateErr := r.Status().Update(ctx, client); updateErr != nil {
+			r.Log.Error(err, fmt.Sprintf("error registring client %s/%s ", client.Name, client.Namespace), "oauth2client", "register")
+			return updateErr
+		}
+
+		return nil
 	}
 
 	clientSecret := apiv1.Secret{
@@ -121,6 +131,10 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, clien
 	err = r.Create(ctx, &clientSecret)
 	if err != nil {
 		r.Log.Error(err, fmt.Sprintf("error creating secret for client %s/%s ", client.Name, client.Namespace), "oauth2client", "register")
+		client.Status.ReconciliationError = hydrav1alpha1.ReconciliationError{
+			Code:        hydrav1alpha1.StatusCreateSecretFailed,
+			Description: err.Error(),
+		}
 	} else {
 		client.Status.Secret = &clientSecret.Name
 	}
