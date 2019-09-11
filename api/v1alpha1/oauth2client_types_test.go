@@ -124,6 +124,7 @@ func resetTestClient() {
 			GrantTypes:    []GrantType{"implicit", "client_credentials", "authorization_code", "refresh_token"},
 			ResponseTypes: []ResponseType{"id_token", "code", "token"},
 			Scope:         "read,write",
+			SecretName:    "secret-name",
 		},
 	}
 }

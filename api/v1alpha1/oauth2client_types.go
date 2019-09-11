@@ -25,6 +25,7 @@ type StatusCode string
 const (
 	StatusRegistrationFailed StatusCode = "CLIENT_REGISTRATION_FAILED"
 	StatusCreateSecretFailed StatusCode = "SECRET_CREATION_FAILED"
+	StatusUpdateFailed       StatusCode = "CLIENT_UPDATE_FAILED"
 )
 
 // OAuth2ClientSpec defines the desired state of OAuth2Client
@@ -48,6 +49,13 @@ type OAuth2ClientSpec struct {
 	// described in Section 3.3 of OAuth 2.0 [RFC6749]) that the client
 	// can use when requesting access tokens.
 	Scope string `json:"scope"`
+
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:Pattern=[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*
+	//
+	// SecretName points to the K8s secret that contains this client's ID and password
+	SecretName string `json:"secretName"`
 }
 
 // +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token
@@ -60,10 +68,6 @@ type ResponseType string
 
 // OAuth2ClientStatus defines the observed state of OAuth2Client
 type OAuth2ClientStatus struct {
-	// Secret points to the K8s secret that contains this client's id and password
-	Secret *string `json:"secret,omitempty"`
-	// ClientID is the id for this client.
-	ClientID *string `json:"clientID,omitempty"`
 	// ObservedGeneration represents the most recent generation observed by the daemon set controller.
 	ObservedGeneration  int64               `json:"observedGeneration,omitempty"`
 	ReconciliationError ReconciliationError `json:"reconciliationError,omitempty"`
@@ -106,7 +110,6 @@ func init() {
 func (c *OAuth2Client) ToOAuth2ClientJSON() *hydra.OAuth2ClientJSON {
 	return &hydra.OAuth2ClientJSON{
 		Name:          c.Name,
-		ClientID:      c.Status.ClientID,
 		GrantTypes:    grantToStringSlice(c.Spec.GrantTypes),
 		ResponseTypes: responseToStringSlice(c.Spec.ResponseTypes),
 		Scope:         c.Spec.Scope,
