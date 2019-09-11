@@ -26,6 +26,7 @@ const (
 	StatusRegistrationFailed StatusCode = "CLIENT_REGISTRATION_FAILED"
 	StatusCreateSecretFailed StatusCode = "SECRET_CREATION_FAILED"
 	StatusUpdateFailed       StatusCode = "CLIENT_UPDATE_FAILED"
+	StatusInvalidSecret      StatusCode = "INVALID_SECRET"
 )
 
 // OAuth2ClientSpec defines the desired state of OAuth2Client

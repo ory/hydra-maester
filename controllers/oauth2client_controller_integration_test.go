@@ -107,9 +107,8 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(createdSecret.Data[controllers.ClientIDKey]).To(Equal([]byte(tstClientID)))
 				Expect(createdSecret.Data[controllers.ClientSecretKey]).To(Equal([]byte(tstSecret)))
 
-				//delete instance and secret
+				//delete instance
 				c.Delete(context.TODO(), instance)
-				c.Delete(context.TODO(), &createdSecret)
 
 				//Ensure manager is stopped properly
 				close(stopMgr)
@@ -258,6 +257,76 @@ var _ = Describe("OAuth2Client Controller", func() {
 
 				Expect(*postedClient.ClientID).To(Equal(tstClientID))
 				Expect(*postedClient.Secret).To(Equal(tstSecret))
+
+				//delete instance
+				c.Delete(context.TODO(), instance)
+
+				//Ensure manager is stopped properly
+				close(stopMgr)
+				mgrStopped.Wait()
+			})
+
+			It("update object status if provided Secret is invalid", func() {
+
+				tstName, tstClientID, tstSecretName := "test4", "testClientID-4", "my-secret-000"
+				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
+
+				s := scheme.Scheme
+				err := hydrav1alpha1.AddToScheme(s)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = apiv1.AddToScheme(s)
+				Expect(err).NotTo(HaveOccurred())
+
+				// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
+				// channel when it is finished.
+				mgr, err := manager.New(cfg, manager.Options{Scheme: s})
+				Expect(err).NotTo(HaveOccurred())
+				c := mgr.GetClient()
+
+				mch := mocks.HydraClientInterface{}
+				mch.On("DeleteOAuth2Client", Anything).Return(nil)
+
+				recFn, requests := SetupTestReconcile(getAPIReconciler(mgr, &mch))
+
+				Expect(add(mgr, recFn)).To(Succeed())
+
+				//Start the manager and the controller
+				stopMgr, mgrStopped := StartTestManager(mgr)
+
+				//ensure invalid secret exists
+				secret := apiv1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      tstSecretName,
+						Namespace: tstNamespace,
+					},
+					Data: map[string][]byte{
+						controllers.ClientIDKey: []byte(tstClientID),
+						//missing client secret key
+					},
+				}
+				err = c.Create(context.TODO(), &secret)
+				Expect(err).NotTo(HaveOccurred())
+
+				instance := testInstance(tstName, tstSecretName)
+				err = c.Create(context.TODO(), instance)
+				// The instance object may not be a valid object because it might be missing some required fields.
+				// Please modify the instance object by adding required fields and then remove the following if statement.
+				if apierrors.IsInvalid(err) {
+					Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
+					return
+				}
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+				//Verify the created CR instance status
+				var retrieved hydrav1alpha1.OAuth2Client
+				ok := client.ObjectKey{Name: tstName, Namespace: tstNamespace}
+				err = c.Get(context.TODO(), ok, &retrieved)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(retrieved.Status.ReconciliationError).NotTo(BeNil())
+				Expect(retrieved.Status.ReconciliationError.Code).To(Equal(hydrav1alpha1.StatusInvalidSecret))
+				Expect(retrieved.Status.ReconciliationError.Description).To(Equal(`"client_secret property missing"`))
 
 				//delete instance
 				c.Delete(context.TODO(), instance)

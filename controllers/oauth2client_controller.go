@@ -82,7 +82,7 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		credentials, err := parseSecret(secret)
 		if err != nil {
 			r.Log.Error(err, fmt.Sprintf("secret %s/%s is invalid", secret.Name, secret.Namespace))
-			return ctrl.Result{}, err
+			return ctrl.Result{}, r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidSecret, err)
 		}
 
 		_, registered, err := r.HydraClient.GetOAuth2Client(string(credentials.ID))
@@ -201,12 +201,12 @@ func parseSecret(secret apiv1.Secret) (*hydra.Oauth2ClientCredentials, error) {
 
 	id, found := secret.Data[ClientIDKey]
 	if !found {
-		return nil, errors.New("provided secret misses client id")
+		return nil, errors.New(`"client_id property missing"`)
 	}
 
 	psw, found := secret.Data[ClientSecretKey]
 	if !found {
-		return nil, errors.New("provided secret misses client password")
+		return nil, errors.New(`"client_secret property missing"`)
 	}
 
 	return &hydra.Oauth2ClientCredentials{
