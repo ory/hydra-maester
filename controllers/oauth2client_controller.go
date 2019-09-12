@@ -75,7 +75,7 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		var secret apiv1.Secret
 		if err := r.Get(ctx, types.NamespacedName{Name: oauth2client.Spec.SecretName, Namespace: req.Namespace}, &secret); err != nil {
 			if apierrs.IsNotFound(err) {
-				return ctrl.Result{}, r.registerOAuth2Client(ctx, &oauth2client)
+				return ctrl.Result{}, r.registerOAuth2Client(ctx, &oauth2client, nil)
 			}
 			return ctrl.Result{}, err
 		}
@@ -90,17 +90,17 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 			return ctrl.Result{}, err
 		}
 
-		_, update, err := r.HydraClient.GetOAuth2Client(string(credentials.ID))
+		_, found, err := r.HydraClient.GetOAuth2Client(string(credentials.ID))
 		if err != nil {
 			return ctrl.Result{}, err
 
 		}
 
-		if update {
+		if found {
 			return ctrl.Result{}, r.updateRegisteredOAuth2Client(ctx, &oauth2client, credentials)
 		}
 
-		return ctrl.Result{}, r.registerOAuth2ClientWithCredentials(ctx, &oauth2client, credentials)
+		return ctrl.Result{}, r.registerOAuth2Client(ctx, &oauth2client, credentials)
 	}
 
 	return ctrl.Result{}, nil
@@ -112,9 +112,16 @@ func (r *OAuth2ClientReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hydrav1alpha1.OAuth2Client) error {
+func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hydrav1alpha1.OAuth2Client, credentials *hydra.Oauth2ClientCredentials) error {
 	if err := r.unregisterOAuth2Clients(ctx, c.Name, c.Namespace); err != nil {
 		return err
+	}
+
+	if credentials != nil {
+		if _, err := r.HydraClient.PostOAuth2Client(c.ToOAuth2ClientJSON().WithCredentials(credentials)); err != nil {
+			return r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err)
+		}
+		return nil
 	}
 
 	created, err := r.HydraClient.PostOAuth2Client(c.ToOAuth2ClientJSON())
@@ -136,18 +143,6 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 
 	if err := r.Create(ctx, &clientSecret); err != nil {
 		return r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusCreateSecretFailed, err)
-	}
-
-	return nil
-}
-
-func (r *OAuth2ClientReconciler) registerOAuth2ClientWithCredentials(ctx context.Context, c *hydrav1alpha1.OAuth2Client, credentials *hydra.Oauth2ClientCredentials) error {
-	if err := r.unregisterOAuth2Clients(ctx, c.Name, c.Namespace); err != nil {
-		return err
-	}
-
-	if _, err := r.HydraClient.PostOAuth2Client(c.ToOAuth2ClientJSON().WithCredentials(credentials)); err != nil {
-		return r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err)
 	}
 
 	return nil
