@@ -62,7 +62,7 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	var oauth2client hydrav1alpha1.OAuth2Client
 	if err := r.Get(ctx, req.NamespacedName, &oauth2client); err != nil {
 		if apierrs.IsNotFound(err) {
-			if err := r.unregisterOAuth2Clients(ctx, req.NamespacedName); err != nil {
+			if err := r.unregisterOAuth2Clients(ctx, req.Name, req.Namespace); err != nil {
 				return ctrl.Result{}, err
 			}
 			return ctrl.Result{}, nil
@@ -86,24 +86,21 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 			return ctrl.Result{}, r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidSecret, err)
 		}
 
-		_, registered, err := r.HydraClient.GetOAuth2Client(string(credentials.ID))
+		if err := r.labelSecretWithOwnerReference(ctx, &oauth2client, secret); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		_, update, err := r.HydraClient.GetOAuth2Client(string(credentials.ID))
 		if err != nil {
 			return ctrl.Result{}, err
 
 		}
 
-		if !registered {
-			if err := r.registerOAuth2ClientWithCredentials(ctx, &oauth2client, credentials); err != nil {
-				return ctrl.Result{}, err
-			}
-			if secret.Labels == nil {
-				secret.Labels = make(map[string]string, 1)
-			}
-			secret.Labels[ownerLabel] = oauth2client.Name
-			return ctrl.Result{}, r.Update(ctx, &secret)
+		if update {
+			return ctrl.Result{}, r.updateRegisteredOAuth2Client(ctx, &oauth2client, credentials)
 		}
 
-		return ctrl.Result{}, r.updateRegisteredOAuth2Client(ctx, &oauth2client, credentials)
+		return ctrl.Result{}, r.registerOAuth2ClientWithCredentials(ctx, &oauth2client, credentials)
 	}
 
 	return ctrl.Result{}, nil
@@ -116,6 +113,9 @@ func (r *OAuth2ClientReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hydrav1alpha1.OAuth2Client) error {
+	if err := r.unregisterOAuth2Clients(ctx, c.Name, c.Namespace); err != nil {
+		return err
+	}
 
 	created, err := r.HydraClient.PostOAuth2Client(c.ToOAuth2ClientJSON())
 	if err != nil {
@@ -142,6 +142,10 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 }
 
 func (r *OAuth2ClientReconciler) registerOAuth2ClientWithCredentials(ctx context.Context, c *hydrav1alpha1.OAuth2Client, credentials *hydra.Oauth2ClientCredentials) error {
+	if err := r.unregisterOAuth2Clients(ctx, c.Name, c.Namespace); err != nil {
+		return err
+	}
+
 	if _, err := r.HydraClient.PostOAuth2Client(c.ToOAuth2ClientJSON().WithCredentials(credentials)); err != nil {
 		return r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err)
 	}
@@ -156,21 +160,25 @@ func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Contex
 	return nil
 }
 
-func (r *OAuth2ClientReconciler) unregisterOAuth2Clients(ctx context.Context, namespacedName types.NamespacedName) error {
-	var secrets apiv1.SecretList
+func (r *OAuth2ClientReconciler) unregisterOAuth2Clients(ctx context.Context, name, namespace string) error {
+	var secretList apiv1.SecretList
 
 	err := r.List(
 		ctx,
-		&secrets,
-		client.InNamespace(namespacedName.Namespace),
-		client.MatchingLabels(map[string]string{ownerLabel: namespacedName.Name}))
+		&secretList,
+		client.InNamespace(namespace),
+		client.MatchingLabels(map[string]string{ownerLabel: name}))
 
 	if err != nil {
 		return err
 	}
 
+	if len(secretList.Items) == 0 {
+		return nil
+	}
+
 	ids := make(map[string]struct{})
-	for _, s := range secrets.Items {
+	for _, s := range secretList.Items {
 		ids[string(s.Data[ClientIDKey])] = struct{}{}
 	}
 
@@ -214,4 +222,17 @@ func parseSecret(secret apiv1.Secret) (*hydra.Oauth2ClientCredentials, error) {
 		ID:       id,
 		Password: psw,
 	}, nil
+}
+
+func (r *OAuth2ClientReconciler) labelSecretWithOwnerReference(ctx context.Context, c *hydrav1alpha1.OAuth2Client, secret apiv1.Secret) error {
+
+	if secret.Labels[ownerLabel] != c.Name {
+		if secret.Labels == nil {
+			secret.Labels = make(map[string]string, 1)
+		}
+		secret.Labels[ownerLabel] = c.Name
+		return r.Update(ctx, &secret)
+	}
+
+	return nil
 }
