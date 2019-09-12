@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"k8s.io/utils/pointer"
 	"time"
+
+	"k8s.io/utils/pointer"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
