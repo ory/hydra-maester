@@ -77,6 +77,7 @@ func TestCreateAPI(t *testing.T) {
 				"invalid grant type":    func() { created.Spec.GrantTypes = []GrantType{"invalid"} },
 				"invalid response type": func() { created.Spec.ResponseTypes = []ResponseType{"invalid"} },
 				"invalid scope":         func() { created.Spec.Scope = "" },
+				"missing secret name":   func() { created.Spec.SecretName = "" },
 			} {
 				t.Run(fmt.Sprintf("case=%s", desc), func(t *testing.T) {
 
@@ -124,6 +125,7 @@ func resetTestClient() {
 			GrantTypes:    []GrantType{"implicit", "client_credentials", "authorization_code", "refresh_token"},
 			ResponseTypes: []ResponseType{"id_token", "code", "token"},
 			Scope:         "read,write",
+			SecretName:    "secret-name",
 		},
 	}
 }

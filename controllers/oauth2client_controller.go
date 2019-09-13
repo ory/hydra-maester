@@ -19,21 +19,22 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/types"
-
 	"github.com/go-logr/logr"
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
 	"github.com/ory/hydra-maester/hydra"
+	"github.com/pkg/errors"
 	apiv1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	clientIDKey     = "client_id"
-	clientSecretKey = "client_secret"
+	ClientIDKey     = "client_id"
+	ClientSecretKey = "client_secret"
+	ownerLabel      = "owner"
 )
 
 type HydraClientInterface interface {
@@ -58,10 +59,10 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	ctx := context.Background()
 	_ = r.Log.WithValues("oauth2client", req.NamespacedName)
 
-	var client hydrav1alpha1.OAuth2Client
-	if err := r.Get(ctx, req.NamespacedName, &client); err != nil {
+	var oauth2client hydrav1alpha1.OAuth2Client
+	if err := r.Get(ctx, req.NamespacedName, &oauth2client); err != nil {
 		if apierrs.IsNotFound(err) {
-			if err := r.unregisterOAuth2Client(ctx, req.NamespacedName); err != nil {
+			if err := r.unregisterOAuth2Clients(ctx, req.Name, req.Namespace); err != nil {
 				return ctrl.Result{}, err
 			}
 			return ctrl.Result{}, nil
@@ -69,24 +70,37 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		return ctrl.Result{}, err
 	}
 
-	if client.Generation != client.Status.ObservedGeneration {
+	if oauth2client.Generation != oauth2client.Status.ObservedGeneration {
 
-		var registered = false
-		var err error
-
-		if client.Status.ClientID != nil {
-
-			_, registered, err = r.HydraClient.GetOAuth2Client(*client.Status.ClientID)
-			if err != nil {
-				return ctrl.Result{}, err
+		var secret apiv1.Secret
+		if err := r.Get(ctx, types.NamespacedName{Name: oauth2client.Spec.SecretName, Namespace: req.Namespace}, &secret); err != nil {
+			if apierrs.IsNotFound(err) {
+				return ctrl.Result{}, r.registerOAuth2Client(ctx, &oauth2client, nil)
 			}
+			return ctrl.Result{}, err
 		}
 
-		if !registered {
-			return ctrl.Result{}, r.registerOAuth2Client(ctx, &client)
+		credentials, err := parseSecret(secret)
+		if err != nil {
+			r.Log.Error(err, fmt.Sprintf("secret %s/%s is invalid", secret.Name, secret.Namespace))
+			return ctrl.Result{}, r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidSecret, err)
 		}
 
-		return ctrl.Result{}, r.updateRegisteredOAuth2Client(&client)
+		if err := r.labelSecretWithOwnerReference(ctx, &oauth2client, secret); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		_, found, err := r.HydraClient.GetOAuth2Client(string(credentials.ID))
+		if err != nil {
+			return ctrl.Result{}, err
+
+		}
+
+		if found {
+			return ctrl.Result{}, r.updateRegisteredOAuth2Client(ctx, &oauth2client, credentials)
+		}
+
+		return ctrl.Result{}, r.registerOAuth2Client(ctx, &oauth2client, credentials)
 	}
 
 	return ctrl.Result{}, nil
@@ -98,64 +112,122 @@ func (r *OAuth2ClientReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, client *hydrav1alpha1.OAuth2Client) error {
-	created, err := r.HydraClient.PostOAuth2Client(client.ToOAuth2ClientJSON())
-	if err != nil {
-		client.Status.ObservedGeneration = client.Generation
-		client.Status.ReconciliationError = hydrav1alpha1.ReconciliationError{
-			Code:        hydrav1alpha1.StatusRegistrationFailed,
-			Description: err.Error(),
-		}
-		if updateErr := r.Status().Update(ctx, client); updateErr != nil {
-			r.Log.Error(err, fmt.Sprintf("error registring client %s/%s ", client.Name, client.Namespace), "oauth2client", "register")
-			return updateErr
-		}
+func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hydrav1alpha1.OAuth2Client, credentials *hydra.Oauth2ClientCredentials) error {
+	if err := r.unregisterOAuth2Clients(ctx, c.Name, c.Namespace); err != nil {
+		return err
+	}
 
+	if credentials != nil {
+		if _, err := r.HydraClient.PostOAuth2Client(c.ToOAuth2ClientJSON().WithCredentials(credentials)); err != nil {
+			return r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err)
+		}
 		return nil
+	}
+
+	created, err := r.HydraClient.PostOAuth2Client(c.ToOAuth2ClientJSON())
+	if err != nil {
+		return r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err)
 	}
 
 	clientSecret := apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      client.Name,
-			Namespace: client.Namespace,
+			Name:      c.Spec.SecretName,
+			Namespace: c.Namespace,
+			Labels:    map[string]string{ownerLabel: c.Name},
 		},
 		Data: map[string][]byte{
-			clientSecretKey: []byte(*created.Secret),
-			clientIDKey:     []byte(*created.ClientID),
+			ClientIDKey:     []byte(*created.ClientID),
+			ClientSecretKey: []byte(*created.Secret),
 		},
 	}
 
-	client.Status.ClientID = created.ClientID
-	client.Status.ObservedGeneration = client.Generation
-
-	err = r.Create(ctx, &clientSecret)
-	if err != nil {
-		r.Log.Error(err, fmt.Sprintf("error creating secret for client %s/%s ", client.Name, client.Namespace), "oauth2client", "register")
-		client.Status.ReconciliationError = hydrav1alpha1.ReconciliationError{
-			Code:        hydrav1alpha1.StatusCreateSecretFailed,
-			Description: err.Error(),
-		}
-	} else {
-		client.Status.Secret = &clientSecret.Name
+	if err := r.Create(ctx, &clientSecret); err != nil {
+		return r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusCreateSecretFailed, err)
 	}
 
-	return r.Status().Update(ctx, client)
+	return nil
 }
 
-func (r *OAuth2ClientReconciler) unregisterOAuth2Client(ctx context.Context, namespacedName types.NamespacedName) error {
-	var sec apiv1.Secret
-	if err := r.Get(ctx, namespacedName, &sec); err != nil {
-		if apierrs.IsNotFound(err) {
-			r.Log.Info(fmt.Sprintf("unable to find secret corresponding with client %s/%s. Manual deletion recommended", namespacedName.Name, namespacedName.Namespace))
-			return nil
-		}
+func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Context, c *hydrav1alpha1.OAuth2Client, credentials *hydra.Oauth2ClientCredentials) error {
+	if _, err := r.HydraClient.PutOAuth2Client(c.ToOAuth2ClientJSON().WithCredentials(credentials)); err != nil {
+		return r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusUpdateFailed, err)
+	}
+	return nil
+}
+
+func (r *OAuth2ClientReconciler) unregisterOAuth2Clients(ctx context.Context, name, namespace string) error {
+	var secretList apiv1.SecretList
+
+	err := r.List(
+		ctx,
+		&secretList,
+		client.InNamespace(namespace),
+		client.MatchingLabels(map[string]string{ownerLabel: name}))
+
+	if err != nil {
 		return err
 	}
 
-	return r.HydraClient.DeleteOAuth2Client(string(sec.Data[clientIDKey]))
+	if len(secretList.Items) == 0 {
+		return nil
+	}
+
+	ids := make(map[string]struct{})
+	for _, s := range secretList.Items {
+		ids[string(s.Data[ClientIDKey])] = struct{}{}
+	}
+
+	for id := range ids {
+		if err := r.HydraClient.DeleteOAuth2Client(id); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(client *hydrav1alpha1.OAuth2Client) error {
-	_, err := r.HydraClient.PutOAuth2Client(client.ToOAuth2ClientJSON())
-	return err
+func (r *OAuth2ClientReconciler) updateReconciliationStatusError(ctx context.Context, c *hydrav1alpha1.OAuth2Client, code hydrav1alpha1.StatusCode, err error) error {
+	r.Log.Error(err, fmt.Sprintf("error processing client %s/%s ", c.Name, c.Namespace), "oauth2client", "register")
+	c.Status.ObservedGeneration = c.Generation
+	c.Status.ReconciliationError = hydrav1alpha1.ReconciliationError{
+		Code:        code,
+		Description: err.Error(),
+	}
+	if updateErr := r.Status().Update(ctx, c); updateErr != nil {
+		r.Log.Error(updateErr, fmt.Sprintf("status update failed for client %s/%s ", c.Name, c.Namespace), "oauth2client", "update status")
+		return updateErr
+	}
+
+	return nil
+}
+
+func parseSecret(secret apiv1.Secret) (*hydra.Oauth2ClientCredentials, error) {
+
+	id, found := secret.Data[ClientIDKey]
+	if !found {
+		return nil, errors.New(`"client_id property missing"`)
+	}
+
+	psw, found := secret.Data[ClientSecretKey]
+	if !found {
+		return nil, errors.New(`"client_secret property missing"`)
+	}
+
+	return &hydra.Oauth2ClientCredentials{
+		ID:       id,
+		Password: psw,
+	}, nil
+}
+
+func (r *OAuth2ClientReconciler) labelSecretWithOwnerReference(ctx context.Context, c *hydrav1alpha1.OAuth2Client, secret apiv1.Secret) error {
+
+	if secret.Labels[ownerLabel] != c.Name {
+		if secret.Labels == nil {
+			secret.Labels = make(map[string]string, 1)
+		}
+		secret.Labels[ownerLabel] = c.Name
+		return r.Update(ctx, &secret)
+	}
+
+	return nil
 }
