@@ -77,6 +77,7 @@ func TestCreateAPI(t *testing.T) {
 				"invalid grant type":    func() { created.Spec.GrantTypes = []GrantType{"invalid"} },
 				"invalid response type": func() { created.Spec.ResponseTypes = []ResponseType{"invalid"} },
 				"invalid scope":         func() { created.Spec.Scope = "" },
+				"missing secret name":   func() { created.Spec.SecretName = "" },
 			} {
 				t.Run(fmt.Sprintf("case=%s", desc), func(t *testing.T) {
 
