@@ -17,6 +17,7 @@ package v1alpha1
 
 import (
 	"fmt"
+
 	"github.com/ory/hydra-maester/hydra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
