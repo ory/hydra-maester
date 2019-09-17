@@ -34,7 +34,6 @@ import (
 const (
 	ClientIDKey     = "client_id"
 	ClientSecretKey = "client_secret"
-	ownerLabel      = "owner"
 )
 
 type HydraClientInterface interface {
@@ -130,7 +129,6 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      c.Spec.SecretName,
 			Namespace: c.Namespace,
-			Labels:    map[string]string{ownerLabel: c.Name},
 		},
 		Data: map[string][]byte{
 			ClientIDKey:     []byte(*created.ClientID),
