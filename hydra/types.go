@@ -6,10 +6,10 @@ import "k8s.io/utils/pointer"
 type OAuth2ClientJSON struct {
 	ClientID      *string  `json:"client_id,omitempty"`
 	Secret        *string  `json:"client_secret,omitempty"`
-	Name          string   `json:"client_name"`
 	GrantTypes    []string `json:"grant_types"`
 	ResponseTypes []string `json:"response_types,omitempty"`
 	Scope         string   `json:"scope"`
+	Owner         string   `json:"owner"`
 }
 
 // Oauth2ClientCredentials represents client ID and password fetched from a Kubernetes secret

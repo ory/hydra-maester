@@ -16,6 +16,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"fmt"
 	"github.com/ory/hydra-maester/hydra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -110,10 +111,10 @@ func init() {
 // ToOAuth2ClientJSON converts an OAuth2Client into a OAuth2ClientJSON object that represents an OAuth2 client digestible by ORY Hydra
 func (c *OAuth2Client) ToOAuth2ClientJSON() *hydra.OAuth2ClientJSON {
 	return &hydra.OAuth2ClientJSON{
-		Name:          c.Name,
 		GrantTypes:    grantToStringSlice(c.Spec.GrantTypes),
 		ResponseTypes: responseToStringSlice(c.Spec.ResponseTypes),
 		Scope:         c.Spec.Scope,
+		Owner:         fmt.Sprintf("%s/%s", c.Name, c.Namespace),
 	}
 }
 

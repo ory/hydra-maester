@@ -65,10 +65,10 @@ var _ = Describe("OAuth2Client Controller", func() {
 					return &hydra.OAuth2ClientJSON{
 						ClientID:      &tstClientID,
 						Secret:        pointer.StringPtr(tstSecret),
-						Name:          o.Name,
 						GrantTypes:    o.GrantTypes,
 						ResponseTypes: o.ResponseTypes,
 						Scope:         o.Scope,
+						Owner:         o.Owner,
 					}
 				}, func(o *hydra.OAuth2ClientJSON) error {
 					return nil
@@ -206,10 +206,10 @@ var _ = Describe("OAuth2Client Controller", func() {
 					postedClient = &hydra.OAuth2ClientJSON{
 						ClientID:      o.ClientID,
 						Secret:        o.Secret,
-						Name:          o.Name,
 						GrantTypes:    o.GrantTypes,
 						ResponseTypes: o.ResponseTypes,
 						Scope:         o.Scope,
+						Owner:         o.Owner,
 					}
 					return postedClient
 				}, func(o *hydra.OAuth2ClientJSON) error {
