@@ -79,7 +79,7 @@ func (c *Client) PostOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error
 	case http.StatusCreated:
 		return jsonClient, nil
 	case http.StatusConflict:
-		return nil, fmt.Errorf(" %s %s http request failed: requested ID already exists", req.Method, req.URL)
+		return nil, fmt.Errorf("%s %s http request failed: requested ID already exists", req.Method, req.URL)
 	default:
 		return nil, fmt.Errorf("%s %s http request returned unexpected status code: %s", req.Method, req.URL, resp.Status)
 	}
