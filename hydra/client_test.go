@@ -27,7 +27,7 @@ const (
 	testClientList    = `{"client_id":"test-id-4","owner":"test-name-4","scope":"scope1 scope2","grant_types":["type4"]}`
 	testClientList2   = `{"client_id":"test-id-5","owner":"test-name-5","scope":"scope3 scope4","grant_types":["type5"]}`
 
-	statusNotFoundBody            = `{"error":"Not Found","error_description":"Unable to located the requested resource","status_code":404,"request_id":"id"}`
+	statusNotFoundBody            = `{"error":"Not Found","error_description":"Unable to locate the requested resource","status_code":404,"request_id":"id"}`
 	statusConflictBody            = `{"error":"Unable to insert or update resource because a resource with that value exists already","error_description":"","status_code":409,"request_id":"id"`
 	statusInternalServerErrorBody = "the server encountered an internal error or misconfiguration and was unable to complete your request"
 )
