@@ -29,7 +29,7 @@ const (
 
 	statusNotFoundBody            = `{"error":"Not Found","error_description":"Unable to located the requested resource","status_code":404,"request_id":"id"}`
 	statusConflictBody            = `{"error":"Unable to insert or update resource because a resource with that value exists already","error_description":"","status_code":409,"request_id":"id"`
-	statusInternalServerErrorBody = `the server encountered an internal error or misconfiguration and was unable to complete your request`
+	statusInternalServerErrorBody = "the server encountered an internal error or misconfiguration and was unable to complete your request"
 )
 
 type server struct {
