@@ -17,16 +17,19 @@ import (
 )
 
 const (
+	clientsEndpoint = "/clients"
+	schemeHTTP      = "http"
+
 	testID            = "test-id"
-	schemeHTTP        = "http"
 	testClient        = `{"client_id":"test-id","owner":"test-name","scope":"some,scopes","grant_types":["type1"]}`
 	testClientCreated = `{"client_id":"test-id-2","client_secret":"TmGkvcY7k526","owner":"test-name-2","scope":"some,other,scopes","grant_types":["type2"]}`
 	testClientUpdated = `{"client_id":"test-id-3","client_secret":"xFoPPm654por","owner":"test-name-3","scope":"yet,another,scope","grant_types":["type3"]}`
 	testClientList    = `{"client_id":"test-id-4","owner":"test-name-4","scope":"scope1 scope2","grant_types":["type4"]}`
 	testClientList2   = `{"client_id":"test-id-5","owner":"test-name-5","scope":"scope3 scope4","grant_types":["type5"]}`
-	emptyBody         = `{}`
-	emptyBodyList     = `[]`
-	clientsEndpoint   = "/clients"
+
+	statusNotFoundBody            = `{"error":"Not Found","error_description":"Unable to locate the requested resource","status_code":404,"request_id":"id"}`
+	statusConflictBody            = `{"error":"Unable to insert or update resource because a resource with that value exists already","error_description":"","status_code":409,"request_id":"id"`
+	statusInternalServerErrorBody = "the server encountered an internal error or misconfiguration and was unable to complete your request"
 )
 
 type server struct {
@@ -67,12 +70,12 @@ func TestCRUD(t *testing.T) {
 			},
 			"getting unregistered client": {
 				http.StatusNotFound,
-				emptyBody,
+				statusNotFoundBody,
 				nil,
 			},
 			"internal server error when requesting": {
 				http.StatusInternalServerError,
-				emptyBody,
+				statusInternalServerErrorBody,
 				errors.New("http request returned unexpected status code"),
 			},
 		} {
@@ -124,12 +127,12 @@ func TestCRUD(t *testing.T) {
 			},
 			"with existing client": {
 				http.StatusConflict,
-				emptyBody,
+				statusConflictBody,
 				errors.New("requested ID already exists"),
 			},
 			"internal server error when requesting": {
 				http.StatusInternalServerError,
-				emptyBody,
+				statusInternalServerErrorBody,
 				errors.New("http request returned unexpected status code"),
 			},
 		} {
@@ -182,7 +185,7 @@ func TestCRUD(t *testing.T) {
 			},
 			"internal server error when requesting": {
 				http.StatusInternalServerError,
-				emptyBody,
+				statusInternalServerErrorBody,
 				errors.New("http request returned unexpected status code"),
 			},
 		} {
@@ -234,9 +237,11 @@ func TestCRUD(t *testing.T) {
 			},
 			"with unregistered client": {
 				statusCode: http.StatusNotFound,
+				respBody:   statusNotFoundBody,
 			},
 			"internal server error when requesting": {
 				statusCode: http.StatusInternalServerError,
+				respBody:   statusInternalServerErrorBody,
 				err:        errors.New("http request returned unexpected status code"),
 			},
 		} {
@@ -269,7 +274,7 @@ func TestCRUD(t *testing.T) {
 		for d, tc := range map[string]server{
 			"no clients": {
 				http.StatusOK,
-				emptyBodyList,
+				`[]`,
 				nil,
 			},
 			"one client": {
@@ -284,7 +289,7 @@ func TestCRUD(t *testing.T) {
 			},
 			"internal server error when requesting": {
 				http.StatusInternalServerError,
-				emptyBodyList,
+				statusInternalServerErrorBody,
 				errors.New("http request returned unexpected status code"),
 			},
 		} {
