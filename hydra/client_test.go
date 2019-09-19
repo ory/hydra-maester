@@ -19,10 +19,13 @@ import (
 const (
 	testID            = "test-id"
 	schemeHTTP        = "http"
-	testClient        = `{"client_id":"test-id","client_name":"test-name","scope":"some,scopes","grant_types":["type1"]}`
-	testClientCreated = `{"client_id":"test-id-2", "client_secret": "TmGkvcY7k526","client_name":"test-name-2","scope":"some,other,scopes","grant_types":["type2"]}`
-	testClientUpdated = `{"client_id":"test-id-3", "client_secret": "xFoPPm654por","client_name":"test-name-3","scope":"yet,another,scope","grant_types":["type3"]}`
+	testClient        = `{"client_id":"test-id","owner":"test-name","scope":"some,scopes","grant_types":["type1"]}`
+	testClientCreated = `{"client_id":"test-id-2","client_secret":"TmGkvcY7k526","owner":"test-name-2","scope":"some,other,scopes","grant_types":["type2"]}`
+	testClientUpdated = `{"client_id":"test-id-3","client_secret":"xFoPPm654por","owner":"test-name-3","scope":"yet,another,scope","grant_types":["type3"]}`
+	testClientList    = `{"client_id":"test-id-4","owner":"test-name-4","scope":"scope1 scope2","grant_types":["type4"]}`
+	testClientList2   = `{"client_id":"test-id-5","owner":"test-name-5","scope":"scope3 scope4","grant_types":["type5"]}`
 	emptyBody         = `{}`
+	emptyBodyList     = `[]`
 	clientsEndpoint   = "/clients"
 )
 
@@ -33,16 +36,16 @@ type server struct {
 }
 
 var testOAuthJSONPost = &hydra.OAuth2ClientJSON{
-	Name:       "test-name-2",
 	Scope:      "some,other,scopes",
 	GrantTypes: []string{"type2"},
+	Owner:      "test-name-2",
 }
 
 var testOAuthJSONPut = &hydra.OAuth2ClientJSON{
 	ClientID:   pointer.StringPtr("test-id-3"),
-	Name:       "test-name-3",
 	Scope:      "yet,another,scope",
 	GrantTypes: []string{"type3"},
+	Owner:      "test-name-3",
 }
 
 func TestCRUD(t *testing.T) {
@@ -160,9 +163,9 @@ func TestCRUD(t *testing.T) {
 				if new {
 					require.NotNil(t, o)
 
-					assert.Equal(testOAuthJSONPost.Name, o.Name)
 					assert.Equal(testOAuthJSONPost.Scope, o.Scope)
 					assert.Equal(testOAuthJSONPost.GrantTypes, o.GrantTypes)
+					assert.Equal(testOAuthJSONPost.Owner, o.Owner)
 					assert.NotNil(o.Secret)
 					assert.NotNil(o.ClientID)
 				}
@@ -213,10 +216,10 @@ func TestCRUD(t *testing.T) {
 				if ok {
 					require.NotNil(t, o)
 
-					assert.Equal(testOAuthJSONPut.Name, o.Name)
 					assert.Equal(testOAuthJSONPut.Scope, o.Scope)
 					assert.Equal(testOAuthJSONPut.GrantTypes, o.GrantTypes)
 					assert.Equal(testOAuthJSONPut.ClientID, o.ClientID)
+					assert.Equal(testOAuthJSONPut.Owner, o.Owner)
 					assert.NotNil(o.Secret)
 				}
 			})
@@ -253,6 +256,61 @@ func TestCRUD(t *testing.T) {
 				//then
 				if tc.err == nil {
 					require.NoError(t, err)
+				} else {
+					require.Error(t, err)
+					assert.Contains(err.Error(), tc.err.Error())
+				}
+			})
+		}
+	})
+
+	t.Run("method=list", func(t *testing.T) {
+
+		for d, tc := range map[string]server{
+			"no clients": {
+				http.StatusOK,
+				emptyBodyList,
+				nil,
+			},
+			"one client": {
+				http.StatusOK,
+				fmt.Sprintf("[%s]", testClientList),
+				nil,
+			},
+			"more clients": {
+				http.StatusOK,
+				fmt.Sprintf("[%s,%s]", testClientList, testClientList2),
+				nil,
+			},
+			"internal server error when requesting": {
+				http.StatusInternalServerError,
+				emptyBodyList,
+				errors.New("http request returned unexpected status code"),
+			},
+		} {
+			t.Run(fmt.Sprintf("case/%s", d), func(t *testing.T) {
+
+				//given
+				h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+					assert.Equal(c.HydraURL.String(), fmt.Sprintf("%s://%s%s", schemeHTTP, req.Host, req.URL.Path))
+					assert.Equal(http.MethodGet, req.Method)
+					w.WriteHeader(tc.statusCode)
+					w.Write([]byte(tc.respBody))
+					w.Header().Set("Content-type", "application/json")
+
+				})
+				runServer(&c, h)
+
+				//when
+				list, err := c.ListOAuth2Client()
+
+				//then
+				if tc.err == nil {
+					require.NoError(t, err)
+					require.NotNil(t, list)
+					var expectedList []*hydra.OAuth2ClientJSON
+					json.Unmarshal([]byte(tc.respBody), &expectedList)
+					assert.Equal(expectedList, list)
 				} else {
 					require.Error(t, err)
 					assert.Contains(err.Error(), tc.err.Error())

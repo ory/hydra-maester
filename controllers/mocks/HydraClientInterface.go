@@ -54,6 +54,29 @@ func (_m *HydraClientInterface) GetOAuth2Client(id string) (*hydra.OAuth2ClientJ
 	return r0, r1, r2
 }
 
+// ListOAuth2Client provides a mock function with given fields:
+func (_m *HydraClientInterface) ListOAuth2Client() ([]*hydra.OAuth2ClientJSON, error) {
+	ret := _m.Called()
+
+	var r0 []*hydra.OAuth2ClientJSON
+	if rf, ok := ret.Get(0).(func() []*hydra.OAuth2ClientJSON); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*hydra.OAuth2ClientJSON)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // PostOAuth2Client provides a mock function with given fields: o
 func (_m *HydraClientInterface) PostOAuth2Client(o *hydra.OAuth2ClientJSON) (*hydra.OAuth2ClientJSON, error) {
 	ret := _m.Called(o)

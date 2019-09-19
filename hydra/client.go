@@ -39,6 +39,28 @@ func (c *Client) GetOAuth2Client(id string) (*OAuth2ClientJSON, bool, error) {
 	}
 }
 
+func (c *Client) ListOAuth2Client() ([]*OAuth2ClientJSON, error) {
+
+	var jsonClientList []*OAuth2ClientJSON
+
+	req, err := c.newRequest(http.MethodGet, "", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.do(req, &jsonClientList)
+	if err != nil {
+		return nil, err
+	}
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return jsonClientList, nil
+	default:
+		return nil, fmt.Errorf("%s %s http request returned unexpected status code %s", req.Method, req.URL.String(), resp.Status)
+	}
+}
+
 func (c *Client) PostOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error) {
 
 	var jsonClient *OAuth2ClientJSON
@@ -57,7 +79,7 @@ func (c *Client) PostOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error
 	case http.StatusCreated:
 		return jsonClient, nil
 	case http.StatusConflict:
-		return nil, fmt.Errorf(" %s %s http request failed: requested ID already exists", req.Method, req.URL)
+		return nil, fmt.Errorf("%s %s http request failed: requested ID already exists", req.Method, req.URL)
 	default:
 		return nil, fmt.Errorf("%s %s http request returned unexpected status code: %s", req.Method, req.URL, resp.Status)
 	}
