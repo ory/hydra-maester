@@ -3,6 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Change Log](#change-log)
+  - [v0.0.4 (2019-09-19)](#v004-2019-09-19)
   - [v0.0.3 (2019-08-30)](#v003-2019-08-30)
   - [v0.0.2-test2 (2019-08-30)](#v002-test2-2019-08-30)
   - [v0.0.2-test1 (2019-08-30)](#v002-test1-2019-08-30)
@@ -12,6 +13,26 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Change Log
+
+## [v0.0.4](https://github.com/ory/hydra-maester/tree/v0.0.4) (2019-09-19)
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.3...v0.0.4)
+
+**Fixed bugs:**
+
+- Controller can override clients that don't correspond with current CR. [\#22](https://github.com/ory/hydra-maester/issues/22)
+
+**Closed issues:**
+
+- Create CI/CD & release [\#6](https://github.com/ory/hydra-maester/issues/6)
+- Plug it in in the hydra chart [\#5](https://github.com/ory/hydra-maester/issues/5)
+- Define CRD [\#2](https://github.com/ory/hydra-maester/issues/2)
+
+**Merged pull requests:**
+
+- fix JSON decode bug [\#25](https://github.com/ory/hydra-maester/pull/25) ([jakkab](https://github.com/jakkab))
+- Fix override clients bug [\#23](https://github.com/ory/hydra-maester/pull/23) ([jakkab](https://github.com/jakkab))
+- Full upgrade [\#19](https://github.com/ory/hydra-maester/pull/19) ([jakkab](https://github.com/jakkab))
+- CR status [\#17](https://github.com/ory/hydra-maester/pull/17) ([jakkab](https://github.com/jakkab))
 
 ## [v0.0.3](https://github.com/ory/hydra-maester/tree/v0.0.3) (2019-08-30)
 [Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.2-test2...v0.0.3)
