@@ -4,11 +4,13 @@ IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
+USE_EXISTING_CLUSTER=t
+
 all: manager
 
 # Run tests
 test: generate fmt vet manifests
-	go test ./api/... ./controllers/... ./hydra... -coverprofile cover.out
+	MAESTER_TEST_USE_EXISTING_CLUSTER=$(USE_EXISTING_CLUSTER) go test ./api/... ./controllers/... ./hydra... -coverprofile cover.out -v -count=1
 
 # Run integration tests on local KIND cluster
 # TODO: modify once integration tests have been implemented

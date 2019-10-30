@@ -16,6 +16,7 @@ limitations under the License.
 package controllers_test
 
 import (
+	"os"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -23,6 +24,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	kubernetes "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -57,6 +59,10 @@ var _ = BeforeSuite(func(done Done) {
 		CRDDirectoryPaths: []string{filepath.Join("..", "config", "crd", "bases")},
 	}
 
+	if os.Getenv("MAESTER_TEST_USE_EXISTING_CLUSTER") != "" {
+		testEnv.UseExistingCluster = true
+	}
+
 	var err error
 	cfg, err = testEnv.Start()
 	Expect(err).ToNot(HaveOccurred())
@@ -73,7 +79,14 @@ var _ = BeforeSuite(func(done Done) {
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
-	err := testEnv.Stop()
+
+	clientset, err := kubernetes.NewForConfig(cfg)
+	Expect(err).ToNot(HaveOccurred())
+
+	err = clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Delete("oauth2clients.hydra.ory.sh", nil)
+	Expect(err).ToNot(HaveOccurred())
+
+	err = testEnv.Stop()
 	Expect(err).ToNot(HaveOccurred())
 })
 

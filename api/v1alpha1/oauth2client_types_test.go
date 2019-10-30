@@ -17,12 +17,14 @@ package v1alpha1
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
+	kubernetes "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -97,6 +99,10 @@ func runEnv(t *testing.T) {
 		CRDDirectoryPaths: []string{filepath.Join("..", "..", "config", "crd", "bases")},
 	}
 
+	if os.Getenv("MAESTER_TEST_USE_EXISTING_CLUSTER") != "" {
+		testEnv.UseExistingCluster = true
+	}
+
 	err := SchemeBuilder.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
 
@@ -111,7 +117,16 @@ func runEnv(t *testing.T) {
 }
 
 func stopEnv(t *testing.T) {
-	err := testEnv.Stop()
+
+	t.Log("stopping env")
+	clientset, err := kubernetes.NewForConfig(cfg)
+	require.NoError(t, err)
+
+	err = clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Delete("oauth2clients.hydra.ory.sh", nil)
+	require.NoError(t, err)
+	t.Log("CRD deleted")
+
+	err = testEnv.Stop()
 	require.NoError(t, err)
 }
 
