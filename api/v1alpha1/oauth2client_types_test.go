@@ -126,6 +126,7 @@ func resetTestClient() {
 			ResponseTypes: []ResponseType{"id_token", "code", "token"},
 			Scope:         "read,write",
 			SecretName:    "secret-name",
+			RedirectURIs:  []RedirectURI{"https://client/account", "http://localhost:8080/account"},
 		},
 	}
 }

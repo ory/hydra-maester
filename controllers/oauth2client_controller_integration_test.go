@@ -211,6 +211,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 						Secret:        o.Secret,
 						GrantTypes:    o.GrantTypes,
 						ResponseTypes: o.ResponseTypes,
+						RedirectURIs:  o.RedirectURIs,
 						Scope:         o.Scope,
 						Owner:         o.Owner,
 					}
@@ -380,6 +381,7 @@ func testInstance(name, secretName string) *hydrav1alpha1.OAuth2Client {
 			GrantTypes:    []hydrav1alpha1.GrantType{"client_credentials"},
 			ResponseTypes: []hydrav1alpha1.ResponseType{"token"},
 			Scope:         "a b c",
+			RedirectURIs:  []hydrav1alpha1.RedirectURI{"https://example.com"},
 			SecretName:    secretName,
 		}}
 }
