@@ -61,6 +61,9 @@ var _ = BeforeSuite(func(done Done) {
 
 	if os.Getenv("MAESTER_TEST_USE_EXISTING_CLUSTER") != "" {
 		testEnv.UseExistingCluster = true
+		// nil this so they don't try to set it up again, delete it at
+		// the end of this test
+		testEnv.CRDDirectoryPaths = nil
 	}
 
 	var err error
