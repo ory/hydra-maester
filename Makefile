@@ -15,7 +15,7 @@ test: generate fmt vet manifests
 # Run integration tests on local KIND cluster
 # TODO: modify once integration tests have been implemented
 test-integration:
-	ginkgo -v ./controllers/...
+	MAESTER_TEST_USE_EXISTING_CLUSTER=$(USE_EXISTING_CLUSTER) ginkgo -v ./controllers/...
 
 # Build manager binary
 manager: generate fmt vet
