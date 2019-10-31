@@ -24,7 +24,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
-	kubernetes "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -119,14 +118,8 @@ func runEnv(t *testing.T) {
 func stopEnv(t *testing.T) {
 
 	t.Log("stopping env")
-	clientset, err := kubernetes.NewForConfig(cfg)
-	require.NoError(t, err)
 
-	err = clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Delete("oauth2clients.hydra.ory.sh", nil)
-	require.NoError(t, err)
-	t.Log("CRD deleted")
-
-	err = testEnv.Stop()
+	err := testEnv.Stop()
 	require.NoError(t, err)
 }
 
