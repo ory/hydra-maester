@@ -24,3 +24,4 @@ bin
 *~
 
 config/default/manager_image_patch.yaml-e
+/manager
