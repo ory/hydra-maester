@@ -400,7 +400,7 @@ spec:
               maxItems: 4
               minItems: 1
               type: array
-            redirctUris:
+            redirectUris:
               description: RedirectURIs is an array of the redirect URIs allowed for
                 the application
               items:
