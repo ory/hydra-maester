@@ -47,7 +47,6 @@ type OAuth2ClientSpec struct {
 	ResponseTypes []ResponseType `json:"responseTypes,omitempty"`
 
 	// RedirectURIs is an array of the redirect URIs allowed for the application
-	// use at the authorization endpoint.
 	RedirectURIs []RedirectURI `json:"redirctUris,omitempty"`
 
 	// +kubebuilder:validation:Pattern=([a-zA-Z0-9\.\*]+\s?)+
