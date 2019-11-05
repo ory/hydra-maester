@@ -7,7 +7,7 @@ type OAuth2ClientJSON struct {
 	ClientID      *string  `json:"client_id,omitempty"`
 	Secret        *string  `json:"client_secret,omitempty"`
 	GrantTypes    []string `json:"grant_types"`
-	RedirectURIs  []string `json:"redirect_uris"`
+	RedirectURIs  []string `json:"redirect_uris,omitempty"`
 	ResponseTypes []string `json:"response_types,omitempty"`
 	Scope         string   `json:"scope"`
 	Owner         string   `json:"owner"`
