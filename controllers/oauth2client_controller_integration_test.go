@@ -68,6 +68,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 						Secret:        pointer.StringPtr(tstSecret),
 						GrantTypes:    o.GrantTypes,
 						ResponseTypes: o.ResponseTypes,
+						RedirectURIs:  o.RedirectURIs,
 						Scope:         o.Scope,
 						Owner:         o.Owner,
 					}
