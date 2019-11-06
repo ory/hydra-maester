@@ -404,7 +404,7 @@ spec:
               description: RedirectURIs is an array of the redirect URIs allowed for
                 the application
               items:
-                pattern: ^https?://.*
+                pattern: \w+:/?/?[^\s]+
                 type: string
               type: array
             responseTypes:

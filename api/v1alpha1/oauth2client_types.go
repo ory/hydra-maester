@@ -72,7 +72,7 @@ type GrantType string
 // ResponseType represents an OAuth 2.0 response type strings
 type ResponseType string
 
-// +kubebuilder:validation:Pattern=^https?://.*
+// +kubebuilder:validation:Pattern=\w+:/?/?[^\s]+
 // RedirectURI represents a redirect URI for the client
 type RedirectURI string
 
