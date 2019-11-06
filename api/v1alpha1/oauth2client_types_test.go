@@ -78,6 +78,7 @@ func TestCreateAPI(t *testing.T) {
 				"invalid response type": func() { created.Spec.ResponseTypes = []ResponseType{"invalid"} },
 				"invalid scope":         func() { created.Spec.Scope = "" },
 				"missing secret name":   func() { created.Spec.SecretName = "" },
+				"invalid redirect URI":  func() { created.Spec.RedirectURIs[1] = "invalid" },
 			} {
 				t.Run(fmt.Sprintf("case=%s", desc), func(t *testing.T) {
 
