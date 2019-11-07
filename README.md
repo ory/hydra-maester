@@ -27,11 +27,10 @@ The project is based on [Kubebuilder](https://github.com/kubernetes-sigs/kubebui
 - make
 - kubectl
 - kustomize
+- [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder) for running tests
 - [ginkgo](https://onsi.github.io/ginkgo/) for local integration testing
 - access to K8s environment: minikube or a remote K8s cluster
 - [mockery](https://github.com/vektra/mockery) to generate mocks for testing purposes
-
-
 
 ## Design
 
