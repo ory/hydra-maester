@@ -24,7 +24,7 @@ import (
 
 	"github.com/ory/hydra-maester/hydra"
 
-	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
+	hydrav1alpha2 "github.com/ory/hydra-maester/api/v1alpha2"
 	"github.com/ory/hydra-maester/controllers"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -42,7 +42,7 @@ var (
 func init() {
 
 	apiv1.AddToScheme(scheme)
-	hydrav1alpha1.AddToScheme(scheme)
+	hydrav1alpha2.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 

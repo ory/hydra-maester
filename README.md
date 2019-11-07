@@ -15,9 +15,9 @@
 # Hydra-maester
 
 
-This project contains a Kubernetes controller that uses Custom Resources (CR) to manage Hydra Oauth2 clients. ORY Hydra Maester watches for instances of `oauth2clients.oathkeeper.ory.sh/v1alpha1` CR and creates, updates, or deletes corresponding OAuth2 clients by communicating with ORY Hydra's API.
+This project contains a Kubernetes controller that uses Custom Resources (CR) to manage Hydra Oauth2 clients. ORY Hydra Maester watches for instances of `oauth2clients.hydra.ory.sh/v1alpha2` CR and creates, updates, or deletes corresponding OAuth2 clients by communicating with ORY Hydra's API.
 
-Visit Hydra-maester's [chart documentation](https://github.com/ory/k8s/blob/master/docs/helm/hydra-maester.md) and view [sample OAuth2 client resources](config/samples) to learn more about the `oauth2clients.oathkeeper.ory.sh/v1alpha1` CR. 
+Visit Hydra-maester's [chart documentation](https://github.com/ory/k8s/blob/master/docs/helm/hydra-maester.md) and view [sample OAuth2 client resources](config/samples) to learn more about the `oauth2clients.hydra.ory.sh/v1alpha2` CR. 
 
 The project is based on [Kubebuilder](https://github.com/kubernetes-sigs/kubebuilder).
 

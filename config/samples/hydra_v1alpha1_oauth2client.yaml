@@ -1,4 +1,4 @@
-apiVersion: hydra.ory.sh/v1alpha1
+apiVersion: hydra.ory.sh/v1alpha2
 kind: OAuth2Client
 metadata:
   name: my-oauth2-client
