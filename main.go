@@ -47,16 +47,17 @@ func init() {
 }
 
 func main() {
-	var metricsAddr string
-	var hydraURL string
-	var hydraPort int
-	var endpoint string
-	var enableLeaderElection bool
+	var (
+		metricsAddr, hydraURL, endpoint, forwardedProto string
+		hydraPort                                       int
+		enableLeaderElection                            bool
+	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&hydraURL, "hydra-url", "", "The address of ORY Hydra")
 	flag.IntVar(&hydraPort, "hydra-port", 4445, "Port ORY Hydra is listening on")
 	flag.StringVar(&endpoint, "endpoint", "/clients", "ORY Hydra's client endpoint")
+	flag.StringVar(&forwardedProto, "forwarded-proto", "", "If set, this adds the value as the X-Forwarded-Proto header in requests to the ORY Hydra admin server")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
@@ -88,8 +89,9 @@ func main() {
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
 		HydraClient: &hydra.Client{
-			HydraURL:   *u.ResolveReference(&url.URL{Path: endpoint}),
-			HTTPClient: &http.Client{},
+			HydraURL:       *u.ResolveReference(&url.URL{Path: endpoint}),
+			HTTPClient:     &http.Client{},
+			ForwardedProto: forwardedProto,
 		},
 	}).SetupWithManager(mgr)
 	if err != nil {
