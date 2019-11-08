@@ -24,7 +24,7 @@ import (
 
 	"github.com/ory/hydra-maester/hydra"
 
-	hydrav1alpha2 "github.com/ory/hydra-maester/api/v1alpha2"
+	hydrav1alpha3 "github.com/ory/hydra-maester/api/v1alpha3"
 	"github.com/ory/hydra-maester/controllers"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -42,7 +42,7 @@ var (
 func init() {
 
 	apiv1.AddToScheme(scheme)
-	hydrav1alpha2.AddToScheme(scheme)
+	hydrav1alpha3.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -78,19 +78,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	u, err := url.Parse(fmt.Sprintf("%s:%d", hydraURL, hydraPort))
+	hydraClient, err := hydraClientMaker(hydraURL, hydraPort, endpoint)
 	if err != nil {
-		setupLog.Error(err, "unable to parse ORY Hydra's URL", "controller", "OAuth2Client")
+		setupLog.Error(err, "making default hydra client", "controller", "OAuth2Client")
 		os.Exit(1)
+
 	}
 
 	err = (&controllers.OAuth2ClientReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
-		HydraClient: &hydra.Client{
-			HydraURL:   *u.ResolveReference(&url.URL{Path: endpoint}),
-			HTTPClient: &http.Client{},
-		},
+		Client:           mgr.GetClient(),
+		Log:              ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
+		HydraClient:      hydraClient,
+		HydraClientMaker: hydraClientMaker,
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OAuth2Client")
@@ -103,4 +102,16 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func hydraClientMaker(host string, port int, endpoint string) (controllers.HydraClientInterface, error) {
+	address := fmt.Sprintf("%s:%d", host, port)
+	u, err := url.Parse(address)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse ORY Hydra's URL: %w", err)
+	}
+	return &hydra.Client{
+		HydraURL:   *u.ResolveReference(&url.URL{Path: endpoint}),
+		HTTPClient: &http.Client{},
+	}, nil
 }

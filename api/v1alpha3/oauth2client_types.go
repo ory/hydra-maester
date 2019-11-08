@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha2
+package v1alpha3
 
 import (
 	"fmt"
@@ -25,10 +25,11 @@ import (
 type StatusCode string
 
 const (
-	StatusRegistrationFailed StatusCode = "CLIENT_REGISTRATION_FAILED"
-	StatusCreateSecretFailed StatusCode = "SECRET_CREATION_FAILED"
-	StatusUpdateFailed       StatusCode = "CLIENT_UPDATE_FAILED"
-	StatusInvalidSecret      StatusCode = "INVALID_SECRET"
+	StatusRegistrationFailed  StatusCode = "CLIENT_REGISTRATION_FAILED"
+	StatusCreateSecretFailed  StatusCode = "SECRET_CREATION_FAILED"
+	StatusUpdateFailed        StatusCode = "CLIENT_UPDATE_FAILED"
+	StatusInvalidSecret       StatusCode = "INVALID_SECRET"
+	StatusInvalidHydraAddress StatusCode = "INVALID_HYDRA_ADDRESS"
 )
 
 // OAuth2ClientSpec defines the desired state of OAuth2Client
@@ -62,6 +63,34 @@ type OAuth2ClientSpec struct {
 	//
 	// SecretName points to the K8s secret that contains this client's ID and password
 	SecretName string `json:"secretName"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:MaxLength=64
+	// +kubebuilder:validation:Pattern=(^$|^https?://.*)
+	//
+	// HydraURL is the URL for the hydra instance on
+	// which to set up the client. This value will override the value
+	// provided to `--hydra-url`
+	HydraURL string `json:"hydraURL"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Maximum=65535
+	// +kubebuilder:default:=4445
+	//
+	// HydraPort is the port for the hydra instance on
+	// which to set up the client. This value will override the value
+	// provided to `--hydra-port`
+	HydraPort int `json:"hydraPort"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Pattern=(^$|^/.*)
+	// +kubebuilder:default:=/client
+	//
+	// HydraEndpoint is the endpoint for the hydra instance on which
+	// to set up the client. This value will override the value
+	// provided to `--endpoint` (defaults to `"/client"` in the
+	// application)
+	HydraEndpoint string `json:"hydraEndpoint"`
 }
 
 // +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token

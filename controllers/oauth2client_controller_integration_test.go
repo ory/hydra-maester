@@ -10,7 +10,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	hydrav1alpha2 "github.com/ory/hydra-maester/api/v1alpha2"
+	hydrav1alpha3 "github.com/ory/hydra-maester/api/v1alpha3"
 	"github.com/ory/hydra-maester/controllers"
 	"github.com/ory/hydra-maester/controllers/mocks"
 	"github.com/ory/hydra-maester/hydra"
@@ -47,7 +47,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
 				s := scheme.Scheme
-				err := hydrav1alpha2.AddToScheme(s)
+				err := hydrav1alpha3.AddToScheme(s)
 				Expect(err).NotTo(HaveOccurred())
 
 				err = apiv1.AddToScheme(s)
@@ -95,7 +95,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
 
 				//Verify the created CR instance status
-				var retrieved hydrav1alpha2.OAuth2Client
+				var retrieved hydrav1alpha3.OAuth2Client
 				ok := client.ObjectKey{Name: tstName, Namespace: tstNamespace}
 				err = c.Get(context.TODO(), ok, &retrieved)
 				Expect(err).NotTo(HaveOccurred())
@@ -124,7 +124,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
 				s := scheme.Scheme
-				err := hydrav1alpha2.AddToScheme(s)
+				err := hydrav1alpha3.AddToScheme(s)
 				Expect(err).NotTo(HaveOccurred())
 
 				err = apiv1.AddToScheme(s)
@@ -160,12 +160,12 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
 
 				//Verify the created CR instance status
-				var retrieved hydrav1alpha2.OAuth2Client
+				var retrieved hydrav1alpha3.OAuth2Client
 				ok := client.ObjectKey{Name: tstName, Namespace: tstNamespace}
 				err = c.Get(context.TODO(), ok, &retrieved)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(retrieved.Status.ReconciliationError).NotTo(BeNil())
-				Expect(retrieved.Status.ReconciliationError.Code).To(Equal(hydrav1alpha2.StatusRegistrationFailed))
+				Expect(retrieved.Status.ReconciliationError.Code).To(Equal(hydrav1alpha3.StatusRegistrationFailed))
 				Expect(retrieved.Status.ReconciliationError.Description).To(Equal("error"))
 
 				//Verify no secret has been created
@@ -190,7 +190,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
 				s := scheme.Scheme
-				err := hydrav1alpha2.AddToScheme(s)
+				err := hydrav1alpha3.AddToScheme(s)
 				Expect(err).NotTo(HaveOccurred())
 
 				err = apiv1.AddToScheme(s)
@@ -254,7 +254,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
 
 				//Verify the created CR instance status
-				var retrieved hydrav1alpha2.OAuth2Client
+				var retrieved hydrav1alpha3.OAuth2Client
 				ok := client.ObjectKey{Name: tstName, Namespace: tstNamespace}
 				err = c.Get(context.TODO(), ok, &retrieved)
 				Expect(err).NotTo(HaveOccurred())
@@ -278,7 +278,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
 				s := scheme.Scheme
-				err := hydrav1alpha2.AddToScheme(s)
+				err := hydrav1alpha3.AddToScheme(s)
 				Expect(err).NotTo(HaveOccurred())
 
 				err = apiv1.AddToScheme(s)
@@ -327,12 +327,12 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
 
 				//Verify the created CR instance status
-				var retrieved hydrav1alpha2.OAuth2Client
+				var retrieved hydrav1alpha3.OAuth2Client
 				ok := client.ObjectKey{Name: tstName, Namespace: tstNamespace}
 				err = c.Get(context.TODO(), ok, &retrieved)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(retrieved.Status.ReconciliationError).NotTo(BeNil())
-				Expect(retrieved.Status.ReconciliationError.Code).To(Equal(hydrav1alpha2.StatusInvalidSecret))
+				Expect(retrieved.Status.ReconciliationError.Code).To(Equal(hydrav1alpha3.StatusInvalidSecret))
 				Expect(retrieved.Status.ReconciliationError.Description).To(Equal(`"client_secret property missing"`))
 
 				//delete instance
@@ -355,7 +355,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to Api
-	err = c.Watch(&source.Kind{Type: &hydrav1alpha2.OAuth2Client{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &hydrav1alpha3.OAuth2Client{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -371,18 +371,18 @@ func getAPIReconciler(mgr ctrl.Manager, mock controllers.HydraClientInterface) r
 	}
 }
 
-func testInstance(name, secretName string) *hydrav1alpha2.OAuth2Client {
+func testInstance(name, secretName string) *hydrav1alpha3.OAuth2Client {
 
-	return &hydrav1alpha2.OAuth2Client{
+	return &hydrav1alpha3.OAuth2Client{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: tstNamespace,
 		},
-		Spec: hydrav1alpha2.OAuth2ClientSpec{
-			GrantTypes:    []hydrav1alpha2.GrantType{"client_credentials"},
-			ResponseTypes: []hydrav1alpha2.ResponseType{"token"},
+		Spec: hydrav1alpha3.OAuth2ClientSpec{
+			GrantTypes:    []hydrav1alpha3.GrantType{"client_credentials"},
+			ResponseTypes: []hydrav1alpha3.ResponseType{"token"},
 			Scope:         "a b c",
-			RedirectURIs:  []hydrav1alpha2.RedirectURI{"https://example.com"},
+			RedirectURIs:  []hydrav1alpha3.RedirectURI{"https://example.com"},
 			SecretName:    secretName,
 		}}
 }
