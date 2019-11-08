@@ -79,6 +79,7 @@ func TestCreateAPI(t *testing.T) {
 			created.Spec.HydraURL = "http://localhost"
 			created.Spec.HydraPort = 4445
 			created.Spec.HydraEndpoint = "/clients"
+			created.Spec.HydraForwardedProto = "https"
 
 			createErr = k8sClient.Create(context.TODO(), created)
 			require.NoError(t, createErr)
@@ -98,14 +99,15 @@ func TestCreateAPI(t *testing.T) {
 		t.Run("by failing if the requested object doesn't meet CRD requirements", func(t *testing.T) {
 
 			for desc, modifyClient := range map[string]func(){
-				"invalid grant type":      func() { created.Spec.GrantTypes = []GrantType{"invalid"} },
-				"invalid response type":   func() { created.Spec.ResponseTypes = []ResponseType{"invalid"} },
-				"invalid scope":           func() { created.Spec.Scope = "" },
-				"missing secret name":     func() { created.Spec.SecretName = "" },
-				"invalid redirect URI":    func() { created.Spec.RedirectURIs = []RedirectURI{"invalid"} },
-				"invalid hydra url":       func() { created.Spec.HydraURL = "invalid" },
-				"invalid hydra port high": func() { created.Spec.HydraPort = 65536 },
-				"invalid hydra endpoint":  func() { created.Spec.HydraEndpoint = "invalid" },
+				"invalid grant type":            func() { created.Spec.GrantTypes = []GrantType{"invalid"} },
+				"invalid response type":         func() { created.Spec.ResponseTypes = []ResponseType{"invalid"} },
+				"invalid scope":                 func() { created.Spec.Scope = "" },
+				"missing secret name":           func() { created.Spec.SecretName = "" },
+				"invalid redirect URI":          func() { created.Spec.RedirectURIs = []RedirectURI{"invalid"} },
+				"invalid hydra url":             func() { created.Spec.HydraURL = "invalid" },
+				"invalid hydra port high":       func() { created.Spec.HydraPort = 65536 },
+				"invalid hydra endpoint":        func() { created.Spec.HydraEndpoint = "invalid" },
+				"invalid hydra forwarded proto": func() { created.Spec.HydraEndpoint = "invalid" },
 			} {
 				t.Run(fmt.Sprintf("case=%s", desc), func(t *testing.T) {
 

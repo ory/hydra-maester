@@ -36,7 +36,14 @@ const (
 	ClientSecretKey = "client_secret"
 )
 
-type HydraClientMakerFunc func(host string, port int, endpoint string) (HydraClientInterface, error)
+type HydraClientMakerFunc func(hydrav1alpha3.OAuth2ClientSpec) (HydraClientInterface, error)
+
+type clientMapKey struct {
+	url            string
+	port           int
+	endpoint       string
+	forwardedProto string
+}
 
 type HydraClientInterface interface {
 	GetOAuth2Client(id string) (*hydra.OAuth2ClientJSON, bool, error)
@@ -51,7 +58,7 @@ type OAuth2ClientReconciler struct {
 	HydraClient      HydraClientInterface
 	HydraClientMaker HydraClientMakerFunc
 	Log              logr.Logger
-	otherClients     map[string]HydraClientInterface
+	otherClients     map[clientMapKey]HydraClientInterface
 	client.Client
 }
 
@@ -272,15 +279,15 @@ func parseSecret(secret apiv1.Secret) (*hydra.Oauth2ClientCredentials, error) {
 }
 
 func (r *OAuth2ClientReconciler) getHydraClientForClient(oauth2client hydrav1alpha3.OAuth2Client) (HydraClientInterface, error) {
-	host := oauth2client.Spec.HydraURL
-	if host == "" {
-		return r.HydraClient, nil
+	spec := oauth2client.Spec
+	key := clientMapKey{
+		url:            spec.HydraURL,
+		port:           spec.HydraPort,
+		endpoint:       spec.HydraEndpoint,
+		forwardedProto: spec.HydraForwardedProto,
 	}
-	port := oauth2client.Spec.HydraPort
-	endpoint := oauth2client.Spec.HydraEndpoint
-	address := fmt.Sprintf("%s:%d%s", host, port, endpoint)
-	if c, ok := r.otherClients[address]; ok {
+	if c, ok := r.otherClients[key]; ok {
 		return c, nil
 	}
-	return r.HydraClientMaker(host, port, endpoint)
+	return r.HydraClientMaker(spec)
 }

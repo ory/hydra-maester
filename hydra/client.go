@@ -11,8 +11,9 @@ import (
 )
 
 type Client struct {
-	HydraURL   url.URL
-	HTTPClient *http.Client
+	HydraURL       url.URL
+	HTTPClient     *http.Client
+	ForwardedProto string
 }
 
 func (c *Client) GetOAuth2Client(id string) (*OAuth2ClientJSON, bool, error) {
@@ -146,6 +147,10 @@ func (c *Client) newRequest(method, relativePath string, body interface{}) (*htt
 	req, err := http.NewRequest(method, u.String(), buf)
 	if err != nil {
 		return nil, err
+	}
+
+	if c.ForwardedProto != "" {
+		req.Header.Add("X-Forwarded-Proto", c.ForwardedProto)
 	}
 
 	if body != nil {

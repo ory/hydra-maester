@@ -91,6 +91,14 @@ type OAuth2ClientSpec struct {
 	// provided to `--endpoint` (defaults to `"/client"` in the
 	// application)
 	HydraEndpoint string `json:"hydraEndpoint"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Pattern=(^$|https?|off)
+	//
+	// HydraForwardedProto overrides the `--forwarded-proto` flag. The
+	// value "off" will force this to be off even if
+	// `--forwarded-proto` is specified
+	HydraForwardedProto string `json:"hydraForwardedProto"`
 }
 
 // +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token
