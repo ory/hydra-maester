@@ -75,7 +75,6 @@ type OAuth2ClientSpec struct {
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Maximum=65535
-	// +kubebuilder:default:=4445
 	//
 	// HydraPort is the port for the hydra instance on
 	// which to set up the client. This value will override the value
@@ -84,11 +83,10 @@ type OAuth2ClientSpec struct {
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Pattern=(^$|^/.*)
-	// +kubebuilder:default:=/client
 	//
 	// HydraEndpoint is the endpoint for the hydra instance on which
 	// to set up the client. This value will override the value
-	// provided to `--endpoint` (defaults to `"/client"` in the
+	// provided to `--endpoint` (defaults to `"/clients"` in the
 	// application)
 	HydraEndpoint string `json:"hydraEndpoint"`
 

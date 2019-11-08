@@ -134,11 +134,16 @@ func getHydraClientMaker(defaultSpec hydrav1alpha3.OAuth2ClientSpec) controllers
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse ORY Hydra's URL: %w", err)
 		}
-		return &hydra.Client{
-			HydraURL:       *u.ResolveReference(&url.URL{Path: spec.HydraEndpoint}),
-			HTTPClient:     &http.Client{},
-			ForwardedProto: spec.HydraForwardedProto,
-		}, nil
+
+		client := &hydra.Client{
+			HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraEndpoint}),
+			HTTPClient: &http.Client{},
+		}
+		if spec.HydraForwardedProto != "" && spec.HydraForwardedProto != "off" {
+			client.ForwardedProto = spec.HydraForwardedProto
+		}
+
+		return client, nil
 	})
 
 }
