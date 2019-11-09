@@ -40,14 +40,14 @@ type HydraAdmin struct {
 	// URL is the URL for the hydra instance on
 	// which to set up the client. This value will override the value
 	// provided to `--hydra-url`
-	URL string `json:"url"`
+	URL string `json:"url,omitempty"`
 
 	// +kubebuilder:validation:Maximum=65535
 	//
 	// Port is the port for the hydra instance on
 	// which to set up the client. This value will override the value
 	// provided to `--hydra-port`
-	Port int `json:"port"`
+	Port int `json:"port,omitempty"`
 
 	// +kubebuilder:validation:Pattern=(^$|^/.*)
 	//
@@ -55,14 +55,14 @@ type HydraAdmin struct {
 	// to set up the client. This value will override the value
 	// provided to `--endpoint` (defaults to `"/clients"` in the
 	// application)
-	Endpoint string `json:"endpoint"`
+	Endpoint string `json:"endpoint,omitempty"`
 
 	// +kubebuilder:validation:Pattern=(^$|https?|off)
 	//
 	// ForwardedProto overrides the `--forwarded-proto` flag. The
 	// value "off" will force this to be off even if
 	// `--forwarded-proto` is specified
-	ForwardedProto string `json:"forwardedProto"`
+	ForwardedProto string `json:"forwardedProto,omitempty"`
 }
 
 // OAuth2ClientSpec defines the desired state of OAuth2Client

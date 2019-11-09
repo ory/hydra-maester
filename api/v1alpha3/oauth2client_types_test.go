@@ -76,10 +76,12 @@ func TestCreateAPI(t *testing.T) {
 			resetTestClient()
 
 			created.Spec.RedirectURIs = []RedirectURI{"https://client/account", "http://localhost:8080/account"}
-			created.Spec.HydraAdmin.URL = "http://localhost"
-			created.Spec.HydraAdmin.Port = 4445
-			created.Spec.HydraAdmin.Endpoint = "/clients"
-			created.Spec.HydraAdmin.ForwardedProto = "https"
+			created.Spec.HydraAdmin = HydraAdmin{
+				URL:  "http://localhost",
+				Port: 4445,
+				// Endpoint:       "/clients",
+				ForwardedProto: "https",
+			}
 
 			createErr = k8sClient.Create(context.TODO(), created)
 			require.NoError(t, createErr)
