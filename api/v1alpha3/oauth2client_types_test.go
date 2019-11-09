@@ -76,10 +76,10 @@ func TestCreateAPI(t *testing.T) {
 			resetTestClient()
 
 			created.Spec.RedirectURIs = []RedirectURI{"https://client/account", "http://localhost:8080/account"}
-			created.Spec.HydraURL = "http://localhost"
-			created.Spec.HydraPort = 4445
-			created.Spec.HydraEndpoint = "/clients"
-			created.Spec.HydraForwardedProto = "https"
+			created.Spec.HydraAdmin.URL = "http://localhost"
+			created.Spec.HydraAdmin.Port = 4445
+			created.Spec.HydraAdmin.Endpoint = "/clients"
+			created.Spec.HydraAdmin.ForwardedProto = "https"
 
 			createErr = k8sClient.Create(context.TODO(), created)
 			require.NoError(t, createErr)
@@ -104,10 +104,10 @@ func TestCreateAPI(t *testing.T) {
 				"invalid scope":                 func() { created.Spec.Scope = "" },
 				"missing secret name":           func() { created.Spec.SecretName = "" },
 				"invalid redirect URI":          func() { created.Spec.RedirectURIs = []RedirectURI{"invalid"} },
-				"invalid hydra url":             func() { created.Spec.HydraURL = "invalid" },
-				"invalid hydra port high":       func() { created.Spec.HydraPort = 65536 },
-				"invalid hydra endpoint":        func() { created.Spec.HydraEndpoint = "invalid" },
-				"invalid hydra forwarded proto": func() { created.Spec.HydraEndpoint = "invalid" },
+				"invalid hydra url":             func() { created.Spec.HydraAdmin.URL = "invalid" },
+				"invalid hydra port high":       func() { created.Spec.HydraAdmin.Port = 65536 },
+				"invalid hydra endpoint":        func() { created.Spec.HydraAdmin.Endpoint = "invalid" },
+				"invalid hydra forwarded proto": func() { created.Spec.HydraAdmin.Endpoint = "invalid" },
 			} {
 				t.Run(fmt.Sprintf("case=%s", desc), func(t *testing.T) {
 

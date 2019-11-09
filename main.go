@@ -80,10 +80,12 @@ func main() {
 	}
 
 	defaultSpec := hydrav1alpha3.OAuth2ClientSpec{
-		HydraURL:            hydraURL,
-		HydraPort:           hydraPort,
-		HydraEndpoint:       endpoint,
-		HydraForwardedProto: forwardedProto,
+		HydraAdmin: hydrav1alpha3.HydraAdmin{
+			URL:            hydraURL,
+			Port:           hydraPort,
+			Endpoint:       endpoint,
+			ForwardedProto: forwardedProto,
+		},
 	}
 	hydraClientMaker := getHydraClientMaker(defaultSpec)
 	hydraClient, err := hydraClientMaker(defaultSpec)
@@ -116,31 +118,31 @@ func getHydraClientMaker(defaultSpec hydrav1alpha3.OAuth2ClientSpec) controllers
 
 	return controllers.HydraClientMakerFunc(func(spec hydrav1alpha3.OAuth2ClientSpec) (controllers.HydraClientInterface, error) {
 
-		if spec.HydraURL == "" {
-			spec.HydraURL = defaultSpec.HydraURL
+		if spec.HydraAdmin.URL == "" {
+			spec.HydraAdmin.URL = defaultSpec.HydraAdmin.URL
 		}
-		if spec.HydraPort == 0 {
-			spec.HydraPort = defaultSpec.HydraPort
+		if spec.HydraAdmin.Port == 0 {
+			spec.HydraAdmin.Port = defaultSpec.HydraAdmin.Port
 		}
-		if spec.HydraEndpoint == "" {
-			spec.HydraEndpoint = defaultSpec.HydraEndpoint
+		if spec.HydraAdmin.Endpoint == "" {
+			spec.HydraAdmin.Endpoint = defaultSpec.HydraAdmin.Endpoint
 		}
-		if spec.HydraForwardedProto == "" {
-			spec.HydraForwardedProto = defaultSpec.HydraForwardedProto
+		if spec.HydraAdmin.ForwardedProto == "" {
+			spec.HydraAdmin.ForwardedProto = defaultSpec.HydraAdmin.ForwardedProto
 		}
 
-		address := fmt.Sprintf("%s:%d", spec.HydraURL, spec.HydraPort)
+		address := fmt.Sprintf("%s:%d", spec.HydraAdmin.URL, spec.HydraAdmin.Port)
 		u, err := url.Parse(address)
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse ORY Hydra's URL: %w", err)
 		}
 
 		client := &hydra.Client{
-			HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraEndpoint}),
+			HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
 			HTTPClient: &http.Client{},
 		}
-		if spec.HydraForwardedProto != "" && spec.HydraForwardedProto != "off" {
-			client.ForwardedProto = spec.HydraForwardedProto
+		if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
+			client.ForwardedProto = spec.HydraAdmin.ForwardedProto
 		}
 
 		return client, nil

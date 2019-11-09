@@ -32,6 +32,39 @@ const (
 	StatusInvalidHydraAddress StatusCode = "INVALID_HYDRA_ADDRESS"
 )
 
+// HydraAdmin defines the desired hydra admin instance to use for OAuth2Client
+type HydraAdmin struct {
+	// +kubebuilder:validation:MaxLength=64
+	// +kubebuilder:validation:Pattern=(^$|^https?://.*)
+	//
+	// URL is the URL for the hydra instance on
+	// which to set up the client. This value will override the value
+	// provided to `--hydra-url`
+	URL string `json:"url"`
+
+	// +kubebuilder:validation:Maximum=65535
+	//
+	// Port is the port for the hydra instance on
+	// which to set up the client. This value will override the value
+	// provided to `--hydra-port`
+	Port int `json:"port"`
+
+	// +kubebuilder:validation:Pattern=(^$|^/.*)
+	//
+	// Endpoint is the endpoint for the hydra instance on which
+	// to set up the client. This value will override the value
+	// provided to `--endpoint` (defaults to `"/clients"` in the
+	// application)
+	Endpoint string `json:"endpoint"`
+
+	// +kubebuilder:validation:Pattern=(^$|https?|off)
+	//
+	// ForwardedProto overrides the `--forwarded-proto` flag. The
+	// value "off" will force this to be off even if
+	// `--forwarded-proto` is specified
+	ForwardedProto string `json:"forwardedProto"`
+}
+
 // OAuth2ClientSpec defines the desired state of OAuth2Client
 type OAuth2ClientSpec struct {
 	// +kubebuilder:validation:MaxItems=4
@@ -64,39 +97,9 @@ type OAuth2ClientSpec struct {
 	// SecretName points to the K8s secret that contains this client's ID and password
 	SecretName string `json:"secretName"`
 
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:MaxLength=64
-	// +kubebuilder:validation:Pattern=(^$|^https?://.*)
-	//
-	// HydraURL is the URL for the hydra instance on
-	// which to set up the client. This value will override the value
-	// provided to `--hydra-url`
-	HydraURL string `json:"hydraURL"`
-
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Maximum=65535
-	//
-	// HydraPort is the port for the hydra instance on
-	// which to set up the client. This value will override the value
-	// provided to `--hydra-port`
-	HydraPort int `json:"hydraPort"`
-
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Pattern=(^$|^/.*)
-	//
-	// HydraEndpoint is the endpoint for the hydra instance on which
-	// to set up the client. This value will override the value
-	// provided to `--endpoint` (defaults to `"/clients"` in the
-	// application)
-	HydraEndpoint string `json:"hydraEndpoint"`
-
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Pattern=(^$|https?|off)
-	//
-	// HydraForwardedProto overrides the `--forwarded-proto` flag. The
-	// value "off" will force this to be off even if
-	// `--forwarded-proto` is specified
-	HydraForwardedProto string `json:"hydraForwardedProto"`
+	// HydraAdmin is the optional configuration to use for managing
+	// this client
+	HydraAdmin HydraAdmin `json:"hydraAdmin,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token

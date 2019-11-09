@@ -107,9 +107,9 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		if err != nil {
 			r.Log.Error(err, fmt.Sprintf(
 				"hydra address %s:%d%s is invalid",
-				oauth2client.Spec.HydraURL,
-				oauth2client.Spec.HydraPort,
-				oauth2client.Spec.HydraEndpoint,
+				oauth2client.Spec.HydraAdmin.URL,
+				oauth2client.Spec.HydraAdmin.Port,
+				oauth2client.Spec.HydraAdmin.Endpoint,
 			))
 			if updateErr := r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha3.StatusInvalidHydraAddress, err); updateErr != nil {
 				return ctrl.Result{}, updateErr
@@ -281,10 +281,10 @@ func parseSecret(secret apiv1.Secret) (*hydra.Oauth2ClientCredentials, error) {
 func (r *OAuth2ClientReconciler) getHydraClientForClient(oauth2client hydrav1alpha3.OAuth2Client) (HydraClientInterface, error) {
 	spec := oauth2client.Spec
 	key := clientMapKey{
-		url:            spec.HydraURL,
-		port:           spec.HydraPort,
-		endpoint:       spec.HydraEndpoint,
-		forwardedProto: spec.HydraForwardedProto,
+		url:            spec.HydraAdmin.URL,
+		port:           spec.HydraAdmin.Port,
+		endpoint:       spec.HydraAdmin.Endpoint,
+		forwardedProto: spec.HydraAdmin.ForwardedProto,
 	}
 	if c, ok := r.otherClients[key]; ok {
 		return c, nil

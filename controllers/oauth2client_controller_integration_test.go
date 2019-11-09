@@ -382,14 +382,16 @@ func testInstance(name, secretName string) *hydrav1alpha3.OAuth2Client {
 			Namespace: tstNamespace,
 		},
 		Spec: hydrav1alpha3.OAuth2ClientSpec{
-			GrantTypes:          []hydrav1alpha3.GrantType{"client_credentials"},
-			ResponseTypes:       []hydrav1alpha3.ResponseType{"token"},
-			Scope:               "a b c",
-			RedirectURIs:        []hydrav1alpha3.RedirectURI{"https://example.com"},
-			SecretName:          secretName,
-			HydraURL:            "http://hydra-admin",
-			HydraPort:           4445,
-			HydraEndpoint:       "/client",
-			HydraForwardedProto: "https",
+			GrantTypes:    []hydrav1alpha3.GrantType{"client_credentials"},
+			ResponseTypes: []hydrav1alpha3.ResponseType{"token"},
+			Scope:         "a b c",
+			RedirectURIs:  []hydrav1alpha3.RedirectURI{"https://example.com"},
+			SecretName:    secretName,
+			HydraAdmin: hydrav1alpha3.HydraAdmin{
+				URL:            "http://hydra-admin",
+				Port:           4445,
+				Endpoint:       "/client",
+				ForwardedProto: "https",
+			},
 		}}
 }
