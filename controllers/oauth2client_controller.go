@@ -280,6 +280,10 @@ func parseSecret(secret apiv1.Secret) (*hydra.Oauth2ClientCredentials, error) {
 
 func (r *OAuth2ClientReconciler) getHydraClientForClient(oauth2client hydrav1alpha3.OAuth2Client) (HydraClientInterface, error) {
 	spec := oauth2client.Spec
+	if spec.HydraAdmin == (hydrav1alpha3.HydraAdmin{}) {
+		r.Log.Info(fmt.Sprintf("using default client"))
+		return r.HydraClient, nil
+	}
 	key := clientMapKey{
 		url:            spec.HydraAdmin.URL,
 		port:           spec.HydraAdmin.Port,
