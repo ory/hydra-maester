@@ -34,6 +34,7 @@ import (
 const (
 	ClientIDKey     = "client_id"
 	ClientSecretKey = "client_secret"
+	FinalizerName   = "finalizer.ory.hydra.sh"
 )
 
 type HydraClientMakerFunc func(hydrav1alpha3.OAuth2ClientSpec) (HydraClientInterface, error)
@@ -79,6 +80,38 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, err
+	}
+
+	// examine DeletionTimestamp to determine if object is under deletion
+	if oauth2client.ObjectMeta.DeletionTimestamp.IsZero() {
+		// The object is not being deleted, so if it does not have our finalizer,
+		// then lets add the finalizer and update the object. This is equivalent
+		// registering our finalizer.
+		if !containsString(oauth2client.ObjectMeta.Finalizers, FinalizerName) {
+			oauth2client.ObjectMeta.Finalizers = append(oauth2client.ObjectMeta.Finalizers, FinalizerName)
+			if err := r.Update(ctx, &oauth2client); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		// The object is being deleted
+		if containsString(oauth2client.ObjectMeta.Finalizers, FinalizerName) {
+			// our finalizer is present, so lets handle any external dependency
+			if err := r.unregisterOAuth2Clients(ctx, &oauth2client); err != nil {
+				// if fail to delete the external dependency here, return with error
+				// so that it can be retried
+				return ctrl.Result{}, err
+			}
+
+			// remove our finalizer from the list and update it.
+			oauth2client.ObjectMeta.Finalizers = removeString(oauth2client.ObjectMeta.Finalizers, FinalizerName)
+			if err := r.Update(ctx, &oauth2client); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+
+		return ctrl.Result{}, nil
+
 	}
 
 	if oauth2client.Generation != oauth2client.Status.ObservedGeneration {
@@ -215,6 +248,12 @@ func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Contex
 
 func (r *OAuth2ClientReconciler) unregisterOAuth2Clients(ctx context.Context, c *hydrav1alpha3.OAuth2Client) error {
 
+	// if a reqired field is empty, that means this is a delete after
+	// the finalizers have done their job, so just return
+	if c.Spec.Scope == "" || c.Spec.SecretName == "" {
+		return nil
+	}
+
 	hydra, err := r.getHydraClientForClient(*c)
 	if err != nil {
 		return err
@@ -294,4 +333,24 @@ func (r *OAuth2ClientReconciler) getHydraClientForClient(oauth2client hydrav1alp
 		return c, nil
 	}
 	return r.HydraClientMaker(spec)
+}
+
+// Helper functions to check and remove string from a slice of strings.
+func containsString(slice []string, s string) bool {
+	for _, item := range slice {
+		if item == s {
+			return true
+		}
+	}
+	return false
+}
+
+func removeString(slice []string, s string) (result []string) {
+	for _, item := range slice {
+		if item == s {
+			continue
+		}
+		result = append(result, item)
+	}
+	return
 }
