@@ -80,7 +80,7 @@ jobs:
       command: |
        go get github.com/onsi/ginkgo/ginkgo
        go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.0-beta.2
-       go install sigs.k8s.io/kustomize/v3/cmd/kustomize
+       go install sigs.k8s.io/kustomize/kustomize/v3
 
    - run:
       name: Install Kind
