@@ -1,6 +1,6 @@
 module github.com/ory/hydra-maester
 
-go 1.12
+go 1.13
 
 require (
 	github.com/go-logr/logr v0.1.0
