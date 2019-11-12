@@ -24,7 +24,7 @@ import (
 
 	"github.com/ory/hydra-maester/hydra"
 
-	hydrav1alpha3 "github.com/ory/hydra-maester/api/v1alpha3"
+	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
 	"github.com/ory/hydra-maester/controllers"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -42,7 +42,7 @@ var (
 func init() {
 
 	apiv1.AddToScheme(scheme)
-	hydrav1alpha3.AddToScheme(scheme)
+	hydrav1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -79,8 +79,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	defaultSpec := hydrav1alpha3.OAuth2ClientSpec{
-		HydraAdmin: hydrav1alpha3.HydraAdmin{
+	defaultSpec := hydrav1alpha1.OAuth2ClientSpec{
+		HydraAdmin: hydrav1alpha1.HydraAdmin{
 			URL:            hydraURL,
 			Port:           hydraPort,
 			Endpoint:       endpoint,
@@ -114,9 +114,10 @@ func main() {
 	}
 }
 
-func getHydraClientMaker(defaultSpec hydrav1alpha3.OAuth2ClientSpec) controllers.HydraClientMakerFunc {
+func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec) controllers.HydraClientMakerFunc {
 
-	return controllers.HydraClientMakerFunc(func(spec hydrav1alpha3.OAuth2ClientSpec) (controllers.HydraClientInterface, error) {
+	return controllers.HydraClientMakerFunc(func(spec hydrav1alpha1.OAuth2ClientSpec) (controllers.HydraClientInterface, error) {
+
 
 		if spec.HydraAdmin.URL == "" {
 			spec.HydraAdmin.URL = defaultSpec.HydraAdmin.URL
@@ -141,6 +142,7 @@ func getHydraClientMaker(defaultSpec hydrav1alpha3.OAuth2ClientSpec) controllers
 			HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
 			HTTPClient: &http.Client{},
 		}
+
 		if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
 			client.ForwardedProto = spec.HydraAdmin.ForwardedProto
 		}
