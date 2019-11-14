@@ -8,5 +8,5 @@ spec:
     spec:
       containers:
       # Change the value of image field below to your controller image URL
-      - image: controller:latest
+      - image: dangersalad/hydra-maester:v0.0.5-alpha15
         name: manager

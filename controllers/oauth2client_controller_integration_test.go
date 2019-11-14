@@ -68,6 +68,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 						Secret:        pointer.StringPtr(tstSecret),
 						GrantTypes:    o.GrantTypes,
 						ResponseTypes: o.ResponseTypes,
+						RedirectURIs:  o.RedirectURIs,
 						Scope:         o.Scope,
 						Owner:         o.Owner,
 					}
@@ -211,6 +212,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 						Secret:        o.Secret,
 						GrantTypes:    o.GrantTypes,
 						ResponseTypes: o.ResponseTypes,
+						RedirectURIs:  o.RedirectURIs,
 						Scope:         o.Scope,
 						Owner:         o.Owner,
 					}
@@ -366,6 +368,9 @@ func getAPIReconciler(mgr ctrl.Manager, mock controllers.HydraClientInterface) r
 		Client:      mgr.GetClient(),
 		Log:         ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
 		HydraClient: mock,
+		HydraClientMaker: func(hydrav1alpha1.OAuth2ClientSpec) (controllers.HydraClientInterface, error) {
+			return mock, nil
+		},
 	}
 }
 
@@ -380,6 +385,13 @@ func testInstance(name, secretName string) *hydrav1alpha1.OAuth2Client {
 			GrantTypes:    []hydrav1alpha1.GrantType{"client_credentials"},
 			ResponseTypes: []hydrav1alpha1.ResponseType{"token"},
 			Scope:         "a b c",
+			RedirectURIs:  []hydrav1alpha1.RedirectURI{"https://example.com"},
 			SecretName:    secretName,
+			HydraAdmin: hydrav1alpha1.HydraAdmin{
+				URL:            "http://hydra-admin",
+				Port:           4445,
+				Endpoint:       "/client",
+				ForwardedProto: "https",
+			},
 		}}
 }

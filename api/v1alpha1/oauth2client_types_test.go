@@ -52,9 +52,36 @@ func TestCreateAPI(t *testing.T) {
 			Namespace: "default",
 		}
 
-		t.Run("by creating an API object if it meets CRD requirements", func(t *testing.T) {
+		t.Run("by creating an API object if it meets CRD requirements without optional parameters", func(t *testing.T) {
 
 			resetTestClient()
+
+			createErr = k8sClient.Create(context.TODO(), created)
+			require.NoError(t, createErr)
+
+			fetched = &OAuth2Client{}
+			getErr = k8sClient.Get(context.TODO(), key, fetched)
+			require.NoError(t, getErr)
+			assert.Equal(t, created, fetched)
+
+			deleteErr = k8sClient.Delete(context.TODO(), created)
+			require.NoError(t, deleteErr)
+
+			getErr = k8sClient.Get(context.TODO(), key, created)
+			require.Error(t, getErr)
+		})
+
+		t.Run("by creating an API object if it meets CRD requirements with optional parameters", func(t *testing.T) {
+
+			resetTestClient()
+
+			created.Spec.RedirectURIs = []RedirectURI{"https://client/account", "http://localhost:8080/account"}
+			created.Spec.HydraAdmin = HydraAdmin{
+				URL:  "http://localhost",
+				Port: 4445,
+				// Endpoint:       "/clients",
+				ForwardedProto: "https",
+			}
 
 			createErr = k8sClient.Create(context.TODO(), created)
 			require.NoError(t, createErr)
@@ -74,10 +101,15 @@ func TestCreateAPI(t *testing.T) {
 		t.Run("by failing if the requested object doesn't meet CRD requirements", func(t *testing.T) {
 
 			for desc, modifyClient := range map[string]func(){
-				"invalid grant type":    func() { created.Spec.GrantTypes = []GrantType{"invalid"} },
-				"invalid response type": func() { created.Spec.ResponseTypes = []ResponseType{"invalid"} },
-				"invalid scope":         func() { created.Spec.Scope = "" },
-				"missing secret name":   func() { created.Spec.SecretName = "" },
+				"invalid grant type":            func() { created.Spec.GrantTypes = []GrantType{"invalid"} },
+				"invalid response type":         func() { created.Spec.ResponseTypes = []ResponseType{"invalid"} },
+				"invalid scope":                 func() { created.Spec.Scope = "" },
+				"missing secret name":           func() { created.Spec.SecretName = "" },
+				"invalid redirect URI":          func() { created.Spec.RedirectURIs = []RedirectURI{"invalid"} },
+				"invalid hydra url":             func() { created.Spec.HydraAdmin.URL = "invalid" },
+				"invalid hydra port high":       func() { created.Spec.HydraAdmin.Port = 65536 },
+				"invalid hydra endpoint":        func() { created.Spec.HydraAdmin.Endpoint = "invalid" },
+				"invalid hydra forwarded proto": func() { created.Spec.HydraAdmin.Endpoint = "invalid" },
 			} {
 				t.Run(fmt.Sprintf("case=%s", desc), func(t *testing.T) {
 

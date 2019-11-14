@@ -2,11 +2,11 @@ version: 2
 jobs:
  build:
   docker:
-   - image: circleci/golang:1.12
+   - image: circleci/golang:1.13
   working_directory: /go/src/github.com/ory/hydra-maester
   steps:
    - run:
-      name: Enable go1.12 modules
+      name: Enable go1.11 modules
       command: |
        echo 'export GO111MODULE=on' >> $BASH_ENV
        source $BASH_ENV
@@ -28,7 +28,7 @@ jobs:
    - run: make
  test:
   docker:
-   - image: circleci/golang:1.12
+   - image: circleci/golang:1.13
      environment:
       - GO111MODULE=on
   working_directory: /go/src/github.com/ory/hydra-maester
@@ -56,8 +56,8 @@ jobs:
       name: Update golang
       command: |
        sudo rm -rf /usr/local/go/
-       curl -LO https://dl.google.com/go/go1.12.7.linux-amd64.tar.gz
-       sudo tar -C /usr/local -xzf go1.12.7.linux-amd64.tar.gz
+       curl -LO https://dl.google.com/go/go1.13.4.linux-amd64.tar.gz
+       sudo tar -C /usr/local -xzf go1.13.4.linux-amd64.tar.gz
        sudo echo "export PATH=$PATH:/usr/local/go/bin" >> $HOME/.profile
        go version
 
@@ -80,7 +80,7 @@ jobs:
       command: |
        go get github.com/onsi/ginkgo/ginkgo
        go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.0-beta.2
-       go install sigs.k8s.io/kustomize/v3/cmd/kustomize
+       go install sigs.k8s.io/kustomize/kustomize/v3
 
    - run:
       name: Install Kind
@@ -101,7 +101,7 @@ jobs:
 
  release:
   docker:
-   - image: circleci/golang:1.12
+   - image: circleci/golang:1.13
      environment:
       - GO111MODULE=on
   working_directory: /go/src/github.com/ory/hydra-maester

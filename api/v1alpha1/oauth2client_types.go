@@ -25,11 +25,45 @@ import (
 type StatusCode string
 
 const (
-	StatusRegistrationFailed StatusCode = "CLIENT_REGISTRATION_FAILED"
-	StatusCreateSecretFailed StatusCode = "SECRET_CREATION_FAILED"
-	StatusUpdateFailed       StatusCode = "CLIENT_UPDATE_FAILED"
-	StatusInvalidSecret      StatusCode = "INVALID_SECRET"
+	StatusRegistrationFailed  StatusCode = "CLIENT_REGISTRATION_FAILED"
+	StatusCreateSecretFailed  StatusCode = "SECRET_CREATION_FAILED"
+	StatusUpdateFailed        StatusCode = "CLIENT_UPDATE_FAILED"
+	StatusInvalidSecret       StatusCode = "INVALID_SECRET"
+	StatusInvalidHydraAddress StatusCode = "INVALID_HYDRA_ADDRESS"
 )
+
+// HydraAdmin defines the desired hydra admin instance to use for OAuth2Client
+type HydraAdmin struct {
+	// +kubebuilder:validation:MaxLength=64
+	// +kubebuilder:validation:Pattern=(^$|^https?://.*)
+	//
+	// URL is the URL for the hydra instance on
+	// which to set up the client. This value will override the value
+	// provided to `--hydra-url`
+	URL string `json:"url,omitempty"`
+
+	// +kubebuilder:validation:Maximum=65535
+	//
+	// Port is the port for the hydra instance on
+	// which to set up the client. This value will override the value
+	// provided to `--hydra-port`
+	Port int `json:"port,omitempty"`
+
+	// +kubebuilder:validation:Pattern=(^$|^/.*)
+	//
+	// Endpoint is the endpoint for the hydra instance on which
+	// to set up the client. This value will override the value
+	// provided to `--endpoint` (defaults to `"/clients"` in the
+	// application)
+	Endpoint string `json:"endpoint,omitempty"`
+
+	// +kubebuilder:validation:Pattern=(^$|https?|off)
+	//
+	// ForwardedProto overrides the `--forwarded-proto` flag. The
+	// value "off" will force this to be off even if
+	// `--forwarded-proto` is specified
+	ForwardedProto string `json:"forwardedProto,omitempty"`
+}
 
 // OAuth2ClientSpec defines the desired state of OAuth2Client
 type OAuth2ClientSpec struct {
@@ -46,6 +80,9 @@ type OAuth2ClientSpec struct {
 	// use at the authorization endpoint.
 	ResponseTypes []ResponseType `json:"responseTypes,omitempty"`
 
+	// RedirectURIs is an array of the redirect URIs allowed for the application
+	RedirectURIs []RedirectURI `json:"redirectUris,omitempty"`
+
 	// +kubebuilder:validation:Pattern=([a-zA-Z0-9\.\*]+\s?)+
 	//
 	// Scope is a string containing a space-separated list of scope values (as
@@ -59,6 +96,10 @@ type OAuth2ClientSpec struct {
 	//
 	// SecretName points to the K8s secret that contains this client's ID and password
 	SecretName string `json:"secretName"`
+
+	// HydraAdmin is the optional configuration to use for managing
+	// this client
+	HydraAdmin HydraAdmin `json:"hydraAdmin,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token
@@ -68,6 +109,10 @@ type GrantType string
 // +kubebuilder:validation:Enum=id_token;code;token
 // ResponseType represents an OAuth 2.0 response type strings
 type ResponseType string
+
+// +kubebuilder:validation:Pattern=\w+:/?/?[^\s]+
+// RedirectURI represents a redirect URI for the client
+type RedirectURI string
 
 // OAuth2ClientStatus defines the observed state of OAuth2Client
 type OAuth2ClientStatus struct {
@@ -114,6 +159,7 @@ func (c *OAuth2Client) ToOAuth2ClientJSON() *hydra.OAuth2ClientJSON {
 	return &hydra.OAuth2ClientJSON{
 		GrantTypes:    grantToStringSlice(c.Spec.GrantTypes),
 		ResponseTypes: responseToStringSlice(c.Spec.ResponseTypes),
+		RedirectURIs:  redirectToStringSlice(c.Spec.RedirectURIs),
 		Scope:         c.Spec.Scope,
 		Owner:         fmt.Sprintf("%s/%s", c.Name, c.Namespace),
 	}
@@ -130,6 +176,14 @@ func responseToStringSlice(rt []ResponseType) []string {
 func grantToStringSlice(gt []GrantType) []string {
 	var output = make([]string, len(gt))
 	for i, elem := range gt {
+		output[i] = string(elem)
+	}
+	return output
+}
+
+func redirectToStringSlice(ru []RedirectURI) []string {
+	var output = make([]string, len(ru))
+	for i, elem := range ru {
 		output[i] = string(elem)
 	}
 	return output

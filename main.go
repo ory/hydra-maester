@@ -47,16 +47,17 @@ func init() {
 }
 
 func main() {
-	var metricsAddr string
-	var hydraURL string
-	var hydraPort int
-	var endpoint string
-	var enableLeaderElection bool
+	var (
+		metricsAddr, hydraURL, endpoint, forwardedProto string
+		hydraPort                                       int
+		enableLeaderElection                            bool
+	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&hydraURL, "hydra-url", "", "The address of ORY Hydra")
 	flag.IntVar(&hydraPort, "hydra-port", 4445, "Port ORY Hydra is listening on")
 	flag.StringVar(&endpoint, "endpoint", "/clients", "ORY Hydra's client endpoint")
+	flag.StringVar(&forwardedProto, "forwarded-proto", "", "If set, this adds the value as the X-Forwarded-Proto header in requests to the ORY Hydra admin server")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
@@ -78,19 +79,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	u, err := url.Parse(fmt.Sprintf("%s:%d", hydraURL, hydraPort))
+	defaultSpec := hydrav1alpha1.OAuth2ClientSpec{
+		HydraAdmin: hydrav1alpha1.HydraAdmin{
+			URL:            hydraURL,
+			Port:           hydraPort,
+			Endpoint:       endpoint,
+			ForwardedProto: forwardedProto,
+		},
+	}
+	hydraClientMaker := getHydraClientMaker(defaultSpec)
+	hydraClient, err := hydraClientMaker(defaultSpec)
 	if err != nil {
-		setupLog.Error(err, "unable to parse ORY Hydra's URL", "controller", "OAuth2Client")
+		setupLog.Error(err, "making default hydra client", "controller", "OAuth2Client")
 		os.Exit(1)
+
 	}
 
 	err = (&controllers.OAuth2ClientReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
-		HydraClient: &hydra.Client{
-			HydraURL:   *u.ResolveReference(&url.URL{Path: endpoint}),
-			HTTPClient: &http.Client{},
-		},
+		Client:           mgr.GetClient(),
+		Log:              ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
+		HydraClient:      hydraClient,
+		HydraClientMaker: hydraClientMaker,
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OAuth2Client")
@@ -103,4 +112,42 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec) controllers.HydraClientMakerFunc {
+
+	return controllers.HydraClientMakerFunc(func(spec hydrav1alpha1.OAuth2ClientSpec) (controllers.HydraClientInterface, error) {
+
+
+		if spec.HydraAdmin.URL == "" {
+			spec.HydraAdmin.URL = defaultSpec.HydraAdmin.URL
+		}
+		if spec.HydraAdmin.Port == 0 {
+			spec.HydraAdmin.Port = defaultSpec.HydraAdmin.Port
+		}
+		if spec.HydraAdmin.Endpoint == "" {
+			spec.HydraAdmin.Endpoint = defaultSpec.HydraAdmin.Endpoint
+		}
+		if spec.HydraAdmin.ForwardedProto == "" {
+			spec.HydraAdmin.ForwardedProto = defaultSpec.HydraAdmin.ForwardedProto
+		}
+
+		address := fmt.Sprintf("%s:%d", spec.HydraAdmin.URL, spec.HydraAdmin.Port)
+		u, err := url.Parse(address)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse ORY Hydra's URL: %w", err)
+		}
+
+		client := &hydra.Client{
+			HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
+			HTTPClient: &http.Client{},
+		}
+
+		if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
+			client.ForwardedProto = spec.HydraAdmin.ForwardedProto
+		}
+
+		return client, nil
+	})
+
 }

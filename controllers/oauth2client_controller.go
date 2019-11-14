@@ -34,7 +34,17 @@ import (
 const (
 	ClientIDKey     = "client_id"
 	ClientSecretKey = "client_secret"
+	FinalizerName   = "finalizer.ory.hydra.sh"
 )
+
+type HydraClientMakerFunc func(hydrav1alpha1.OAuth2ClientSpec) (HydraClientInterface, error)
+
+type clientMapKey struct {
+	url            string
+	port           int
+	endpoint       string
+	forwardedProto string
+}
 
 type HydraClientInterface interface {
 	GetOAuth2Client(id string) (*hydra.OAuth2ClientJSON, bool, error)
@@ -46,8 +56,10 @@ type HydraClientInterface interface {
 
 // OAuth2ClientReconciler reconciles a OAuth2Client object
 type OAuth2ClientReconciler struct {
-	HydraClient HydraClientInterface
-	Log         logr.Logger
+	HydraClient      HydraClientInterface
+	HydraClientMaker HydraClientMakerFunc
+	Log              logr.Logger
+	otherClients     map[clientMapKey]HydraClientInterface
 	client.Client
 }
 
@@ -62,12 +74,44 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	var oauth2client hydrav1alpha1.OAuth2Client
 	if err := r.Get(ctx, req.NamespacedName, &oauth2client); err != nil {
 		if apierrs.IsNotFound(err) {
-			if registerErr := r.unregisterOAuth2Clients(ctx, req.Name, req.Namespace); registerErr != nil {
+			if registerErr := r.unregisterOAuth2Clients(ctx, &oauth2client); registerErr != nil {
 				return ctrl.Result{}, registerErr
 			}
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, err
+	}
+
+	// examine DeletionTimestamp to determine if object is under deletion
+	if oauth2client.ObjectMeta.DeletionTimestamp.IsZero() {
+		// The object is not being deleted, so if it does not have our finalizer,
+		// then lets add the finalizer and update the object. This is equivalent
+		// registering our finalizer.
+		if !containsString(oauth2client.ObjectMeta.Finalizers, FinalizerName) {
+			oauth2client.ObjectMeta.Finalizers = append(oauth2client.ObjectMeta.Finalizers, FinalizerName)
+			if err := r.Update(ctx, &oauth2client); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		// The object is being deleted
+		if containsString(oauth2client.ObjectMeta.Finalizers, FinalizerName) {
+			// our finalizer is present, so lets handle any external dependency
+			if err := r.unregisterOAuth2Clients(ctx, &oauth2client); err != nil {
+				// if fail to delete the external dependency here, return with error
+				// so that it can be retried
+				return ctrl.Result{}, err
+			}
+
+			// remove our finalizer from the list and update it.
+			oauth2client.ObjectMeta.Finalizers = removeString(oauth2client.ObjectMeta.Finalizers, FinalizerName)
+			if err := r.Update(ctx, &oauth2client); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+
+		return ctrl.Result{}, nil
+
 	}
 
 	if oauth2client.Generation != oauth2client.Status.ObservedGeneration {
@@ -92,7 +136,21 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 			return ctrl.Result{}, nil
 		}
 
-		fetched, found, err := r.HydraClient.GetOAuth2Client(string(credentials.ID))
+		hydraClient, err := r.getHydraClientForClient(oauth2client)
+		if err != nil {
+			r.Log.Error(err, fmt.Sprintf(
+				"hydra address %s:%d%s is invalid",
+				oauth2client.Spec.HydraAdmin.URL,
+				oauth2client.Spec.HydraAdmin.Port,
+				oauth2client.Spec.HydraAdmin.Endpoint,
+			))
+			if updateErr := r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidHydraAddress, err); updateErr != nil {
+				return ctrl.Result{}, updateErr
+			}
+			return ctrl.Result{}, nil
+		}
+
+		fetched, found, err := hydraClient.GetOAuth2Client(string(credentials.ID))
 		if err != nil {
 			return ctrl.Result{}, err
 
@@ -128,12 +186,17 @@ func (r *OAuth2ClientReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hydrav1alpha1.OAuth2Client, credentials *hydra.Oauth2ClientCredentials) error {
-	if err := r.unregisterOAuth2Clients(ctx, c.Name, c.Namespace); err != nil {
+	if err := r.unregisterOAuth2Clients(ctx, c); err != nil {
+		return err
+	}
+
+	hydra, err := r.getHydraClientForClient(*c)
+	if err != nil {
 		return err
 	}
 
 	if credentials != nil {
-		if _, err := r.HydraClient.PostOAuth2Client(c.ToOAuth2ClientJSON().WithCredentials(credentials)); err != nil {
+		if _, err := hydra.PostOAuth2Client(c.ToOAuth2ClientJSON().WithCredentials(credentials)); err != nil {
 			if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
 				return updateErr
 			}
@@ -141,7 +204,7 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 		return r.ensureEmptyStatusError(ctx, c)
 	}
 
-	created, err := r.HydraClient.PostOAuth2Client(c.ToOAuth2ClientJSON())
+	created, err := hydra.PostOAuth2Client(c.ToOAuth2ClientJSON())
 	if err != nil {
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
 			return updateErr
@@ -170,7 +233,12 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 }
 
 func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Context, c *hydrav1alpha1.OAuth2Client, credentials *hydra.Oauth2ClientCredentials) error {
-	if _, err := r.HydraClient.PutOAuth2Client(c.ToOAuth2ClientJSON().WithCredentials(credentials)); err != nil {
+	hydra, err := r.getHydraClientForClient(*c)
+	if err != nil {
+		return err
+	}
+
+	if _, err := hydra.PutOAuth2Client(c.ToOAuth2ClientJSON().WithCredentials(credentials)); err != nil {
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusUpdateFailed, err); updateErr != nil {
 			return updateErr
 		}
@@ -178,16 +246,27 @@ func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Contex
 	return r.ensureEmptyStatusError(ctx, c)
 }
 
-func (r *OAuth2ClientReconciler) unregisterOAuth2Clients(ctx context.Context, name, namespace string) error {
+func (r *OAuth2ClientReconciler) unregisterOAuth2Clients(ctx context.Context, c *hydrav1alpha1.OAuth2Client) error {
 
-	clients, err := r.HydraClient.ListOAuth2Client()
+	// if a reqired field is empty, that means this is a delete after
+	// the finalizers have done their job, so just return
+	if c.Spec.Scope == "" || c.Spec.SecretName == "" {
+		return nil
+	}
+
+	hydra, err := r.getHydraClientForClient(*c)
 	if err != nil {
 		return err
 	}
 
-	for _, c := range clients {
-		if c.Owner == fmt.Sprintf("%s/%s", name, namespace) {
-			if err := r.HydraClient.DeleteOAuth2Client(*c.ClientID); err != nil {
+	clients, err := hydra.ListOAuth2Client()
+	if err != nil {
+		return err
+	}
+
+	for _, cJSON := range clients {
+		if cJSON.Owner == fmt.Sprintf("%s/%s", c.Name, c.Namespace) {
+			if err := hydra.DeleteOAuth2Client(*cJSON.ClientID); err != nil {
 				return err
 			}
 		}
@@ -236,4 +315,42 @@ func parseSecret(secret apiv1.Secret) (*hydra.Oauth2ClientCredentials, error) {
 		ID:       id,
 		Password: psw,
 	}, nil
+}
+
+func (r *OAuth2ClientReconciler) getHydraClientForClient(oauth2client hydrav1alpha1.OAuth2Client) (HydraClientInterface, error) {
+	spec := oauth2client.Spec
+	if spec.HydraAdmin == (hydrav1alpha1.HydraAdmin{}) {
+		r.Log.Info(fmt.Sprintf("using default client"))
+		return r.HydraClient, nil
+	}
+	key := clientMapKey{
+		url:            spec.HydraAdmin.URL,
+		port:           spec.HydraAdmin.Port,
+		endpoint:       spec.HydraAdmin.Endpoint,
+		forwardedProto: spec.HydraAdmin.ForwardedProto,
+	}
+	if c, ok := r.otherClients[key]; ok {
+		return c, nil
+	}
+	return r.HydraClientMaker(spec)
+}
+
+// Helper functions to check and remove string from a slice of strings.
+func containsString(slice []string, s string) bool {
+	for _, item := range slice {
+		if item == s {
+			return true
+		}
+	}
+	return false
+}
+
+func removeString(slice []string, s string) (result []string) {
+	for _, item := range slice {
+		if item == s {
+			continue
+		}
+		result = append(result, item)
+	}
+	return
 }
