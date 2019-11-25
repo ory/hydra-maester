@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"k8s.io/utils/pointer"
@@ -21,11 +22,11 @@ const (
 	schemeHTTP      = "http"
 
 	testID            = "test-id"
-	testClient        = `{"client_id":"test-id","owner":"test-name","scope":"some,scopes","grant_types":["type1"]}`
-	testClientCreated = `{"client_id":"test-id-2","client_secret":"TmGkvcY7k526","owner":"test-name-2","scope":"some,other,scopes","grant_types":["type2"]}`
-	testClientUpdated = `{"client_id":"test-id-3","client_secret":"xFoPPm654por","owner":"test-name-3","scope":"yet,another,scope","grant_types":["type3"]}`
-	testClientList    = `{"client_id":"test-id-4","owner":"test-name-4","scope":"scope1 scope2","grant_types":["type4"]}`
-	testClientList2   = `{"client_id":"test-id-5","owner":"test-name-5","scope":"scope3 scope4","grant_types":["type5"]}`
+	testClient        = `{"client_id":"test-id","owner":"test-name","scope":"some,scopes","grant_types":["type1"],"token_endpoint_auth_method":"client_secret_basic"}`
+	testClientCreated = `{"client_id":"test-id-2","client_secret":"TmGkvcY7k526","owner":"test-name-2","scope":"some,other,scopes","grant_types":["type2"],"token_endpoint_auth_method":"client_secret_basic"}`
+	testClientUpdated = `{"client_id":"test-id-3","client_secret":"xFoPPm654por","owner":"test-name-3","scope":"yet,another,scope","grant_types":["type3"],"token_endpoint_auth_method":"client_secret_basic"}`
+	testClientList    = `{"client_id":"test-id-4","owner":"test-name-4","scope":"scope1 scope2","grant_types":["type4"],"token_endpoint_auth_method":"client_secret_basic"}`
+	testClientList2   = `{"client_id":"test-id-5","owner":"test-name-5","scope":"scope3 scope4","grant_types":["type5"],"token_endpoint_auth_method":"client_secret_basic"}`
 
 	statusNotFoundBody            = `{"error":"Not Found","error_description":"Unable to locate the requested resource","status_code":404,"request_id":"id"}`
 	statusConflictBody            = `{"error":"Unable to insert or update resource because a resource with that value exists already","error_description":"","status_code":409,"request_id":"id"`
@@ -171,6 +172,10 @@ func TestCRUD(t *testing.T) {
 					assert.Equal(testOAuthJSONPost.Owner, o.Owner)
 					assert.NotNil(o.Secret)
 					assert.NotNil(o.ClientID)
+					assert.NotNil(o.TokenEndpointAuthMethod)
+					if testOAuthJSONPost.TokenEndpointAuthMethod != "" {
+						assert.Equal(testOAuthJSONPost.TokenEndpointAuthMethod, o.TokenEndpointAuthMethod)
+					}
 				}
 			})
 		}
@@ -322,6 +327,28 @@ func TestCRUD(t *testing.T) {
 				}
 			})
 		}
+	})
+
+	t.Run("default parameters", func(t *testing.T) {
+		var input = &hydra.OAuth2ClientJSON{
+			Scope:      "some,other,scopes",
+			GrantTypes: []string{"type2"},
+			Owner:      "test-name-2",
+		}
+		assert.Equal(input.TokenEndpointAuthMethod, "")
+		b, _ := json.Marshal(input)
+		payload := string(b)
+		assert.Equal(strings.Index(payload, "token_endpoint_auth_method"), -1)
+
+		input = &hydra.OAuth2ClientJSON{
+			Scope:                   "some,other,scopes",
+			GrantTypes:              []string{"type2"},
+			Owner:                   "test-name-3",
+			TokenEndpointAuthMethod: "none",
+		}
+		b, _ = json.Marshal(input)
+		payload = string(b)
+		assert.True(strings.Index(payload, "token_endpoint_auth_method") > 0)
 	})
 }
 

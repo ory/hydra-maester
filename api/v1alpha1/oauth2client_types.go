@@ -100,6 +100,11 @@ type OAuth2ClientSpec struct {
 	// HydraAdmin is the optional configuration to use for managing
 	// this client
 	HydraAdmin HydraAdmin `json:"hydraAdmin,omitempty"`
+
+	// +kubebuilder:validation:Enum=;client_secret_basic;client_secret_post;private_key_jwt;none
+	//
+	// Indication which authenticaiton method shoud be used for the token endpoint
+	TokenEndpointAuthMethod TokenEndpointAuthMethod `json:"tokenEndpointAuthMethod,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token
@@ -113,6 +118,10 @@ type ResponseType string
 // +kubebuilder:validation:Pattern=\w+:/?/?[^\s]+
 // RedirectURI represents a redirect URI for the client
 type RedirectURI string
+
+// +kubebuilder:validation:Enum=;client_secret_basic;client_secret_post;private_key_jwt;none
+// TokenEndpointAuthMethod represents an authenticaiton method for token endpoint
+type TokenEndpointAuthMethod string
 
 // OAuth2ClientStatus defines the observed state of OAuth2Client
 type OAuth2ClientStatus struct {
@@ -157,11 +166,12 @@ func init() {
 // ToOAuth2ClientJSON converts an OAuth2Client into a OAuth2ClientJSON object that represents an OAuth2 client digestible by ORY Hydra
 func (c *OAuth2Client) ToOAuth2ClientJSON() *hydra.OAuth2ClientJSON {
 	return &hydra.OAuth2ClientJSON{
-		GrantTypes:    grantToStringSlice(c.Spec.GrantTypes),
-		ResponseTypes: responseToStringSlice(c.Spec.ResponseTypes),
-		RedirectURIs:  redirectToStringSlice(c.Spec.RedirectURIs),
-		Scope:         c.Spec.Scope,
-		Owner:         fmt.Sprintf("%s/%s", c.Name, c.Namespace),
+		GrantTypes:              grantToStringSlice(c.Spec.GrantTypes),
+		ResponseTypes:           responseToStringSlice(c.Spec.ResponseTypes),
+		RedirectURIs:            redirectToStringSlice(c.Spec.RedirectURIs),
+		Scope:                   c.Spec.Scope,
+		Owner:                   fmt.Sprintf("%s/%s", c.Name, c.Namespace),
+		TokenEndpointAuthMethod: string(c.Spec.TokenEndpointAuthMethod),
 	}
 }
 
