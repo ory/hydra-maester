@@ -449,6 +449,14 @@ spec:
               maxItems: 3
               minItems: 1
               type: array
+            tokenEndpointAuthMethod:
+              description: Indication which authenticaiton method shoud be used for the token endpoint.
+              type: string
+              enum:
+              - client_secret_basic
+              - client_secret_post
+              - private_key_jwt
+              - none
             scope:
               description: Scope is a string containing a space-separated list of
                 scope values (as described in Section 3.3 of OAuth 2.0 [RFC6749])
