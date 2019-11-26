@@ -3,6 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Changelog](#changelog)
+  - [v0.0.6 (2019-11-26)](#v006-2019-11-26)
   - [v0.0.5 (2019-11-14)](#v005-2019-11-14)
   - [v0.0.4 (2019-09-19)](#v004-2019-09-19)
   - [v0.0.3 (2019-08-30)](#v003-2019-08-30)
@@ -14,6 +15,20 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Changelog
+
+## [v0.0.6](https://github.com/ory/hydra-maester/tree/v0.0.6) (2019-11-26)
+
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.5...v0.0.6)
+
+**Closed issues:**
+
+- Improvement: Allow multiple hydra with single maester [\#34](https://github.com/ory/hydra-maester/issues/34)
+- cannot use hydra's allow\_termination\_from support without X-Forwarded-Proto header [\#32](https://github.com/ory/hydra-maester/issues/32)
+- How do we set the redirect\_uri [\#26](https://github.com/ory/hydra-maester/issues/26)
+
+**Merged pull requests:**
+
+- adding support for token\_endpoint\_auth\_method [\#37](https://github.com/ory/hydra-maester/pull/37) ([amihalj](https://github.com/amihalj))
 
 ## [v0.0.5](https://github.com/ory/hydra-maester/tree/v0.0.5) (2019-11-14)
 
