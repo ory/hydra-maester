@@ -126,6 +126,7 @@ type RedirectURI string
 // TokenEndpointAuthMethod represents an authentication method for token endpoint
 type TokenEndpointAuthMethod string
 
+// Metadata is abritrary data
 type Metadata map[string]interface{}
 
 // OAuth2ClientStatus defines the observed state of OAuth2Client
@@ -177,6 +178,7 @@ func (c *OAuth2Client) ToOAuth2ClientJSON() *hydra.OAuth2ClientJSON {
 		Scope:                   c.Spec.Scope,
 		Owner:                   fmt.Sprintf("%s/%s", c.Name, c.Namespace),
 		TokenEndpointAuthMethod: string(c.Spec.TokenEndpointAuthMethod),
+		Metadata:                c.Spec.Metadata,
 	}
 }
 
