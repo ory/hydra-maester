@@ -106,8 +106,11 @@ type OAuth2ClientSpec struct {
 
 	// +kubebuilder:validation:Enum=;client_secret_basic;client_secret_post;private_key_jwt;none
 	//
-	// Indication which authenticaiton method shoud be used for the token endpoint
+	// Indication which authentication method shoud be used for the token endpoint
 	TokenEndpointAuthMethod TokenEndpointAuthMethod `json:"tokenEndpointAuthMethod,omitempty"`
+
+	// Metadata is abritrary data
+	Metadata Metadata `json:"metadata,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token
@@ -123,8 +126,10 @@ type ResponseType string
 type RedirectURI string
 
 // +kubebuilder:validation:Enum=;client_secret_basic;client_secret_post;private_key_jwt;none
-// TokenEndpointAuthMethod represents an authenticaiton method for token endpoint
+// TokenEndpointAuthMethod represents an authentication method for token endpoint
 type TokenEndpointAuthMethod string
+
+type Metadata map[string]interface{}
 
 // OAuth2ClientStatus defines the observed state of OAuth2Client
 type OAuth2ClientStatus struct {

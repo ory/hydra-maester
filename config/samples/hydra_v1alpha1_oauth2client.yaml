@@ -30,4 +30,7 @@ spec:
     endpoint: /clients
     forwardedProto: https
   tokenEndpointAuthMethod: client_secret_basic
+  metadata:
+    property1: 1
+    propetry2: "2"
   

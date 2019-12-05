@@ -21,12 +21,13 @@ const (
 	clientsEndpoint = "/clients"
 	schemeHTTP      = "http"
 
-	testID            = "test-id"
-	testClient        = `{"client_id":"test-id","owner":"test-name","scope":"some,scopes","grant_types":["type1"],"token_endpoint_auth_method":"client_secret_basic"}`
-	testClientCreated = `{"client_id":"test-id-2","client_secret":"TmGkvcY7k526","owner":"test-name-2","scope":"some,other,scopes","grant_types":["type2"],"audience":["audience-a","audience-b"],"token_endpoint_auth_method":"client_secret_basic"}`
-	testClientUpdated = `{"client_id":"test-id-3","client_secret":"xFoPPm654por","owner":"test-name-3","scope":"yet,another,scope","grant_types":["type3"],"audience":["audience-c"],"token_endpoint_auth_method":"client_secret_basic"}`
-	testClientList    = `{"client_id":"test-id-4","owner":"test-name-4","scope":"scope1 scope2","grant_types":["type4"],"token_endpoint_auth_method":"client_secret_basic"}`
-	testClientList2   = `{"client_id":"test-id-5","owner":"test-name-5","scope":"scope3 scope4","grant_types":["type5"],"token_endpoint_auth_method":"client_secret_basic"}`
+	testID                        = "test-id"
+	testClient                    = `{"client_id":"test-id","owner":"test-name","scope":"some,scopes","grant_types":["type1"],"token_endpoint_auth_method":"client_secret_basic"}`
+	testClientCreated             = `{"client_id":"test-id-2","client_secret":"TmGkvcY7k526","owner":"test-name-2","scope":"some,other,scopes","grant_types":["type2"],"audience":["audience-a","audience-b"],"token_endpoint_auth_method":"client_secret_basic"}`
+	testClientUpdated             = `{"client_id":"test-id-3","client_secret":"xFoPPm654por","owner":"test-name-3","scope":"yet,another,scope","grant_types":["type3"],"audience":["audience-c"],"token_endpoint_auth_method":"client_secret_basic"}`
+	testClientList                = `{"client_id":"test-id-4","owner":"test-name-4","scope":"scope1 scope2","grant_types":["type4"],"token_endpoint_auth_method":"client_secret_basic"}`
+	testClientList2               = `{"client_id":"test-id-5","owner":"test-name-5","scope":"scope3 scope4","grant_types":["type5"],"token_endpoint_auth_method":"client_secret_basic"}`
+	testClientWithMetadataCreated = `{"client_id":"test-id-21","client_secret":"TmGkvcY7k526","owner":"test-name-21","scope":"some,other,scopes","grant_types":["type2"],"token_endpoint_auth_method":"client_secret_basic","metadata":{"property1":1,"property2":"2"}}`
 
 	statusNotFoundBody            = `{"error":"Not Found","error_description":"Unable to locate the requested resource","status_code":404,"request_id":"id"}`
 	statusConflictBody            = `{"error":"Unable to insert or update resource because a resource with that value exists already","error_description":"","status_code":409,"request_id":"id"`
@@ -44,6 +45,16 @@ var testOAuthJSONPost = &hydra.OAuth2ClientJSON{
 	GrantTypes: []string{"type2"},
 	Owner:      "test-name-2",
 	Audience:   []string{"audience-a", "audience-b"},
+}
+
+var testOAuthJSONPost2 = &hydra.OAuth2ClientJSON{
+	Scope:      "some,other,scopes",
+	GrantTypes: []string{"type2"},
+	Owner:      "test-name-21",
+	Metadata: map[string]interface{}{
+		"property1": float64(1),
+		"property2": "2",
+	},
 }
 
 var testOAuthJSONPut = &hydra.OAuth2ClientJSON{
@@ -128,6 +139,11 @@ func TestCRUD(t *testing.T) {
 				testClientCreated,
 				nil,
 			},
+			"with new client with metadata": {
+				http.StatusCreated,
+				testClientWithMetadataCreated,
+				nil,
+			},
 			"with existing client": {
 				http.StatusConflict,
 				statusConflictBody,
@@ -140,9 +156,14 @@ func TestCRUD(t *testing.T) {
 			},
 		} {
 			t.Run(fmt.Sprintf("case/%s", d), func(t *testing.T) {
-
+				var (
+					err      error
+					o        *hydra.OAuth2ClientJSON
+					expected *hydra.OAuth2ClientJSON
+				)
 				//given
 				new := tc.statusCode == http.StatusCreated
+				newWithMetadata := d == "with new client with metadata"
 
 				h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 					assert.Equal(c.HydraURL.String(), fmt.Sprintf("%s://%s%s", schemeHTTP, req.Host, req.URL.Path))
@@ -156,7 +177,13 @@ func TestCRUD(t *testing.T) {
 				runServer(&c, h)
 
 				//when
-				o, err := c.PostOAuth2Client(testOAuthJSONPost)
+				if newWithMetadata {
+					o, err = c.PostOAuth2Client(testOAuthJSONPost2)
+					expected = testOAuthJSONPost2
+				} else {
+					o, err = c.PostOAuth2Client(testOAuthJSONPost)
+					expected = testOAuthJSONPost
+				}
 
 				//then
 				if tc.err == nil {
@@ -176,8 +203,17 @@ func TestCRUD(t *testing.T) {
 					assert.NotNil(o.Secret)
 					assert.NotNil(o.ClientID)
 					assert.NotNil(o.TokenEndpointAuthMethod)
-					if testOAuthJSONPost.TokenEndpointAuthMethod != "" {
-						assert.Equal(testOAuthJSONPost.TokenEndpointAuthMethod, o.TokenEndpointAuthMethod)
+					if expected.TokenEndpointAuthMethod != "" {
+						assert.Equal(expected.TokenEndpointAuthMethod, o.TokenEndpointAuthMethod)
+					}
+					if newWithMetadata {
+						assert.NotNil(o.Metadata)
+						assert.True(len(o.Metadata) > 0)
+						for key, _ := range o.Metadata {
+							assert.Equal(o.Metadata[key], expected.Metadata[key])
+						}
+					} else {
+						assert.Nil(o.Metadata)
 					}
 				}
 			})
