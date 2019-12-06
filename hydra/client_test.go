@@ -47,16 +47,6 @@ var testOAuthJSONPost = &hydra.OAuth2ClientJSON{
 	Audience:   []string{"audience-a", "audience-b"},
 }
 
-var testOAuthJSONPost2 = &hydra.OAuth2ClientJSON{
-	Scope:      "some,other,scopes",
-	GrantTypes: []string{"type2"},
-	Owner:      "test-name-21",
-	Metadata: map[string]interface{}{
-		"property1": float64(1),
-		"property2": "2",
-	},
-}
-
 var testOAuthJSONPut = &hydra.OAuth2ClientJSON{
 	ClientID:   pointer.StringPtr("test-id-3"),
 	Scope:      "yet,another,scope",
@@ -178,6 +168,16 @@ func TestCRUD(t *testing.T) {
 
 				//when
 				if newWithMetadata {
+					meta, _ := json.Marshal(map[string]interface{}{
+						"property1": float64(1),
+						"property2": "2",
+					})
+					var testOAuthJSONPost2 = &hydra.OAuth2ClientJSON{
+						Scope:      "some,other,scopes",
+						GrantTypes: []string{"type2"},
+						Owner:      "test-name-21",
+						Metadata:   meta,
+					}
 					o, err = c.PostOAuth2Client(testOAuthJSONPost2)
 					expected = testOAuthJSONPost2
 				} else {

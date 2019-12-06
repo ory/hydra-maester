@@ -16,6 +16,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/ory/hydra-maester/hydra"
@@ -130,7 +131,7 @@ type RedirectURI string
 type TokenEndpointAuthMethod string
 
 // Metadata is abritrary data
-type Metadata map[string]interface{}
+type Metadata json.RawMessage
 
 // OAuth2ClientStatus defines the observed state of OAuth2Client
 type OAuth2ClientStatus struct {
