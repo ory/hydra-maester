@@ -183,7 +183,7 @@ func (c *OAuth2Client) ToOAuth2ClientJSON() *hydra.OAuth2ClientJSON {
 		Scope:                   c.Spec.Scope,
 		Owner:                   fmt.Sprintf("%s/%s", c.Name, c.Namespace),
 		TokenEndpointAuthMethod: string(c.Spec.TokenEndpointAuthMethod),
-		Metadata:                c.Spec.Metadata,
+		Metadata:                json.RawMessage(c.Spec.Metadata),
 	}
 }
 
