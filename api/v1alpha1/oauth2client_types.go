@@ -108,7 +108,7 @@ type OAuth2ClientSpec struct {
 	TokenEndpointAuthMethod TokenEndpointAuthMethod `json:"tokenEndpointAuthMethod,omitempty"`
 
 	// Metadata is abritrary data
-	Metadata Metadata `json:"metadata,omitempty"`
+	Metadata json.RawMessage `json:"metadata,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token
@@ -126,9 +126,6 @@ type RedirectURI string
 // +kubebuilder:validation:Enum=;client_secret_basic;client_secret_post;private_key_jwt;none
 // TokenEndpointAuthMethod represents an authentication method for token endpoint
 type TokenEndpointAuthMethod string
-
-// Metadata is abritrary data
-type Metadata json.RawMessage
 
 // OAuth2ClientStatus defines the observed state of OAuth2Client
 type OAuth2ClientStatus struct {
@@ -179,7 +176,7 @@ func (c *OAuth2Client) ToOAuth2ClientJSON() *hydra.OAuth2ClientJSON {
 		Scope:                   c.Spec.Scope,
 		Owner:                   fmt.Sprintf("%s/%s", c.Name, c.Namespace),
 		TokenEndpointAuthMethod: string(c.Spec.TokenEndpointAuthMethod),
-		Metadata:                json.RawMessage(c.Spec.Metadata),
+		Metadata:                c.Spec.Metadata,
 	}
 }
 
