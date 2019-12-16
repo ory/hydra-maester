@@ -3,6 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Changelog](#changelog)
+  - [v0.0.7 (2019-12-16)](#v007-2019-12-16)
   - [v0.0.6 (2019-11-26)](#v006-2019-11-26)
   - [v0.0.5 (2019-11-14)](#v005-2019-11-14)
   - [v0.0.4 (2019-09-19)](#v004-2019-09-19)
@@ -15,6 +16,14 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Changelog
+
+## [v0.0.7](https://github.com/ory/hydra-maester/tree/v0.0.7) (2019-12-16)
+
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.6...v0.0.7)
+
+**Merged pull requests:**
+
+- Set OwnerReference on Secrets created by controller [\#39](https://github.com/ory/hydra-maester/pull/39) ([kubadz](https://github.com/kubadz))
 
 ## [v0.0.6](https://github.com/ory/hydra-maester/tree/v0.0.6) (2019-11-26)
 
