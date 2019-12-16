@@ -109,6 +109,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(createdSecret.Data[controllers.ClientIDKey]).To(Equal([]byte(tstClientID)))
 				Expect(createdSecret.Data[controllers.ClientSecretKey]).To(Equal([]byte(tstSecret)))
+				Expect(createdSecret.OwnerReferences).To(Equal(getOwnerReferenceTo(retrieved)))
 
 				//delete instance
 				c.Delete(context.TODO(), instance)
@@ -264,6 +265,12 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(*postedClient.ClientID).To(Equal(tstClientID))
 				Expect(*postedClient.Secret).To(Equal(tstSecret))
 
+				// Ensure that secret doesn't have OwnerReference set
+				ok = client.ObjectKey{Name: tstSecretName, Namespace: tstNamespace}
+				err = k8sClient.Get(context.TODO(), ok, &secret)
+				Expect(err).To(BeNil())
+				Expect(len(secret.OwnerReferences)).To(Equal(0))
+
 				//delete instance
 				c.Delete(context.TODO(), instance)
 
@@ -345,6 +352,15 @@ var _ = Describe("OAuth2Client Controller", func() {
 		})
 	})
 })
+
+func getOwnerReferenceTo(c hydrav1alpha1.OAuth2Client) []metav1.OwnerReference {
+	return []metav1.OwnerReference{{
+		APIVersion: c.APIVersion,
+		Kind:       c.Kind,
+		Name:       c.Name,
+		UID:        c.UID,
+	}}
+}
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {

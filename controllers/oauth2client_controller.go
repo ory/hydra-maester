@@ -88,10 +88,13 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		// then lets add the finalizer and update the object. This is equivalent
 		// registering our finalizer.
 		if !containsString(oauth2client.ObjectMeta.Finalizers, FinalizerName) {
+			typeMeta := oauth2client.TypeMeta
 			oauth2client.ObjectMeta.Finalizers = append(oauth2client.ObjectMeta.Finalizers, FinalizerName)
 			if err := r.Update(ctx, &oauth2client); err != nil {
 				return ctrl.Result{}, err
 			}
+			// restore the TypeMeta object as it is removed during Update, but need to be accessed later
+			oauth2client.TypeMeta = typeMeta
 		}
 	} else {
 		// The object is being deleted
@@ -216,6 +219,12 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      c.Spec.SecretName,
 			Namespace: c.Namespace,
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: c.TypeMeta.APIVersion,
+				Kind:       c.TypeMeta.Kind,
+				Name:       c.ObjectMeta.Name,
+				UID:        c.ObjectMeta.UID,
+			}},
 		},
 		Data: map[string][]byte{
 			ClientIDKey:     []byte(*created.ClientID),
