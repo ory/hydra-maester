@@ -3,6 +3,8 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Changelog](#changelog)
+  - [v0.0.9 (2019-12-26)](#v009-2019-12-26)
+  - [v0.0.8 (2019-12-16)](#v008-2019-12-16)
   - [v0.0.7 (2019-12-16)](#v007-2019-12-16)
   - [v0.0.6 (2019-11-26)](#v006-2019-11-26)
   - [v0.0.5 (2019-11-14)](#v005-2019-11-14)
@@ -16,6 +18,22 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Changelog
+
+## [v0.0.9](https://github.com/ory/hydra-maester/tree/v0.0.9) (2019-12-26)
+
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.8...v0.0.9)
+
+**Closed issues:**
+
+- Set owner reference on secrets created by the controller. [\#20](https://github.com/ory/hydra-maester/issues/20)
+
+**Merged pull requests:**
+
+- Use binary kustomize release for CI [\#40](https://github.com/ory/hydra-maester/pull/40) ([aeneasr](https://github.com/aeneasr))
+
+## [v0.0.8](https://github.com/ory/hydra-maester/tree/v0.0.8) (2019-12-16)
+
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.7...v0.0.8)
 
 ## [v0.0.7](https://github.com/ory/hydra-maester/tree/v0.0.7) (2019-12-16)
 
