@@ -76,11 +76,17 @@ jobs:
        sudo echo "export PATH=$PATH:/usr/local/kubebuilder/bin" >> $HOME/.profile
 
    - run:
-      name: Install ginkgo,controller-gen, kustomize
+      name: Install kustomize
+      command: |
+        curl -sL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv3.3.0/kustomize_v3.3.0_linux_amd64.tar.gz | tar -xz -C /tmp/
+        sudo mv /tmp/kustomize /usr/local/bin/kustomize
+        kustomize version
+
+   - run:
+      name: Install ginkgo,controller-gen
       command: |
        go get github.com/onsi/ginkgo/ginkgo
        go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.0-beta.2
-       go install sigs.k8s.io/kustomize/kustomize/v3
 
    - run:
       name: Install Kind
