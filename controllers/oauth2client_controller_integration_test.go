@@ -70,6 +70,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 						ResponseTypes: o.ResponseTypes,
 						RedirectURIs:  o.RedirectURIs,
 						Scope:         o.Scope,
+						Audience:      o.Audience,
 						Owner:         o.Owner,
 					}
 				}, func(o *hydra.OAuth2ClientJSON) error {
@@ -214,6 +215,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 						GrantTypes:    o.GrantTypes,
 						ResponseTypes: o.ResponseTypes,
 						RedirectURIs:  o.RedirectURIs,
+						Audience:      o.Audience,
 						Scope:         o.Scope,
 						Owner:         o.Owner,
 					}
@@ -402,6 +404,7 @@ func testInstance(name, secretName string) *hydrav1alpha1.OAuth2Client {
 			ResponseTypes: []hydrav1alpha1.ResponseType{"token"},
 			Scope:         "a b c",
 			RedirectURIs:  []hydrav1alpha1.RedirectURI{"https://example.com"},
+			Audience:      []string{"audience-a"},
 			SecretName:    secretName,
 			HydraAdmin: hydrav1alpha1.HydraAdmin{
 				URL:            "http://hydra-admin",
