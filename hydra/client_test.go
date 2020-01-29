@@ -23,8 +23,8 @@ const (
 
 	testID            = "test-id"
 	testClient        = `{"client_id":"test-id","owner":"test-name","scope":"some,scopes","grant_types":["type1"],"token_endpoint_auth_method":"client_secret_basic"}`
-	testClientCreated = `{"client_id":"test-id-2","client_secret":"TmGkvcY7k526","owner":"test-name-2","scope":"some,other,scopes","grant_types":["type2"],"token_endpoint_auth_method":"client_secret_basic"}`
-	testClientUpdated = `{"client_id":"test-id-3","client_secret":"xFoPPm654por","owner":"test-name-3","scope":"yet,another,scope","grant_types":["type3"],"token_endpoint_auth_method":"client_secret_basic"}`
+	testClientCreated = `{"client_id":"test-id-2","client_secret":"TmGkvcY7k526","owner":"test-name-2","scope":"some,other,scopes","grant_types":["type2"],"audience":["audience-a","audience-b"],"token_endpoint_auth_method":"client_secret_basic"}`
+	testClientUpdated = `{"client_id":"test-id-3","client_secret":"xFoPPm654por","owner":"test-name-3","scope":"yet,another,scope","grant_types":["type3"],"audience":["audience-c"],"token_endpoint_auth_method":"client_secret_basic"}`
 	testClientList    = `{"client_id":"test-id-4","owner":"test-name-4","scope":"scope1 scope2","grant_types":["type4"],"token_endpoint_auth_method":"client_secret_basic"}`
 	testClientList2   = `{"client_id":"test-id-5","owner":"test-name-5","scope":"scope3 scope4","grant_types":["type5"],"token_endpoint_auth_method":"client_secret_basic"}`
 
@@ -43,6 +43,7 @@ var testOAuthJSONPost = &hydra.OAuth2ClientJSON{
 	Scope:      "some,other,scopes",
 	GrantTypes: []string{"type2"},
 	Owner:      "test-name-2",
+	Audience:   []string{"audience-a", "audience-b"},
 }
 
 var testOAuthJSONPut = &hydra.OAuth2ClientJSON{
@@ -50,6 +51,7 @@ var testOAuthJSONPut = &hydra.OAuth2ClientJSON{
 	Scope:      "yet,another,scope",
 	GrantTypes: []string{"type3"},
 	Owner:      "test-name-3",
+	Audience:   []string{"audience-c"},
 }
 
 func TestCRUD(t *testing.T) {
@@ -170,6 +172,7 @@ func TestCRUD(t *testing.T) {
 					assert.Equal(testOAuthJSONPost.Scope, o.Scope)
 					assert.Equal(testOAuthJSONPost.GrantTypes, o.GrantTypes)
 					assert.Equal(testOAuthJSONPost.Owner, o.Owner)
+					assert.Equal(testOAuthJSONPost.Audience, o.Audience)
 					assert.NotNil(o.Secret)
 					assert.NotNil(o.ClientID)
 					assert.NotNil(o.TokenEndpointAuthMethod)
@@ -228,6 +231,7 @@ func TestCRUD(t *testing.T) {
 					assert.Equal(testOAuthJSONPut.GrantTypes, o.GrantTypes)
 					assert.Equal(testOAuthJSONPut.ClientID, o.ClientID)
 					assert.Equal(testOAuthJSONPut.Owner, o.Owner)
+					assert.Equal(testOAuthJSONPut.Audience, o.Audience)
 					assert.NotNil(o.Secret)
 				}
 			})

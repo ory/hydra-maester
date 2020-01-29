@@ -83,6 +83,9 @@ type OAuth2ClientSpec struct {
 	// RedirectURIs is an array of the redirect URIs allowed for the application
 	RedirectURIs []RedirectURI `json:"redirectUris,omitempty"`
 
+	// Audience is a whitelist defining the audiences this client is allowed to request tokens for
+	Audience []string `json:"audience,omitempty"`
+
 	// +kubebuilder:validation:Pattern=([a-zA-Z0-9\.\*]+\s?)+
 	//
 	// Scope is a string containing a space-separated list of scope values (as
@@ -169,6 +172,7 @@ func (c *OAuth2Client) ToOAuth2ClientJSON() *hydra.OAuth2ClientJSON {
 		GrantTypes:              grantToStringSlice(c.Spec.GrantTypes),
 		ResponseTypes:           responseToStringSlice(c.Spec.ResponseTypes),
 		RedirectURIs:            redirectToStringSlice(c.Spec.RedirectURIs),
+		Audience:                c.Spec.Audience,
 		Scope:                   c.Spec.Scope,
 		Owner:                   fmt.Sprintf("%s/%s", c.Name, c.Namespace),
 		TokenEndpointAuthMethod: string(c.Spec.TokenEndpointAuthMethod),

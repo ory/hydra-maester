@@ -9,6 +9,7 @@ type OAuth2ClientJSON struct {
 	GrantTypes              []string `json:"grant_types"`
 	RedirectURIs            []string `json:"redirect_uris,omitempty"`
 	ResponseTypes           []string `json:"response_types,omitempty"`
+	Audience                []string `json:"audience,omitempty"`
 	Scope                   string   `json:"scope"`
 	Owner                   string   `json:"owner"`
 	TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method,omitempty"`
