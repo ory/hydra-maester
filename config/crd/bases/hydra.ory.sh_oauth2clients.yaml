@@ -437,6 +437,11 @@ spec:
                 pattern: \w+:/?/?[^\s]+
                 type: string
               type: array
+            audience:
+              description: Audience is a whitelist defining the audiences this client is allowed to request tokens for
+              items:
+                type: string
+              type: array
             responseTypes:
               description: ResponseTypes is an array of the OAuth 2.0 response type
                 strings that the client can use at the authorization endpoint.
