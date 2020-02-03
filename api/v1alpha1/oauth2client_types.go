@@ -16,6 +16,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/ory/hydra-maester/hydra"
@@ -106,8 +107,11 @@ type OAuth2ClientSpec struct {
 
 	// +kubebuilder:validation:Enum=;client_secret_basic;client_secret_post;private_key_jwt;none
 	//
-	// Indication which authenticaiton method shoud be used for the token endpoint
+	// Indication which authentication method shoud be used for the token endpoint
 	TokenEndpointAuthMethod TokenEndpointAuthMethod `json:"tokenEndpointAuthMethod,omitempty"`
+
+	// Metadata is abritrary data
+	Metadata json.RawMessage `json:"metadata,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token
@@ -123,7 +127,7 @@ type ResponseType string
 type RedirectURI string
 
 // +kubebuilder:validation:Enum=;client_secret_basic;client_secret_post;private_key_jwt;none
-// TokenEndpointAuthMethod represents an authenticaiton method for token endpoint
+// TokenEndpointAuthMethod represents an authentication method for token endpoint
 type TokenEndpointAuthMethod string
 
 // OAuth2ClientStatus defines the observed state of OAuth2Client
@@ -176,6 +180,7 @@ func (c *OAuth2Client) ToOAuth2ClientJSON() *hydra.OAuth2ClientJSON {
 		Scope:                   c.Spec.Scope,
 		Owner:                   fmt.Sprintf("%s/%s", c.Name, c.Namespace),
 		TokenEndpointAuthMethod: string(c.Spec.TokenEndpointAuthMethod),
+		Metadata:                c.Spec.Metadata,
 	}
 }
 
