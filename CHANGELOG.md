@@ -3,6 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Changelog](#changelog)
+  - [v0.0.11 (2020-02-03)](#v0011-2020-02-03)
   - [v0.0.10 (2020-02-01)](#v0010-2020-02-01)
   - [v0.0.9 (2019-12-26)](#v009-2019-12-26)
   - [v0.0.8 (2019-12-16)](#v008-2019-12-16)
@@ -19,6 +20,14 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Changelog
+
+## [v0.0.11](https://github.com/ory/hydra-maester/tree/v0.0.11) (2020-02-03)
+
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.10...v0.0.11)
+
+**Merged pull requests:**
+
+- adding support for hydra client metadata property [\#38](https://github.com/ory/hydra-maester/pull/38) ([amihalj](https://github.com/amihalj))
 
 ## [v0.0.10](https://github.com/ory/hydra-maester/tree/v0.0.10) (2020-02-01)
 
