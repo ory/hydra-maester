@@ -195,11 +195,10 @@ func TestCRUD(t *testing.T) {
 
 				if new {
 					require.NotNil(t, o)
-
-					assert.Equal(testOAuthJSONPost.Scope, o.Scope)
-					assert.Equal(testOAuthJSONPost.GrantTypes, o.GrantTypes)
-					assert.Equal(testOAuthJSONPost.Owner, o.Owner)
-					assert.Equal(testOAuthJSONPost.Audience, o.Audience)
+					assert.Equal(expected.Scope, o.Scope)
+					assert.Equal(expected.GrantTypes, o.GrantTypes)
+					assert.Equal(expected.Owner, o.Owner)
+					assert.Equal(expected.Audience, o.Audience)
 					assert.NotNil(o.Secret)
 					assert.NotNil(o.ClientID)
 					assert.NotNil(o.TokenEndpointAuthMethod)
