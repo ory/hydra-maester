@@ -160,7 +160,7 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		}
 
 		if found {
-			if fetched.Owner != oauth2client.Name {
+			if fetched.Owner != fmt.Sprintf("%s/%s", oauth2client.Name, oauth2client.Namespace) {
 				conflictErr := errors.Errorf("ID provided in secret %s/%s is assigned to another resource", secret.Name, secret.Namespace)
 				if updateErr := r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidSecret, conflictErr); updateErr != nil {
 					return ctrl.Result{}, updateErr
