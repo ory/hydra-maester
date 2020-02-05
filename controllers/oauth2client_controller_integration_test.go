@@ -60,6 +60,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				c := mgr.GetClient()
 
 				mch := &mocks.HydraClientInterface{}
+				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
 				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
 				mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
@@ -139,6 +140,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				c := mgr.GetClient()
 
 				mch := &mocks.HydraClientInterface{}
+				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
 				mch.On("PostOAuth2Client", Anything).Return(nil, errors.New("error"))
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
 				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
@@ -205,6 +207,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				c := mgr.GetClient()
 
 				mch := mocks.HydraClientInterface{}
+				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
 				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
 				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
@@ -300,6 +303,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				c := mgr.GetClient()
 
 				mch := mocks.HydraClientInterface{}
+				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
 				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
 
