@@ -117,66 +117,68 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 
 	}
 
-	if oauth2client.Generation != oauth2client.Status.ObservedGeneration {
-
-		var secret apiv1.Secret
-		if err := r.Get(ctx, types.NamespacedName{Name: oauth2client.Spec.SecretName, Namespace: req.Namespace}, &secret); err != nil {
-			if apierrs.IsNotFound(err) {
-				if registerErr := r.registerOAuth2Client(ctx, &oauth2client, nil); registerErr != nil {
-					return ctrl.Result{}, registerErr
-				}
-				return ctrl.Result{}, nil
+	var secret apiv1.Secret
+	if err := r.Get(ctx, types.NamespacedName{Name: oauth2client.Spec.SecretName, Namespace: req.Namespace}, &secret); err != nil {
+		if apierrs.IsNotFound(err) {
+			if registerErr := r.registerOAuth2Client(ctx, &oauth2client, nil); registerErr != nil {
+				return ctrl.Result{}, registerErr
 			}
-			return ctrl.Result{}, err
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, err
+	}
+
+	credentials, err := parseSecret(secret)
+	if err != nil {
+		r.Log.Error(err, fmt.Sprintf("secret %s/%s is invalid", secret.Name, secret.Namespace))
+		if updateErr := r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidSecret, err); updateErr != nil {
+			return ctrl.Result{}, updateErr
+		}
+		return ctrl.Result{}, nil
+	}
+
+	hydraClient, err := r.getHydraClientForClient(oauth2client)
+	if err != nil {
+		r.Log.Error(err, fmt.Sprintf(
+			"hydra address %s:%d%s is invalid",
+			oauth2client.Spec.HydraAdmin.URL,
+			oauth2client.Spec.HydraAdmin.Port,
+			oauth2client.Spec.HydraAdmin.Endpoint,
+		))
+		if updateErr := r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidHydraAddress, err); updateErr != nil {
+			return ctrl.Result{}, updateErr
+		}
+		return ctrl.Result{}, nil
+	}
+
+	fetched, found, err := hydraClient.GetOAuth2Client(string(credentials.ID))
+	if err != nil {
+		return ctrl.Result{}, err
+
+	}
+
+	if found {
+		//conclude reconciliation if the client exists and has not been updated
+		if oauth2client.Generation == oauth2client.Status.ObservedGeneration {
+			return ctrl.Result{}, nil
 		}
 
-		credentials, err := parseSecret(secret)
-		if err != nil {
-			r.Log.Error(err, fmt.Sprintf("secret %s/%s is invalid", secret.Name, secret.Namespace))
-			if updateErr := r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidSecret, err); updateErr != nil {
+		if fetched.Owner != oauth2client.Name {
+			conflictErr := errors.Errorf("ID provided in secret %s/%s is assigned to another resource", secret.Name, secret.Namespace)
+			if updateErr := r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidSecret, conflictErr); updateErr != nil {
 				return ctrl.Result{}, updateErr
 			}
 			return ctrl.Result{}, nil
 		}
 
-		hydraClient, err := r.getHydraClientForClient(oauth2client)
-		if err != nil {
-			r.Log.Error(err, fmt.Sprintf(
-				"hydra address %s:%d%s is invalid",
-				oauth2client.Spec.HydraAdmin.URL,
-				oauth2client.Spec.HydraAdmin.Port,
-				oauth2client.Spec.HydraAdmin.Endpoint,
-			))
-			if updateErr := r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidHydraAddress, err); updateErr != nil {
-				return ctrl.Result{}, updateErr
-			}
-			return ctrl.Result{}, nil
+		if updateErr := r.updateRegisteredOAuth2Client(ctx, &oauth2client, credentials); updateErr != nil {
+			return ctrl.Result{}, updateErr
 		}
+		return ctrl.Result{}, nil
+	}
 
-		fetched, found, err := hydraClient.GetOAuth2Client(string(credentials.ID))
-		if err != nil {
-			return ctrl.Result{}, err
-
-		}
-
-		if found {
-			if fetched.Owner != fmt.Sprintf("%s/%s", oauth2client.Name, oauth2client.Namespace) {
-				conflictErr := errors.Errorf("ID provided in secret %s/%s is assigned to another resource", secret.Name, secret.Namespace)
-				if updateErr := r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidSecret, conflictErr); updateErr != nil {
-					return ctrl.Result{}, updateErr
-				}
-				return ctrl.Result{}, nil
-			}
-
-			if updateErr := r.updateRegisteredOAuth2Client(ctx, &oauth2client, credentials); updateErr != nil {
-				return ctrl.Result{}, updateErr
-			}
-			return ctrl.Result{}, nil
-		}
-
-		if registerErr := r.registerOAuth2Client(ctx, &oauth2client, credentials); registerErr != nil {
-			return ctrl.Result{}, registerErr
-		}
+	if registerErr := r.registerOAuth2Client(ctx, &oauth2client, credentials); registerErr != nil {
+		return ctrl.Result{}, registerErr
 	}
 
 	return ctrl.Result{}, nil
