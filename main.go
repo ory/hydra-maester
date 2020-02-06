@@ -18,11 +18,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/ory/hydra-maester/hydra"
 	"net/http"
 	"net/url"
 	"os"
-
-	"github.com/ory/hydra-maester/hydra"
+	"time"
 
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
 	"github.com/ory/hydra-maester/controllers"
@@ -48,9 +48,9 @@ func init() {
 
 func main() {
 	var (
-		metricsAddr, hydraURL, endpoint, forwardedProto string
-		hydraPort                                       int
-		enableLeaderElection                            bool
+		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod string
+		hydraPort                                                   int
+		enableLeaderElection                                        bool
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -58,16 +58,24 @@ func main() {
 	flag.IntVar(&hydraPort, "hydra-port", 4445, "Port ORY Hydra is listening on")
 	flag.StringVar(&endpoint, "endpoint", "/clients", "ORY Hydra's client endpoint")
 	flag.StringVar(&forwardedProto, "forwarded-proto", "", "If set, this adds the value as the X-Forwarded-Proto header in requests to the ORY Hydra admin server")
+	flag.StringVar(&syncPeriod, "sync-period", "10h", "Determines the minimum frequency at which watched resources are reconciled")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.Logger(true))
 
+	syncPeriodParsed, err := time.ParseDuration(syncPeriod)
+	if err != nil {
+		setupLog.Error(err, "unable to start manager")
+		os.Exit(1)
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
 		LeaderElection:     enableLeaderElection,
+		SyncPeriod:         &syncPeriodParsed,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -117,7 +125,6 @@ func main() {
 func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec) controllers.HydraClientMakerFunc {
 
 	return controllers.HydraClientMakerFunc(func(spec hydrav1alpha1.OAuth2ClientSpec) (controllers.HydraClientInterface, error) {
-
 
 		if spec.HydraAdmin.URL == "" {
 			spec.HydraAdmin.URL = defaultSpec.HydraAdmin.URL
