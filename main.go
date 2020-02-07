@@ -18,11 +18,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ory/hydra-maester/hydra"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/ory/hydra-maester/hydra"
 
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
 	"github.com/ory/hydra-maester/controllers"
