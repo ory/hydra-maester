@@ -3,6 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Changelog](#changelog)
+  - [v0.0.13 (2020-02-11)](#v0013-2020-02-11)
   - [v0.0.12 (2020-02-05)](#v0012-2020-02-05)
   - [v0.0.11 (2020-02-03)](#v0011-2020-02-03)
   - [v0.0.10 (2020-02-01)](#v0010-2020-02-01)
@@ -21,6 +22,14 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Changelog
+
+## [v0.0.13](https://github.com/ory/hydra-maester/tree/v0.0.13) (2020-02-11)
+
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.12...v0.0.13)
+
+**Merged pull requests:**
+
+- feat: Sync mode - least work approach [\#46](https://github.com/ory/hydra-maester/pull/46) ([jakkab](https://github.com/jakkab))
 
 ## [v0.0.12](https://github.com/ory/hydra-maester/tree/v0.0.12) (2020-02-05)
 
@@ -127,6 +136,7 @@
 - Fix override clients bug [\#23](https://github.com/ory/hydra-maester/pull/23) ([jakkab](https://github.com/jakkab))
 - Full upgrade [\#19](https://github.com/ory/hydra-maester/pull/19) ([jakkab](https://github.com/jakkab))
 - CR status [\#17](https://github.com/ory/hydra-maester/pull/17) ([jakkab](https://github.com/jakkab))
+- Update Dockerfile [\#14](https://github.com/ory/hydra-maester/pull/14) ([Demonsthere](https://github.com/Demonsthere))
 
 ## [v0.0.3](https://github.com/ory/hydra-maester/tree/v0.0.3) (2019-08-30)
 
@@ -147,10 +157,6 @@
 ## [v0.0.2-test1](https://github.com/ory/hydra-maester/tree/v0.0.2-test1) (2019-08-30)
 
 [Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.2...v0.0.2-test1)
-
-**Merged pull requests:**
-
-- Update Dockerfile [\#14](https://github.com/ory/hydra-maester/pull/14) ([Demonsthere](https://github.com/Demonsthere))
 
 ## [v0.0.2](https://github.com/ory/hydra-maester/tree/v0.0.2) (2019-08-30)
 
