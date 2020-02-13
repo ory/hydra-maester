@@ -105,7 +105,11 @@ func main() {
 			ForwardedProto: forwardedProto,
 		},
 	}
-	clientCache := cache.New(clientsCacheExpirationParsed, 5*time.Minute)
+
+	var clientCache *cache.Cache
+	if enableClientsCache {
+		clientCache = cache.New(clientsCacheExpirationParsed, 5*time.Minute)
+	}
 	hydraClientMaker := getHydraClientMaker(defaultSpec, clientCache)
 	hydraClient, err := hydraClientMaker(defaultSpec)
 	if err != nil {

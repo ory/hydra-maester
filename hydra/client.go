@@ -23,12 +23,14 @@ func (c *Client) GetOAuth2Client(id string) (*OAuth2ClientJSON, bool, error) {
 
 	var jsonClient *OAuth2ClientJSON
 
-	clientListFromCache, found := c.Cache.Get(c.HydraURL.Hostname())
-	if found {
-		jsonClientList := clientListFromCache.([]*OAuth2ClientJSON)
-		for _, client := range jsonClientList {
-			if *client.ClientID == id {
-				return jsonClient, true, nil
+	if c.Cache != nil {
+		clientListFromCache, found := c.Cache.Get(c.HydraURL.Hostname())
+		if found {
+			jsonClientList := clientListFromCache.([]*OAuth2ClientJSON)
+			for _, client := range jsonClientList {
+				if *client.ClientID == id {
+					return jsonClient, true, nil
+				}
 			}
 		}
 	}
@@ -56,10 +58,12 @@ func (c *Client) ListOAuth2Client() ([]*OAuth2ClientJSON, error) {
 
 	var jsonClientList []*OAuth2ClientJSON
 
-	clientListFromCache, found := c.Cache.Get(c.HydraURL.Hostname())
-	if found {
-		jsonClientList = clientListFromCache.([]*OAuth2ClientJSON)
-		return jsonClientList, nil
+	if c.Cache != nil {
+		clientListFromCache, found := c.Cache.Get(c.HydraURL.Hostname())
+		if found {
+			jsonClientList = clientListFromCache.([]*OAuth2ClientJSON)
+			return jsonClientList, nil
+		}
 	}
 
 	req, err := c.newRequest(http.MethodGet, "", nil)
@@ -74,7 +78,9 @@ func (c *Client) ListOAuth2Client() ([]*OAuth2ClientJSON, error) {
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		c.Cache.Set(c.HydraURL.Hostname(), jsonClientList, cache.DefaultExpiration)
+		if c.Cache != nil {
+			c.Cache.Set(c.HydraURL.Hostname(), jsonClientList, cache.DefaultExpiration)
+		}
 		return jsonClientList, nil
 	default:
 		return nil, fmt.Errorf("%s %s http request returned unexpected status code %s", req.Method, req.URL.String(), resp.Status)
@@ -97,7 +103,9 @@ func (c *Client) PostOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error
 
 	switch resp.StatusCode {
 	case http.StatusCreated:
-		c.Cache.Delete(c.HydraURL.Hostname())
+		if c.Cache != nil {
+			c.Cache.Delete(c.HydraURL.Hostname())
+		}
 		return jsonClient, nil
 	case http.StatusConflict:
 		return nil, fmt.Errorf("%s %s http request failed: requested ID already exists", req.Method, req.URL)
@@ -121,7 +129,9 @@ func (c *Client) PutOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		c.Cache.Delete(c.HydraURL.Hostname())
+		if c.Cache != nil {
+			c.Cache.Delete(c.HydraURL.Hostname())
+		}
 		return nil, fmt.Errorf("%s %s http request returned unexpected status code: %s", req.Method, req.URL, resp.Status)
 	}
 
@@ -142,7 +152,9 @@ func (c *Client) DeleteOAuth2Client(id string) error {
 
 	switch resp.StatusCode {
 	case http.StatusNoContent:
-		c.Cache.Delete(c.HydraURL.Hostname())
+		if c.Cache != nil {
+			c.Cache.Delete(c.HydraURL.Hostname())
+		}
 		return nil
 	case http.StatusNotFound:
 		fmt.Printf("client with id %s does not exist", id)
