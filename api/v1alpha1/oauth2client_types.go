@@ -105,7 +105,7 @@ type OAuth2ClientSpec struct {
 	// this client
 	HydraAdmin HydraAdmin `json:"hydraAdmin,omitempty"`
 
-	// +kubebuilder:validation:Enum=;client_secret_basic;client_secret_post;private_key_jwt;none
+	// +kubebuilder:validation:Enum=client_secret_basic;client_secret_post;private_key_jwt;none
 	//
 	// Indication which authentication method shoud be used for the token endpoint
 	TokenEndpointAuthMethod TokenEndpointAuthMethod `json:"tokenEndpointAuthMethod,omitempty"`
@@ -126,7 +126,7 @@ type ResponseType string
 // RedirectURI represents a redirect URI for the client
 type RedirectURI string
 
-// +kubebuilder:validation:Enum=;client_secret_basic;client_secret_post;private_key_jwt;none
+// +kubebuilder:validation:Enum=client_secret_basic;client_secret_post;private_key_jwt;none
 // TokenEndpointAuthMethod represents an authentication method for token endpoint
 type TokenEndpointAuthMethod string
 
