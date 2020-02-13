@@ -27,6 +27,7 @@ import (
 
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
 	"github.com/ory/hydra-maester/controllers"
+	"github.com/patrickmn/go-cache"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -62,11 +63,19 @@ func main() {
 	flag.StringVar(&syncPeriod, "sync-period", "10h", "Determines the minimum frequency at which watched resources are reconciled")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&enableClientsCache, "clients-cache-expiration", true, "Enable caching lists of clients")
+	flag.StringVar(&clientsCacheExpiration, "clients-cache-expiration", "2s", "Determines the amount of time, after which the single entry in cache is removed")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.Logger(true))
 
 	syncPeriodParsed, err := time.ParseDuration(syncPeriod)
+	if err != nil {
+		setupLog.Error(err, "unable to start manager")
+		os.Exit(1)
+	}
+
+	clientsCacheExpirationParsed, err := time.ParseDuration(clientsCacheExpiration)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
@@ -96,7 +105,8 @@ func main() {
 			ForwardedProto: forwardedProto,
 		},
 	}
-	hydraClientMaker := getHydraClientMaker(defaultSpec)
+	clientCache := cache.New(clientsCacheExpirationParsed, 5*time.Minute)
+	hydraClientMaker := getHydraClientMaker(defaultSpec, clientCache)
 	hydraClient, err := hydraClientMaker(defaultSpec)
 	if err != nil {
 		setupLog.Error(err, "making default hydra client", "controller", "OAuth2Client")
@@ -123,7 +133,7 @@ func main() {
 	}
 }
 
-func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec) controllers.HydraClientMakerFunc {
+func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec, cache *cache.Cache) controllers.HydraClientMakerFunc {
 
 	return controllers.HydraClientMakerFunc(func(spec hydrav1alpha1.OAuth2ClientSpec) (controllers.HydraClientInterface, error) {
 
@@ -149,6 +159,7 @@ func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec) controllers
 		client := &hydra.Client{
 			HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
 			HTTPClient: &http.Client{},
+			Cache:      cache,
 		}
 
 		if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {

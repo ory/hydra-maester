@@ -9,10 +9,12 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"k8s.io/utils/pointer"
 
 	"github.com/ory/hydra-maester/hydra"
+	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -55,14 +57,17 @@ var testOAuthJSONPut = &hydra.OAuth2ClientJSON{
 	Audience:   []string{"audience-c"},
 }
 
+func defaultHydraClient() hydra.Client {
+	return hydra.Client{
+		HTTPClient: &http.Client{},
+		HydraURL:   url.URL{Scheme: schemeHTTP},
+		Cache:      cache.New(2*time.Second, 5*time.Minute),
+	}
+}
+
 func TestCRUD(t *testing.T) {
 
 	assert := assert.New(t)
-
-	c := hydra.Client{
-		HTTPClient: &http.Client{},
-		HydraURL:   url.URL{Scheme: schemeHTTP},
-	}
 
 	t.Run("method=get", func(t *testing.T) {
 
@@ -88,6 +93,7 @@ func TestCRUD(t *testing.T) {
 				//given
 				shouldFind := tc.statusCode == http.StatusOK
 
+				c := defaultHydraClient()
 				h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 					assert.Equal(fmt.Sprintf("%s/%s", c.HydraURL.String(), testID), fmt.Sprintf("%s://%s%s", schemeHTTP, req.Host, req.URL.Path))
 					assert.Equal(http.MethodGet, req.Method)
@@ -155,6 +161,7 @@ func TestCRUD(t *testing.T) {
 				new := tc.statusCode == http.StatusCreated
 				newWithMetadata := d == "with new client with metadata"
 
+				c := defaultHydraClient()
 				h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 					assert.Equal(c.HydraURL.String(), fmt.Sprintf("%s://%s%s", schemeHTTP, req.Host, req.URL.Path))
 					assert.Equal(http.MethodPost, req.Method)
@@ -237,6 +244,7 @@ func TestCRUD(t *testing.T) {
 				ok := tc.statusCode == http.StatusOK
 
 				//given
+				c := defaultHydraClient()
 				h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 					assert.Equal(fmt.Sprintf("%s/%s", c.HydraURL.String(), *testOAuthJSONPut.ClientID), fmt.Sprintf("%s://%s%s", schemeHTTP, req.Host, req.URL.Path))
 					assert.Equal(http.MethodPut, req.Method)
@@ -292,6 +300,7 @@ func TestCRUD(t *testing.T) {
 			t.Run(fmt.Sprintf("case/%s", d), func(t *testing.T) {
 
 				//given
+				c := defaultHydraClient()
 				h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 					assert.Equal(fmt.Sprintf("%s/%s", c.HydraURL.String(), testID), fmt.Sprintf("%s://%s%s", schemeHTTP, req.Host, req.URL.Path))
 					assert.Equal(http.MethodDelete, req.Method)
@@ -340,6 +349,7 @@ func TestCRUD(t *testing.T) {
 			t.Run(fmt.Sprintf("case/%s", d), func(t *testing.T) {
 
 				//given
+				c := defaultHydraClient()
 				h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 					assert.Equal(c.HydraURL.String(), fmt.Sprintf("%s://%s%s", schemeHTTP, req.Host, req.URL.Path))
 					assert.Equal(http.MethodGet, req.Method)
@@ -366,6 +376,119 @@ func TestCRUD(t *testing.T) {
 				}
 			})
 		}
+
+		countingHandler := func(counter *int, c *hydra.Client, serverResponse server) http.HandlerFunc {
+			return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(c.HydraURL.String(), fmt.Sprintf("%s://%s%s", schemeHTTP, req.Host, req.URL.Path))
+				assert.Equal(http.MethodGet, req.Method)
+				*counter++
+				w.WriteHeader(serverResponse.statusCode)
+				w.Write([]byte(serverResponse.respBody))
+				w.Header().Set("Content-type", "application/json")
+			})
+		}
+
+		t.Run("case/cache clients", func(t *testing.T) {
+			// given
+			serverResponse := server{
+				http.StatusOK,
+				fmt.Sprintf("[%s,%s]", testClientList, testClientList2),
+				nil,
+			}
+			c := defaultHydraClient()
+			countServerHits := 0
+			h := countingHandler(&countServerHits, &c, serverResponse)
+			runServer(&c, h)
+
+			// when
+			var list []*hydra.OAuth2ClientJSON
+			var err error
+			for i := 0; i < 10; i++ {
+				list, err = c.ListOAuth2Client()
+			}
+
+			//then
+			require.NoError(t, err)
+			require.NotNil(t, list)
+			var expectedList []*hydra.OAuth2ClientJSON
+			json.Unmarshal([]byte(serverResponse.respBody), &expectedList)
+			assert.Equal(expectedList, list)
+			assert.Equal(1, countServerHits)
+		})
+
+		t.Run("case/clients from expired cache", func(t *testing.T) {
+			// given
+			serverResponse := server{
+				http.StatusOK,
+				fmt.Sprintf("[%s,%s]", testClientList, testClientList2),
+				nil,
+			}
+			cacheExpirationTime := 200 * time.Millisecond
+			c := hydra.Client{
+				HTTPClient: &http.Client{},
+				HydraURL:   url.URL{Scheme: schemeHTTP},
+				Cache:      cache.New(cacheExpirationTime, 5*time.Minute),
+			}
+			countServerHits := 0
+			h := countingHandler(&countServerHits, &c, serverResponse)
+			runServer(&c, h)
+
+			// when
+			var list []*hydra.OAuth2ClientJSON
+			var err error
+			for i := 0; i < 2; i++ {
+				list, err = c.ListOAuth2Client()
+				time.Sleep(2 * cacheExpirationTime)
+			}
+
+			//then
+			require.NoError(t, err)
+			require.NotNil(t, list)
+			var expectedList []*hydra.OAuth2ClientJSON
+			json.Unmarshal([]byte(serverResponse.respBody), &expectedList)
+			assert.Equal(expectedList, list)
+			assert.Equal(2, countServerHits)
+		})
+
+		t.Run("case/clients from invalidated cache", func(t *testing.T) {
+			// given
+			serverResponse := server{
+				http.StatusOK,
+				fmt.Sprintf("[%s,%s]", testClientList, testClientList2),
+				nil,
+			}
+			cacheExpirationTime := 200 * time.Millisecond
+			c := hydra.Client{
+				HTTPClient: &http.Client{},
+				HydraURL:   url.URL{Scheme: schemeHTTP},
+				Cache:      cache.New(cacheExpirationTime, 5*time.Minute),
+			}
+			countListRequests := 0
+			h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				assert.Equal(c.HydraURL.String(), fmt.Sprintf("%s://%s%s", schemeHTTP, req.Host, req.URL.Path))
+				if http.MethodGet == req.Method {
+					countListRequests++
+					w.WriteHeader(serverResponse.statusCode)
+					w.Write([]byte(serverResponse.respBody))
+					w.Header().Set("Content-type", "application/json")
+				} else {
+					w.WriteHeader(serverResponse.statusCode)
+					w.Write([]byte(serverResponse.respBody))
+					w.Header().Set("Content-type", "application/json")
+				}
+			})
+			runServer(&c, h)
+
+			// when
+			list, err := c.ListOAuth2Client()
+			err = c.DeleteOAuth2Client(*list[0].ClientID) // creating, updating, removing client invalidates cache
+			list, err = c.ListOAuth2Client()
+
+			//then
+			require.NoError(t, err)
+			require.NotNil(t, list)
+			assert.Equal(2, countListRequests)
+		})
 	})
 
 	t.Run("default parameters", func(t *testing.T) {
