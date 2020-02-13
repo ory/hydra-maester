@@ -465,14 +465,16 @@ func TestCRUD(t *testing.T) {
 			}
 			countListRequests := 0
 			h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-				assert.Equal(c.HydraURL.String(), fmt.Sprintf("%s://%s%s", schemeHTTP, req.Host, req.URL.Path))
 				if http.MethodGet == req.Method {
+					assert.Equal(c.HydraURL.String(), fmt.Sprintf("%s://%s%s", schemeHTTP, req.Host, req.URL.Path))
 					countListRequests++
 					w.WriteHeader(serverResponse.statusCode)
 					w.Write([]byte(serverResponse.respBody))
 					w.Header().Set("Content-type", "application/json")
 				} else {
-					w.WriteHeader(serverResponse.statusCode)
+					assert.Equal(fmt.Sprintf("%s/%s", c.HydraURL.String(), "test-id-4"), fmt.Sprintf("%s://%s%s", schemeHTTP, req.Host, req.URL.Path))
+					assert.Equal(http.MethodDelete, req.Method)
+					w.WriteHeader(http.StatusNoContent)
 					w.Write([]byte(serverResponse.respBody))
 					w.Header().Set("Content-type", "application/json")
 				}

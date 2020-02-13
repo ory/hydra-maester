@@ -50,9 +50,9 @@ func init() {
 
 func main() {
 	var (
-		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod string
-		hydraPort                                                   int
-		enableLeaderElection                                        bool
+		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod, clientsCacheExpiration string
+		hydraPort                                                                           int
+		enableLeaderElection, enableClientsCache                                            bool
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
