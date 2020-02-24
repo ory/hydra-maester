@@ -229,9 +229,12 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 			}},
 		},
 		Data: map[string][]byte{
-			ClientIDKey:     []byte(*created.ClientID),
-			ClientSecretKey: []byte(*created.Secret),
+			ClientIDKey: []byte(*created.ClientID),
 		},
+	}
+
+	if created.Secret != nil {
+		clientSecret.Data[ClientSecretKey] = []byte(*created.Secret)
 	}
 
 	if err := r.Create(ctx, &clientSecret); err != nil {
