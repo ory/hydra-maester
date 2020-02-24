@@ -320,10 +320,7 @@ func parseSecret(secret apiv1.Secret) (*hydra.Oauth2ClientCredentials, error) {
 		return nil, errors.New(`"client_id property missing"`)
 	}
 
-	psw, found := secret.Data[ClientSecretKey]
-	if !found {
-		return nil, errors.New(`"client_secret property missing"`)
-	}
+	psw := secret.Data[ClientSecretKey]
 
 	return &hydra.Oauth2ClientCredentials{
 		ID:       id,
