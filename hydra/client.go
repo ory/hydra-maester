@@ -33,7 +33,7 @@ func (c *Client) GetOAuth2Client(id string) (*OAuth2ClientJSON, bool, error) {
 	switch resp.StatusCode {
 	case http.StatusOK:
 		return jsonClient, true, nil
-	case http.StatusNotFound:
+	case http.StatusNotFound, http.StatusUnauthorized:
 		return nil, false, nil
 	default:
 		return nil, false, fmt.Errorf("%s %s http request returned unexpected status code %s", req.Method, req.URL.String(), resp.Status)

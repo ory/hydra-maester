@@ -30,6 +30,7 @@ const (
 	testClientWithMetadataCreated = `{"client_id":"test-id-21","client_secret":"TmGkvcY7k526","owner":"test-name-21","scope":"some,other,scopes","grant_types":["type2"],"token_endpoint_auth_method":"client_secret_basic","metadata":{"property1":1,"property2":"2"}}`
 
 	statusNotFoundBody            = `{"error":"Not Found","error_description":"Unable to locate the requested resource","status_code":404,"request_id":"id"}`
+	statusUnauthorizedBody        = `{"error":"The request could not be authorized","error_description":"The requested OAuth 2.0 client does not exist or you did not provide the necessary credentials","status_code":401,"request_id":"id"}`
 	statusConflictBody            = `{"error":"Unable to insert or update resource because a resource with that value exists already","error_description":"","status_code":409,"request_id":"id"`
 	statusInternalServerErrorBody = "the server encountered an internal error or misconfiguration and was unable to complete your request"
 )
@@ -75,6 +76,11 @@ func TestCRUD(t *testing.T) {
 			"getting unregistered client": {
 				http.StatusNotFound,
 				statusNotFoundBody,
+				nil,
+			},
+			"getting unauthorized request": {
+				http.StatusUnauthorized,
+				statusUnauthorizedBody,
 				nil,
 			},
 			"internal server error when requesting": {
