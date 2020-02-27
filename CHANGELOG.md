@@ -4,6 +4,7 @@
 
 - [Changelog](#changelog)
   - [Unreleased](#unreleased)
+  - [v0.0.15 (2020-02-27)](#v0015-2020-02-27)
   - [v0.0.14 (2020-02-11)](#v0014-2020-02-11)
   - [v0.0.13 (2020-02-11)](#v0013-2020-02-11)
   - [v0.0.12 (2020-02-05)](#v0012-2020-02-05)
@@ -27,11 +28,27 @@
 
 ## [Unreleased](https://github.com/ory/hydra-maester/tree/HEAD)
 
-[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.14...HEAD)
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.15...HEAD)
+
+**Fixed bugs:**
+
+- Reconciliation Broken with Hydra \> 1.3 [\#49](https://github.com/ory/hydra-maester/issues/49)
+
+**Closed issues:**
+
+- Maester controller [\#3](https://github.com/ory/hydra-maester/issues/3)
+
+## [v0.0.15](https://github.com/ory/hydra-maester/tree/v0.0.15) (2020-02-27)
+
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.14...v0.0.15)
 
 **Closed issues:**
 
 - Restarting hydra-maester should trigger a reconcile check [\#43](https://github.com/ory/hydra-maester/issues/43)
+
+**Merged pull requests:**
+
+- fix: Reconciliation Broken with Hydra \> 1.3 [\#50](https://github.com/ory/hydra-maester/pull/50) ([jhutchins](https://github.com/jhutchins))
 
 ## [v0.0.14](https://github.com/ory/hydra-maester/tree/v0.0.14) (2020-02-11)
 
