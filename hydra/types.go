@@ -28,6 +28,8 @@ type Oauth2ClientCredentials struct {
 
 func (oj *OAuth2ClientJSON) WithCredentials(credentials *Oauth2ClientCredentials) *OAuth2ClientJSON {
 	oj.ClientID = pointer.StringPtr(string(credentials.ID))
-	oj.Secret = pointer.StringPtr(string(credentials.Password))
+	if credentials.Password != nil {
+		oj.Secret = pointer.StringPtr(string(credentials.Password))
+	}
 	return oj
 }
