@@ -128,7 +128,7 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		return ctrl.Result{}, err
 	}
 
-	credentials, err := parseSecret(secret)
+	credentials, err := parseSecret(secret, oauth2client.Spec.TokenEndpointAuthMethod)
 	if err != nil {
 		r.Log.Error(err, fmt.Sprintf("secret %s/%s is invalid", secret.Name, secret.Namespace))
 		if updateErr := r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidSecret, err); updateErr != nil {
@@ -229,9 +229,12 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 			}},
 		},
 		Data: map[string][]byte{
-			ClientIDKey:     []byte(*created.ClientID),
-			ClientSecretKey: []byte(*created.Secret),
+			ClientIDKey: []byte(*created.ClientID),
 		},
+	}
+
+	if created.Secret != nil {
+		clientSecret.Data[ClientSecretKey] = []byte(*created.Secret)
 	}
 
 	if err := r.Create(ctx, &clientSecret); err != nil {
@@ -310,7 +313,7 @@ func (r *OAuth2ClientReconciler) updateClientStatus(ctx context.Context, c *hydr
 	return nil
 }
 
-func parseSecret(secret apiv1.Secret) (*hydra.Oauth2ClientCredentials, error) {
+func parseSecret(secret apiv1.Secret, authMethod hydrav1alpha1.TokenEndpointAuthMethod) (*hydra.Oauth2ClientCredentials, error) {
 
 	id, found := secret.Data[ClientIDKey]
 	if !found {
@@ -318,7 +321,7 @@ func parseSecret(secret apiv1.Secret) (*hydra.Oauth2ClientCredentials, error) {
 	}
 
 	psw, found := secret.Data[ClientSecretKey]
-	if !found {
+	if !found && authMethod != "none" {
 		return nil, errors.New(`"client_secret property missing"`)
 	}
 
