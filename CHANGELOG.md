@@ -4,6 +4,7 @@
 
 - [Changelog](#changelog)
   - [Unreleased](#unreleased)
+  - [v0.0.16 (2020-03-26)](#v0016-2020-03-26)
   - [v0.0.15 (2020-02-27)](#v0015-2020-02-27)
   - [v0.0.14 (2020-02-11)](#v0014-2020-02-11)
   - [v0.0.13 (2020-02-11)](#v0013-2020-02-11)
@@ -28,7 +29,15 @@
 
 ## [Unreleased](https://github.com/ory/hydra-maester/tree/HEAD)
 
-[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.15...HEAD)
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.16...HEAD)
+
+**Closed issues:**
+
+- Maester crash when creating a client with tokenEndpointAuthMethod: none [\#52](https://github.com/ory/hydra-maester/issues/52)
+
+## [v0.0.16](https://github.com/ory/hydra-maester/tree/v0.0.16) (2020-03-26)
+
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.15...v0.0.16)
 
 **Fixed bugs:**
 
@@ -37,6 +46,10 @@
 **Closed issues:**
 
 - Maester controller [\#3](https://github.com/ory/hydra-maester/issues/3)
+
+**Merged pull requests:**
+
+- fix: Tolerate nil secret when tokenEndpointAuthMethod: none [\#53](https://github.com/ory/hydra-maester/pull/53) ([clement-buchart](https://github.com/clement-buchart))
 
 ## [v0.0.15](https://github.com/ory/hydra-maester/tree/v0.0.15) (2020-02-27)
 
