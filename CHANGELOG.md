@@ -3,7 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Changelog](#changelog)
-  - [Unreleased](#unreleased)
+  - [v0.0.17 (2020-03-26)](#v0017-2020-03-26)
   - [v0.0.16 (2020-03-26)](#v0016-2020-03-26)
   - [v0.0.15 (2020-02-27)](#v0015-2020-02-27)
   - [v0.0.14 (2020-02-11)](#v0014-2020-02-11)
@@ -27,9 +27,9 @@
 
 # Changelog
 
-## [Unreleased](https://github.com/ory/hydra-maester/tree/HEAD)
+## [v0.0.17](https://github.com/ory/hydra-maester/tree/v0.0.17) (2020-03-26)
 
-[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.16...HEAD)
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.16...v0.0.17)
 
 **Closed issues:**
 
