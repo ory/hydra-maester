@@ -106,6 +106,7 @@ func TestCreateAPI(t *testing.T) {
 				"invalid scope":                 func() { created.Spec.Scope = "" },
 				"missing secret name":           func() { created.Spec.SecretName = "" },
 				"invalid redirect URI":          func() { created.Spec.RedirectURIs = []RedirectURI{"invalid"} },
+				"invalid logout redirect URI":   func() { created.Spec.PostLogoutRedirectURIs = []RedirectURI{"invalid"} },
 				"invalid hydra url":             func() { created.Spec.HydraAdmin.URL = "invalid" },
 				"invalid hydra port high":       func() { created.Spec.HydraAdmin.Port = 65536 },
 				"invalid hydra endpoint":        func() { created.Spec.HydraAdmin.Endpoint = "invalid" },
