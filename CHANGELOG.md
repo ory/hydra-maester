@@ -3,6 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Changelog](#changelog)
+  - [v0.0.18 (2020-06-08)](#v0018-2020-06-08)
   - [v0.0.17 (2020-03-26)](#v0017-2020-03-26)
   - [v0.0.16 (2020-03-26)](#v0016-2020-03-26)
   - [v0.0.15 (2020-02-27)](#v0015-2020-02-27)
@@ -26,6 +27,18 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Changelog
+
+## [v0.0.18](https://github.com/ory/hydra-maester/tree/v0.0.18) (2020-06-08)
+
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.17...v0.0.18)
+
+**Closed issues:**
+
+- Distinction between `redirect\_uris ` and `post\_logout\_redirect\_uris` into maester? [\#51](https://github.com/ory/hydra-maester/issues/51)
+
+**Merged pull requests:**
+
+- feat: Allows postLogoutRedirectsUris to be set [\#54](https://github.com/ory/hydra-maester/pull/54) ([clement-buchart](https://github.com/clement-buchart))
 
 ## [v0.0.17](https://github.com/ory/hydra-maester/tree/v0.0.17) (2020-03-26)
 
