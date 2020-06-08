@@ -84,6 +84,9 @@ type OAuth2ClientSpec struct {
 	// RedirectURIs is an array of the redirect URIs allowed for the application
 	RedirectURIs []RedirectURI `json:"redirectUris,omitempty"`
 
+	// PostLogoutRedirectURIs is an array of the post logout redirect URIs allowed for the application
+	PostLogoutRedirectURIs []RedirectURI `json:"postLogoutRedirectUris,omitempty"`
+
 	// Audience is a whitelist defining the audiences this client is allowed to request tokens for
 	Audience []string `json:"audience,omitempty"`
 
@@ -105,7 +108,7 @@ type OAuth2ClientSpec struct {
 	// this client
 	HydraAdmin HydraAdmin `json:"hydraAdmin,omitempty"`
 
-	// +kubebuilder:validation:Enum=;client_secret_basic;client_secret_post;private_key_jwt;none
+	// +kubebuilder:validation:Enum=client_secret_basic;client_secret_post;private_key_jwt;none
 	//
 	// Indication which authentication method shoud be used for the token endpoint
 	TokenEndpointAuthMethod TokenEndpointAuthMethod `json:"tokenEndpointAuthMethod,omitempty"`
@@ -126,7 +129,7 @@ type ResponseType string
 // RedirectURI represents a redirect URI for the client
 type RedirectURI string
 
-// +kubebuilder:validation:Enum=;client_secret_basic;client_secret_post;private_key_jwt;none
+// +kubebuilder:validation:Enum=client_secret_basic;client_secret_post;private_key_jwt;none
 // TokenEndpointAuthMethod represents an authentication method for token endpoint
 type TokenEndpointAuthMethod string
 
@@ -176,6 +179,7 @@ func (c *OAuth2Client) ToOAuth2ClientJSON() *hydra.OAuth2ClientJSON {
 		GrantTypes:              grantToStringSlice(c.Spec.GrantTypes),
 		ResponseTypes:           responseToStringSlice(c.Spec.ResponseTypes),
 		RedirectURIs:            redirectToStringSlice(c.Spec.RedirectURIs),
+		PostLogoutRedirectURIs:  redirectToStringSlice(c.Spec.PostLogoutRedirectURIs),
 		Audience:                c.Spec.Audience,
 		Scope:                   c.Spec.Scope,
 		Owner:                   fmt.Sprintf("%s/%s", c.Name, c.Namespace),

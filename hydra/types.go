@@ -12,6 +12,7 @@ type OAuth2ClientJSON struct {
 	Secret                  *string         `json:"client_secret,omitempty"`
 	GrantTypes              []string        `json:"grant_types"`
 	RedirectURIs            []string        `json:"redirect_uris,omitempty"`
+	PostLogoutRedirectURIs  []string        `json:"post_logout_redirect_uris,omitempty"`
 	ResponseTypes           []string        `json:"response_types,omitempty"`
 	Audience                []string        `json:"audience,omitempty"`
 	Scope                   string          `json:"scope"`
