@@ -393,6 +393,10 @@ spec:
               items:
                 type: string
               type: array
+            clientName:
+              description: ClientName is the human-readable string name of the client
+                to be presented to the end-user during authorization.
+              type: string
             grantTypes:
               description: GrantTypes is an array of grant types the client is allowed
                 to use.

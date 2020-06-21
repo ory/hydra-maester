@@ -68,6 +68,10 @@ type HydraAdmin struct {
 
 // OAuth2ClientSpec defines the desired state of OAuth2Client
 type OAuth2ClientSpec struct {
+
+	// ClientName is the human-readable string name of the client to be presented to the end-user during authorization.
+	ClientName string `json:"clientName,omitempty"`
+
 	// +kubebuilder:validation:MaxItems=4
 	// +kubebuilder:validation:MinItems=1
 	//
@@ -176,6 +180,7 @@ func init() {
 // ToOAuth2ClientJSON converts an OAuth2Client into a OAuth2ClientJSON object that represents an OAuth2 client digestible by ORY Hydra
 func (c *OAuth2Client) ToOAuth2ClientJSON() *hydra.OAuth2ClientJSON {
 	return &hydra.OAuth2ClientJSON{
+		ClientName:              c.Spec.ClientName,
 		GrantTypes:              grantToStringSlice(c.Spec.GrantTypes),
 		ResponseTypes:           responseToStringSlice(c.Spec.ResponseTypes),
 		RedirectURIs:            redirectToStringSlice(c.Spec.RedirectURIs),

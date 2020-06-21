@@ -8,6 +8,7 @@ import (
 
 // OAuth2ClientJSON represents an OAuth2 client digestible by ORY Hydra
 type OAuth2ClientJSON struct {
+	ClientName              string          `json:"client_name,omitempty"`
 	ClientID                *string         `json:"client_id,omitempty"`
 	Secret                  *string         `json:"client_secret,omitempty"`
 	GrantTypes              []string        `json:"grant_types"`
