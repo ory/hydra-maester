@@ -59,6 +59,7 @@ type OAuth2ClientReconciler struct {
 	HydraClient      HydraClientInterface
 	HydraClientMaker HydraClientMakerFunc
 	Log              logr.Logger
+	Namespaces       []string
 	otherClients     map[clientMapKey]HydraClientInterface
 	client.Client
 }
@@ -158,7 +159,7 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	}
 
 	if found {
-		//conclude reconciliation if the client exists and has not been updated
+		// conclude reconciliation if the client exists and has not been updated
 		if oauth2client.Generation == oauth2client.Status.ObservedGeneration {
 			return ctrl.Result{}, nil
 		}
@@ -185,9 +186,14 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 }
 
 func (r *OAuth2ClientReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&hydrav1alpha1.OAuth2Client{}).
-		Complete(r)
+	builder := ctrl.NewControllerManagedBy(mgr).
+		For(&hydrav1alpha1.OAuth2Client{})
+	if len(r.Namespaces) > 0 {
+		builder = builder.WithEventFilter(&filter{
+			namespaces: r.Namespaces,
+		})
+	}
+	return builder.Complete(r)
 }
 
 func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hydrav1alpha1.OAuth2Client, credentials *hydra.Oauth2ClientCredentials) error {

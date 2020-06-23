@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ory/hydra-maester/hydra"
@@ -49,9 +50,9 @@ func init() {
 
 func main() {
 	var (
-		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod string
-		hydraPort                                                   int
-		enableLeaderElection                                        bool
+		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod, namespaces string
+		hydraPort                                                               int
+		enableLeaderElection                                                    bool
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -62,6 +63,7 @@ func main() {
 	flag.StringVar(&syncPeriod, "sync-period", "10h", "Determines the minimum frequency at which watched resources are reconciled")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(&namespaces, "namespaces", "", "If set, this filters the namespaces that oauth2clients will be processed from")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.Logger(true))
@@ -104,12 +106,16 @@ func main() {
 
 	}
 
-	err = (&controllers.OAuth2ClientReconciler{
+	reconciler := &controllers.OAuth2ClientReconciler{
 		Client:           mgr.GetClient(),
 		Log:              ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
 		HydraClient:      hydraClient,
 		HydraClientMaker: hydraClientMaker,
-	}).SetupWithManager(mgr)
+	}
+	if namespaces != "" {
+		reconciler.Namespaces = strings.Split(namespaces, ",")
+	}
+	err = reconciler.SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OAuth2Client")
 		os.Exit(1)
