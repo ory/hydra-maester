@@ -14,6 +14,7 @@ type OAuth2ClientJSON struct {
 	GrantTypes              []string        `json:"grant_types"`
 	RedirectURIs            []string        `json:"redirect_uris,omitempty"`
 	PostLogoutRedirectURIs  []string        `json:"post_logout_redirect_uris,omitempty"`
+	AllowedCorsOrigins      []string        `json:"allowed_cors_origins,omitempty"`
 	ResponseTypes           []string        `json:"response_types,omitempty"`
 	Audience                []string        `json:"audience,omitempty"`
 	Scope                   string          `json:"scope"`
