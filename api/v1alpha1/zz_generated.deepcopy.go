@@ -121,6 +121,11 @@ func (in *OAuth2ClientSpec) DeepCopyInto(out *OAuth2ClientSpec) {
 		*out = make([]RedirectURI, len(*in))
 		copy(*out, *in)
 	}
+	if in.AllowedCorsOrigins != nil {
+		in, out := &in.AllowedCorsOrigins, &out.AllowedCorsOrigins
+		*out = make([]RedirectURI, len(*in))
+		copy(*out, *in)
+	}
 	if in.Audience != nil {
 		in, out := &in.Audience, &out.Audience
 		*out = make([]string, len(*in))

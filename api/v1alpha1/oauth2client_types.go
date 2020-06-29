@@ -91,6 +91,9 @@ type OAuth2ClientSpec struct {
 	// PostLogoutRedirectURIs is an array of the post logout redirect URIs allowed for the application
 	PostLogoutRedirectURIs []RedirectURI `json:"postLogoutRedirectUris,omitempty"`
 
+	// AllowedCorsOrigins is an array of allowed CORS origins
+	AllowedCorsOrigins []RedirectURI `json:"allowedCorsOrigins,omitempty"`
+
 	// Audience is a whitelist defining the audiences this client is allowed to request tokens for
 	Audience []string `json:"audience,omitempty"`
 
@@ -185,6 +188,7 @@ func (c *OAuth2Client) ToOAuth2ClientJSON() *hydra.OAuth2ClientJSON {
 		ResponseTypes:           responseToStringSlice(c.Spec.ResponseTypes),
 		RedirectURIs:            redirectToStringSlice(c.Spec.RedirectURIs),
 		PostLogoutRedirectURIs:  redirectToStringSlice(c.Spec.PostLogoutRedirectURIs),
+		AllowedCorsOrigins:      redirectToStringSlice(c.Spec.AllowedCorsOrigins),
 		Audience:                c.Spec.Audience,
 		Scope:                   c.Spec.Scope,
 		Owner:                   fmt.Sprintf("%s/%s", c.Name, c.Namespace),

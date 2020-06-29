@@ -387,6 +387,12 @@ spec:
           type: object
         spec:
           properties:
+            allowedCorsOrigins:
+              description: AllowedCorsOrigins is an array of allowed CORS origins
+              items:
+                pattern: \w+:/?/?[^\s]+
+                type: string
+              type: array
             audience:
               description: Audience is a whitelist defining the audiences this client
                 is allowed to request tokens for
