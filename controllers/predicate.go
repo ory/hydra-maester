@@ -35,4 +35,3 @@ func (f filter) Update(event event.UpdateEvent) bool {
 func (f filter) Generic(event event.GenericEvent) bool {
 	return f.allowed(event.Meta.GetNamespace())
 }
-
