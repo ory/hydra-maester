@@ -3,6 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Changelog](#changelog)
+  - [v0.0.19 (2020-06-29)](#v0019-2020-06-29)
   - [v0.0.18 (2020-06-08)](#v0018-2020-06-08)
   - [v0.0.17 (2020-03-26)](#v0017-2020-03-26)
   - [v0.0.16 (2020-03-26)](#v0016-2020-03-26)
@@ -27,6 +28,15 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Changelog
+
+## [v0.0.19](https://github.com/ory/hydra-maester/tree/v0.0.19) (2020-06-29)
+
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.18...v0.0.19)
+
+**Merged pull requests:**
+
+- feat: Add AllowedCorsOrigins [\#58](https://github.com/ory/hydra-maester/pull/58) ([greenboxal](https://github.com/greenboxal))
+- feat: Adding oauth client name to the CRD spec [\#56](https://github.com/ory/hydra-maester/pull/56) ([angelokurtis](https://github.com/angelokurtis))
 
 ## [v0.0.18](https://github.com/ory/hydra-maester/tree/v0.0.18) (2020-06-08)
 
