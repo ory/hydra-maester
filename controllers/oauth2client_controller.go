@@ -202,19 +202,22 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 
 	if credentials != nil {
 		if _, err := hydra.PostOAuth2Client(c.ToOAuth2ClientJSON().WithCredentials(credentials)); err != nil {
+			r.Log.Error(err, fmt.Sprintf("unable to register client %s/%s in hydra ", c.Name, c.Namespace))
 			if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
 				return updateErr
 			}
+			return err
 		}
-		return r.ensureEmptyStatusError(ctx, c)
+		return nil
 	}
 
 	created, err := hydra.PostOAuth2Client(c.ToOAuth2ClientJSON())
 	if err != nil {
+		r.Log.Error(err, fmt.Sprintf("unable to register client %s/%s in hydra ", c.Name, c.Namespace))
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
 			return updateErr
 		}
-		return nil
+		return err
 	}
 
 	clientSecret := apiv1.Secret{
