@@ -18,10 +18,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/ory/hydra-maester/helpers"
 
 	"github.com/ory/hydra-maester/hydra"
 
@@ -49,9 +50,9 @@ func init() {
 
 func main() {
 	var (
-		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod string
-		hydraPort                                                   int
-		enableLeaderElection                                        bool
+		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod, tlsTrustStore string
+		hydraPort                                                                  int
+		enableLeaderElection, insecureSkipVerify                                   bool
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -59,9 +60,10 @@ func main() {
 	flag.IntVar(&hydraPort, "hydra-port", 4445, "Port ORY Hydra is listening on")
 	flag.StringVar(&endpoint, "endpoint", "/clients", "ORY Hydra's client endpoint")
 	flag.StringVar(&forwardedProto, "forwarded-proto", "", "If set, this adds the value as the X-Forwarded-Proto header in requests to the ORY Hydra admin server")
+	flag.StringVar(&tlsTrustStore, "tls-trust-store", "", "trust store certificate path. If set ca will be set in http client to connect with hydra admin")
 	flag.StringVar(&syncPeriod, "sync-period", "10h", "Determines the minimum frequency at which watched resources are reconciled")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
-		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&insecureSkipVerify, "insecure-skip-verify", false, "If set, http client will be configured to skip insecure verification to connect with hydra admin")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
@@ -96,8 +98,14 @@ func main() {
 			ForwardedProto: forwardedProto,
 		},
 	}
-	hydraClientMaker := getHydraClientMaker(defaultSpec)
-	hydraClient, err := hydraClientMaker(defaultSpec)
+	if tlsTrustStore != "" {
+		if _, err := os.Stat(tlsTrustStore); err != nil {
+			setupLog.Error(err, "cannot parse tls trust store")
+			os.Exit(1)
+		}
+	}
+
+	hydraClient, err := getHydraClient(defaultSpec, tlsTrustStore, insecureSkipVerify)
 	if err != nil {
 		setupLog.Error(err, "making default hydra client", "controller", "OAuth2Client")
 		os.Exit(1)
@@ -105,10 +113,9 @@ func main() {
 	}
 
 	err = (&controllers.OAuth2ClientReconciler{
-		Client:           mgr.GetClient(),
-		Log:              ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
-		HydraClient:      hydraClient,
-		HydraClientMaker: hydraClientMaker,
+		Client:      mgr.GetClient(),
+		Log:         ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
+		HydraClient: hydraClient,
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OAuth2Client")
@@ -123,39 +130,27 @@ func main() {
 	}
 }
 
-func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec) controllers.HydraClientMakerFunc {
+func getHydraClient(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) (controllers.HydraClientInterface, error) {
 
-	return controllers.HydraClientMakerFunc(func(spec hydrav1alpha1.OAuth2ClientSpec) (controllers.HydraClientInterface, error) {
+	address := fmt.Sprintf("%s:%d", spec.HydraAdmin.URL, spec.HydraAdmin.Port)
+	u, err := url.Parse(address)
+	if err != nil {
+		return nil, err
+	}
 
-		if spec.HydraAdmin.URL == "" {
-			spec.HydraAdmin.URL = defaultSpec.HydraAdmin.URL
-		}
-		if spec.HydraAdmin.Port == 0 {
-			spec.HydraAdmin.Port = defaultSpec.HydraAdmin.Port
-		}
-		if spec.HydraAdmin.Endpoint == "" {
-			spec.HydraAdmin.Endpoint = defaultSpec.HydraAdmin.Endpoint
-		}
-		if spec.HydraAdmin.ForwardedProto == "" {
-			spec.HydraAdmin.ForwardedProto = defaultSpec.HydraAdmin.ForwardedProto
-		}
+	c, err := helpers.CreateHttpClient(insecureSkipVerify, tlsTrustStore)
+	if err != nil {
+		return nil, err
+	}
 
-		address := fmt.Sprintf("%s:%d", spec.HydraAdmin.URL, spec.HydraAdmin.Port)
-		u, err := url.Parse(address)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse ORY Hydra's URL: %w", err)
-		}
+	client := &hydra.Client{
+		HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
+		HTTPClient: c,
+	}
 
-		client := &hydra.Client{
-			HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
-			HTTPClient: &http.Client{},
-		}
+	if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
+		client.ForwardedProto = spec.HydraAdmin.ForwardedProto
+	}
 
-		if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
-			client.ForwardedProto = spec.HydraAdmin.ForwardedProto
-		}
-
-		return client, nil
-	})
-
+	return client, nil
 }
