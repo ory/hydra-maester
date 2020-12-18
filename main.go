@@ -16,12 +16,15 @@ limitations under the License.
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
+
+	httptransport "github.com/go-openapi/runtime/client"
 
 	"github.com/ory/hydra-maester/hydra"
 
@@ -49,9 +52,9 @@ func init() {
 
 func main() {
 	var (
-		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod string
-		hydraPort                                                   int
-		enableLeaderElection                                        bool
+		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod, tlsTrustStore string
+		hydraPort                                                                  int
+		enableLeaderElection, insecureSkipVerify                                   bool
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -59,9 +62,10 @@ func main() {
 	flag.IntVar(&hydraPort, "hydra-port", 4445, "Port ORY Hydra is listening on")
 	flag.StringVar(&endpoint, "endpoint", "/clients", "ORY Hydra's client endpoint")
 	flag.StringVar(&forwardedProto, "forwarded-proto", "", "If set, this adds the value as the X-Forwarded-Proto header in requests to the ORY Hydra admin server")
+	flag.StringVar(&tlsTrustStore, "tls-trust-store", "", "trust store certificate path. If set ca will be set in http client to connect with hydra admin")
 	flag.StringVar(&syncPeriod, "sync-period", "10h", "Determines the minimum frequency at which watched resources are reconciled")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
-		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&insecureSkipVerify, "insecure-skip-verify", false, "If set, http client will be configured to skip insecure verification to connect with hydra admin")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.Logger(true))
@@ -96,7 +100,7 @@ func main() {
 			ForwardedProto: forwardedProto,
 		},
 	}
-	hydraClientMaker := getHydraClientMaker(defaultSpec)
+	hydraClientMaker := getHydraClientMaker(defaultSpec, tlsTrustStore, insecureSkipVerify)
 	hydraClient, err := hydraClientMaker(defaultSpec)
 	if err != nil {
 		setupLog.Error(err, "making default hydra client", "controller", "OAuth2Client")
@@ -123,7 +127,7 @@ func main() {
 	}
 }
 
-func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec) controllers.HydraClientMakerFunc {
+func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) controllers.HydraClientMakerFunc {
 
 	return controllers.HydraClientMakerFunc(func(spec hydrav1alpha1.OAuth2ClientSpec) (controllers.HydraClientInterface, error) {
 
@@ -148,7 +152,7 @@ func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec) controllers
 
 		client := &hydra.Client{
 			HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
-			HTTPClient: &http.Client{},
+			HTTPClient: createHttpClient(insecureSkipVerify, tlsTrustStore),
 		}
 
 		if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
@@ -158,4 +162,26 @@ func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec) controllers
 		return client, nil
 	})
 
+}
+
+func createHttpClient(insecureSkipVerify bool, tlsTrustStore string) *http.Client {
+	tr := &http.Transport{}
+	httpClient := &http.Client{}
+	if insecureSkipVerify {
+		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		httpClient.Transport = tr
+	}
+	if tlsTrustStore != "" {
+		setupLog.Info("configuring TLS with tlsTrustStore")
+		ops := httptransport.TLSClientOptions{
+			CA:                 tlsTrustStore,
+			InsecureSkipVerify: insecureSkipVerify,
+		}
+		if tlsClient, err := httptransport.TLSClient(ops); err != nil {
+			setupLog.Error(err, "Error while getting TLSClient, default http client will be used")
+		} else {
+			httpClient = tlsClient
+		}
+	}
+	return httpClient
 }
