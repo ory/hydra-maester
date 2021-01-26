@@ -18,11 +18,13 @@ jobs:
        arch=$(go env GOARCH)
 
        # download kubebuilder and extract it to tmp
-       curl -sL https://go.kubebuilder.io/dl/2.0.0-alpha.4/${os}/${arch} | tar -xz -C /tmp/
+       curl -L https://go.kubebuilder.io/dl/2.3.1/${os}/${arch} | tar -xz -C /tmp/
+
 
        # move to a long-term location and put it on your path
        # (you'll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else)
-       sudo mv /tmp/kubebuilder_2.0.0-alpha.4_${os}_${arch} /usr/local/kubebuilder
+       sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch} /usr/local/kubebuilder
+
        export PATH=$PATH:/usr/local/kubebuilder/bin
 
    - run: make
@@ -36,17 +38,21 @@ jobs:
    - checkout
    - run:
       name: Fetch kube-builder
-      command: |
        os=$(go env GOOS)
-       arch=$(go env GOARCH)
+        arch=$(go env GOARCH)
+      command: |
+        os=$(go env GOOS)
+        arch=$(go env GOARCH)
 
-       # download kubebuilder and extract it to tmp
-       curl -sL https://go.kubebuilder.io/dl/2.0.0-alpha.4/${os}/${arch} | tar -xz -C /tmp/
+        # download kubebuilder and extract it to tmp
+        curl -L https://go.kubebuilder.io/dl/2.3.1/${os}/${arch} | tar -xz -C /tmp/
 
-       # move to a long-term location and put it on your path
-       # (you'll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else)
-       sudo mv /tmp/kubebuilder_2.0.0-alpha.4_${os}_${arch} /usr/local/kubebuilder
-       export PATH=$PATH:/usr/local/kubebuilder/bin
+
+        # move to a long-term location and put it on your path
+        # (you'll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else)
+        sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch} /usr/local/kubebuilder
+
+        export PATH=$PATH:/usr/local/kubebuilder/bin
    - run: make test
  test-integration:
   machine: true
@@ -64,16 +70,18 @@ jobs:
    - run:
       name: Download kube-builder
       command: |
-       os=$(go env GOOS)
-       arch=$(go env GOARCH)
+        os=$(go env GOOS)
+        arch=$(go env GOARCH)
 
-       # download kubebuilder and extract it to tmp
-       curl -sL https://go.kubebuilder.io/dl/2.0.0-alpha.4/${os}/${arch} | tar -xz -C /tmp/
+        # download kubebuilder and extract it to tmp
+        curl -L https://go.kubebuilder.io/dl/2.3.1/${os}/${arch} | tar -xz -C /tmp/
 
-       # move to a long-term location and put it on your path
-       # (you'll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else)
-       sudo mv /tmp/kubebuilder_2.0.0-alpha.4_${os}_${arch} /usr/local/kubebuilder
-       sudo echo "export PATH=$PATH:/usr/local/kubebuilder/bin" >> $HOME/.profile
+
+        # move to a long-term location and put it on your path
+        # (you'll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else)
+        sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch} /usr/local/kubebuilder
+
+        export PATH=$PATH:/usr/local/kubebuilder/bin
 
    - run:
       name: Install kustomize
