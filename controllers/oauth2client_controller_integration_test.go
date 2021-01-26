@@ -435,6 +435,68 @@ var _ = Describe("OAuth2Client Controller", func() {
 				close(stopMgr)
 				mgrStopped.Wait()
 			})
+
+			It("report when the client could not be created", func() {
+				tstName, tstSecretName, tstErrMsg := "test6", "error-on-post", "I failed on POST"
+				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
+
+				s := scheme.Scheme
+				err := hydrav1alpha1.AddToScheme(s)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = apiv1.AddToScheme(s)
+				Expect(err).NotTo(HaveOccurred())
+
+				// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
+				// channel when it is finished.
+				mgr, err := manager.New(cfg, manager.Options{Scheme: s})
+				Expect(err).NotTo(HaveOccurred())
+				c := mgr.GetClient()
+
+				mch := &mocks.HydraClientInterface{}
+				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
+				mch.On("DeleteOAuth2Client", Anything).Return(nil)
+				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
+				mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
+					return nil
+				}, func(o *hydra.OAuth2ClientJSON) error {
+					return fmt.Errorf(tstErrMsg)
+				})
+
+				recFn, requests := SetupTestReconcile(getAPIReconciler(mgr, mch))
+
+				Expect(add(mgr, recFn)).To(Succeed())
+
+				//Start the manager and the controller
+				stopMgr, mgrStopped := StartTestManager(mgr)
+
+				instance := testInstance(tstName, tstSecretName)
+				instance.Spec.TokenEndpointAuthMethod = "none"
+				err = c.Create(context.TODO(), instance)
+				// The instance object may not be a valid object because it might be missing some required fields.
+				// Please modify the instance object by adding required fields and then remove the following if statement.
+				if apierrors.IsInvalid(err) {
+					Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
+					return
+				}
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+				//Verify the created CR instance status
+				var retrieved hydrav1alpha1.OAuth2Client
+				ok := client.ObjectKey{Name: tstName, Namespace: tstNamespace}
+				err = c.Get(context.TODO(), ok, &retrieved)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(retrieved.Status.ReconciliationError.Code).To(Equal(hydrav1alpha1.StatusRegistrationFailed))
+				Expect(retrieved.Status.ReconciliationError.Description).To(Equal(tstErrMsg))
+
+				//delete instance
+				c.Delete(context.TODO(), instance)
+
+				//Ensure manager is stopped properly
+				close(stopMgr)
+				mgrStopped.Wait()
+			})
 		})
 	})
 })

@@ -115,7 +115,6 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		}
 
 		return ctrl.Result{}, nil
-
 	}
 
 	var secret apiv1.Secret
@@ -131,7 +130,7 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 
 	credentials, err := parseSecret(secret, oauth2client.Spec.TokenEndpointAuthMethod)
 	if err != nil {
-		r.Log.Error(err, fmt.Sprintf("secret %s/%s is invalid", secret.Name, secret.Namespace))
+		r.Log.Error(err, fmt.Sprintf("secret %s/%s is invalid", secret.Namespace, secret.Name))
 		if updateErr := r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidSecret, err); updateErr != nil {
 			return ctrl.Result{}, updateErr
 		}
@@ -165,7 +164,7 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		}
 
 		if fetched.Owner != fmt.Sprintf("%s/%s", oauth2client.Name, oauth2client.Namespace) {
-			conflictErr := errors.Errorf("ID provided in secret %s/%s is assigned to another resource", secret.Name, secret.Namespace)
+			conflictErr := errors.Errorf("ID provided in secret %s/%s is assigned to another resource", secret.Namespace, secret.Name)
 			if updateErr := r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidSecret, conflictErr); updateErr != nil {
 				return ctrl.Result{}, updateErr
 			}
@@ -205,7 +204,7 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 
 	if credentials != nil {
 		if _, err := hydra.PostOAuth2Client(c.ToOAuth2ClientJSON().WithCredentials(credentials)); err != nil {
-			r.Log.Error(err, fmt.Sprintf("unable to register client %s/%s in hydra ", c.Name, c.Namespace))
+			r.Log.Error(err, fmt.Sprintf("unable to register client %s/%s in hydra ", c.Namespace, c.Name))
 			if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
 				return updateErr
 			}
@@ -216,7 +215,7 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 
 	created, err := hydra.PostOAuth2Client(c.ToOAuth2ClientJSON())
 	if err != nil {
-		r.Log.Error(err, fmt.Sprintf("unable to register client %s/%s in hydra ", c.Name, c.Namespace))
+		r.Log.Error(err, fmt.Sprintf("unable to register client %s/%s in hydra ", c.Namespace, c.Name))
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
 			return updateErr
 		}
@@ -296,7 +295,7 @@ func (r *OAuth2ClientReconciler) unregisterOAuth2Clients(ctx context.Context, c 
 }
 
 func (r *OAuth2ClientReconciler) updateReconciliationStatusError(ctx context.Context, c *hydrav1alpha1.OAuth2Client, code hydrav1alpha1.StatusCode, err error) error {
-	r.Log.Error(err, fmt.Sprintf("error processing client %s/%s ", c.Name, c.Namespace), "oauth2client", "register")
+	r.Log.Error(err, fmt.Sprintf("error processing client %s/%s ", c.Namespace, c.Name), "oauth2client", "register")
 	c.Status.ReconciliationError = hydrav1alpha1.ReconciliationError{
 		Code:        code,
 		Description: err.Error(),
@@ -313,7 +312,7 @@ func (r *OAuth2ClientReconciler) ensureEmptyStatusError(ctx context.Context, c *
 func (r *OAuth2ClientReconciler) updateClientStatus(ctx context.Context, c *hydrav1alpha1.OAuth2Client) error {
 	c.Status.ObservedGeneration = c.Generation
 	if err := r.Status().Update(ctx, c); err != nil {
-		r.Log.Error(err, fmt.Sprintf("status update failed for client %s/%s ", c.Name, c.Namespace), "oauth2client", "update status")
+		r.Log.Error(err, fmt.Sprintf("status update failed for client %s/%s ", c.Namespace, c.Name), "oauth2client", "update status")
 		return err
 	}
 	return nil
