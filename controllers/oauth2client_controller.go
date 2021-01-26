@@ -18,6 +18,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/go-logr/logr"
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
@@ -185,8 +186,10 @@ func (r *OAuth2ClientReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 }
 
 func (r *OAuth2ClientReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	predicate := predicate.GenerationChangedPredicate{}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&hydrav1alpha1.OAuth2Client{}).
+		WithEventFilter(predicate).
 		Complete(r)
 }
 
