@@ -86,7 +86,7 @@ jobs:
       name: Install ginkgo,controller-gen
       command: |
        go get github.com/onsi/ginkgo/ginkgo
-       go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.0-beta.2
+       go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.5
 
    - run:
       name: Install Kind
