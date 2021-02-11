@@ -55,9 +55,9 @@ func init() {
 
 func main() {
 	var (
-		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod, tlsTrustStore string
-		hydraPort                                                                  int
-		enableLeaderElection, insecureSkipVerify                                   bool
+		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod, tlsTrustStore, namespace, leaderElectorNs string
+		hydraPort                                                                                              int
+		enableLeaderElection, insecureSkipVerify                                                               bool
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -69,6 +69,9 @@ func main() {
 	flag.StringVar(&syncPeriod, "sync-period", "10h", "Determines the minimum frequency at which watched resources are reconciled")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.BoolVar(&insecureSkipVerify, "insecure-skip-verify", false, "If set, http client will be configured to skip insecure verification to connect with hydra admin")
+	flag.StringVar(&namespace, "namespace", "", "Namespace in which the controller should operate. Setting this will make the controller ignore other namespaces.")
+	flag.StringVar(&leaderElectorNs, "leader-elector-namespace", "", "leader elector namespace where controller should be set.")
+
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
@@ -80,11 +83,14 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
-		MetricsBindAddress: metricsAddr,
-		LeaderElection:     enableLeaderElection,
-		SyncPeriod:         &syncPeriodParsed,
+		Scheme:                  scheme,
+		MetricsBindAddress:      metricsAddr,
+		LeaderElection:          enableLeaderElection,
+		SyncPeriod:              &syncPeriodParsed,
+		Namespace:               namespace,
+		LeaderElectionNamespace: leaderElectorNs,
 	})
+
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
@@ -123,9 +129,17 @@ func main() {
 	}
 
 	err = (&controllers.OAuth2ClientReconciler{
+<<<<<<< HEAD
 		Client:      mgr.GetClient(),
 		Log:         ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
 		HydraClient: hydraClient,
+=======
+		Client:              mgr.GetClient(),
+		Log:                 ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
+		HydraClient:         hydraClient,
+		HydraClientMaker:    hydraClientMaker,
+		ControllerNamespace: namespace,
+>>>>>>> 07694ae (Add single namespace operation mode)
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OAuth2Client")
@@ -175,7 +189,7 @@ func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec, tlsTrustSto
 =======
 		client := &hydra.Client{
 			HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
-			HTTPClient: createHttpClient(insecureSkipVerify, tlsTrustStore),
+			HTTPClient: createHTTPClient(insecureSkipVerify, tlsTrustStore),
 		}
 >>>>>>> 6491a99 (Support to ory hydra running in secure mode)
 
@@ -191,7 +205,7 @@ func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec, tlsTrustSto
 	return client, nil
 }
 
-func createHttpClient(insecureSkipVerify bool, tlsTrustStore string) *http.Client {
+func createHTTPClient(insecureSkipVerify bool, tlsTrustStore string) *http.Client {
 	tr := &http.Transport{}
 	httpClient := &http.Client{}
 	if insecureSkipVerify {

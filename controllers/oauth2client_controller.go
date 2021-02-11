@@ -58,6 +58,7 @@ type OAuth2ClientReconciler struct {
 	Log          logr.Logger
 	otherClients map[clientMapKey]HydraClientInterface
 	client.Client
+	ControllerNamespace string
 }
 
 // +kubebuilder:rbac:groups=hydra.ory.sh,resources=oauth2clients,verbs=get;list;watch;create;update;patch;delete
@@ -76,6 +77,15 @@ func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, err
+	}
+
+	// Check request namespace
+	if r.ControllerNamespace != "" {
+		r.Log.Info((fmt.Sprintf("ControllerNamespace is set to: %s, working only on items in this namespace", r.ControllerNamespace)))
+		if req.Namespace != r.ControllerNamespace {
+			r.Log.Info((fmt.Sprintf("Requested ns %s is not %s", req.Namespace, r.ControllerNamespace)))
+			return ctrl.Result{}, nil
+		}
 	}
 
 	// examine DeletionTimestamp to determine if object is under deletion
