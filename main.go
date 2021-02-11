@@ -52,9 +52,9 @@ func init() {
 
 func main() {
 	var (
-		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod, tlsTrustStore string
-		hydraPort                                                                  int
-		enableLeaderElection, insecureSkipVerify                                   bool
+		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod, tlsTrustStore, namespace, leaderElectorNs string
+		hydraPort                                                                                              int
+		enableLeaderElection, insecureSkipVerify                                                               bool
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -66,6 +66,9 @@ func main() {
 	flag.StringVar(&syncPeriod, "sync-period", "10h", "Determines the minimum frequency at which watched resources are reconciled")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.BoolVar(&insecureSkipVerify, "insecure-skip-verify", false, "If set, http client will be configured to skip insecure verification to connect with hydra admin")
+	flag.StringVar(&namespace, "namespace", "", "namespace where controller should be set.")
+	flag.StringVar(&leaderElectorNs, "leader-elector-namespace", "", "leader elector namespace where controller should be set.")
+
 	flag.Parse()
 
 	ctrl.SetLogger(zap.Logger(true))
@@ -77,11 +80,14 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
-		MetricsBindAddress: metricsAddr,
-		LeaderElection:     enableLeaderElection,
-		SyncPeriod:         &syncPeriodParsed,
+		Scheme:                  scheme,
+		MetricsBindAddress:      metricsAddr,
+		LeaderElection:          enableLeaderElection,
+		SyncPeriod:              &syncPeriodParsed,
+		Namespace:               namespace,
+		LeaderElectionNamespace: leaderElectorNs,
 	})
+
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
