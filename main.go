@@ -16,13 +16,15 @@ limitations under the License.
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"time"
 
-	"github.com/ory/hydra-maester/helpers"
+	httptransport "github.com/go-openapi/runtime/client"
 
 	"github.com/ory/hydra-maester/hydra"
 
@@ -104,14 +106,8 @@ func main() {
 			ForwardedProto: forwardedProto,
 		},
 	}
-	if tlsTrustStore != "" {
-		if _, err := os.Stat(tlsTrustStore); err != nil {
-			setupLog.Error(err, "cannot parse tls trust store")
-			os.Exit(1)
-		}
-	}
-
-	hydraClient, err := getHydraClient(defaultSpec, tlsTrustStore, insecureSkipVerify)
+	hydraClientMaker := getHydraClientMaker(defaultSpec, tlsTrustStore, insecureSkipVerify)
+	hydraClient, err := hydraClientMaker(defaultSpec)
 	if err != nil {
 		setupLog.Error(err, "making default hydra client", "controller", "OAuth2Client")
 		os.Exit(1)
@@ -119,9 +115,10 @@ func main() {
 	}
 
 	err = (&controllers.OAuth2ClientReconciler{
-		Client:      mgr.GetClient(),
-		Log:         ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
-		HydraClient: hydraClient,
+		Client:           mgr.GetClient(),
+		Log:              ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
+		HydraClient:      hydraClient,
+		HydraClientMaker: hydraClientMaker,
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OAuth2Client")
@@ -136,27 +133,62 @@ func main() {
 	}
 }
 
-func getHydraClient(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) (controllers.HydraClientInterface, error) {
+func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) controllers.HydraClientMakerFunc {
 
-	address := fmt.Sprintf("%s:%d", spec.HydraAdmin.URL, spec.HydraAdmin.Port)
-	u, err := url.Parse(address)
-	if err != nil {
-		return nil, err
+	return controllers.HydraClientMakerFunc(func(spec hydrav1alpha1.OAuth2ClientSpec) (controllers.HydraClientInterface, error) {
+
+		if spec.HydraAdmin.URL == "" {
+			spec.HydraAdmin.URL = defaultSpec.HydraAdmin.URL
+		}
+		if spec.HydraAdmin.Port == 0 {
+			spec.HydraAdmin.Port = defaultSpec.HydraAdmin.Port
+		}
+		if spec.HydraAdmin.Endpoint == "" {
+			spec.HydraAdmin.Endpoint = defaultSpec.HydraAdmin.Endpoint
+		}
+		if spec.HydraAdmin.ForwardedProto == "" {
+			spec.HydraAdmin.ForwardedProto = defaultSpec.HydraAdmin.ForwardedProto
+		}
+
+		address := fmt.Sprintf("%s:%d", spec.HydraAdmin.URL, spec.HydraAdmin.Port)
+		u, err := url.Parse(address)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse ORY Hydra's URL: %w", err)
+		}
+
+		client := &hydra.Client{
+			HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
+			HTTPClient: createHttpClient(insecureSkipVerify, tlsTrustStore),
+		}
+
+		if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
+			client.ForwardedProto = spec.HydraAdmin.ForwardedProto
+		}
+
+		return client, nil
+	})
+
+}
+
+func createHttpClient(insecureSkipVerify bool, tlsTrustStore string) *http.Client {
+	tr := &http.Transport{}
+	httpClient := &http.Client{}
+	if insecureSkipVerify {
+		setupLog.Info("configuring TLS with InsecureSkipVerify enabled")
+		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		httpClient.Transport = tr
 	}
-
-	c, err := helpers.CreateHttpClient(insecureSkipVerify, tlsTrustStore)
-	if err != nil {
-		return nil, err
+	if tlsTrustStore != "" {
+		setupLog.Info("configuring TLS with tlsTrustStore")
+		ops := httptransport.TLSClientOptions{
+			CA:                 tlsTrustStore,
+			InsecureSkipVerify: insecureSkipVerify,
+		}
+		if tlsClient, err := httptransport.TLSClient(ops); err != nil {
+			setupLog.Error(err, "Error while getting TLSClient, default http client will be used")
+		} else {
+			httpClient = tlsClient
+		}
 	}
-
-	client := &hydra.Client{
-		HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
-		HTTPClient: c,
-	}
-
-	if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
-		client.ForwardedProto = spec.HydraAdmin.ForwardedProto
-	}
-
-	return client, nil
+	return httpClient
 }
