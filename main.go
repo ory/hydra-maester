@@ -168,6 +168,7 @@ func createHttpClient(insecureSkipVerify bool, tlsTrustStore string) *http.Clien
 	tr := &http.Transport{}
 	httpClient := &http.Client{}
 	if insecureSkipVerify {
+	        setupLog.Info("configuring TLS with InsecureSkipVerify")
 		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 		httpClient.Transport = tr
 	}
