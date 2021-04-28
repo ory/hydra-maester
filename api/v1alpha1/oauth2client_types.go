@@ -36,7 +36,7 @@ const (
 // HydraAdmin defines the desired hydra admin instance to use for OAuth2Client
 type HydraAdmin struct {
 	// +kubebuilder:validation:MaxLength=64
-	// +kubebuilder:validation:Pattern=(^$|^https?://.*)
+	// +kubebuilder:validation:Pattern=`(^$|^https?://.*)`
 	//
 	// URL is the URL for the hydra instance on
 	// which to set up the client. This value will override the value
@@ -132,7 +132,7 @@ type GrantType string
 // ResponseType represents an OAuth 2.0 response type strings
 type ResponseType string
 
-// +kubebuilder:validation:Pattern=\w+:/?/?[^\s]+
+// +kubebuilder:validation:Pattern=`\w+:/?/?[^\s]+`
 // RedirectURI represents a redirect URI for the client
 type RedirectURI string
 
