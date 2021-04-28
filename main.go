@@ -100,6 +100,13 @@ func main() {
 			ForwardedProto: forwardedProto,
 		},
 	}
+	if tlsTrustStore != "" {
+		if _, err := os.Stat(tlsTrustStore); err != nil {
+			setupLog.Error(err, "cannot parse tls trust store")
+			os.Exit(1)
+		}
+	}
+
 	hydraClientMaker := getHydraClientMaker(defaultSpec, tlsTrustStore, insecureSkipVerify)
 	hydraClient, err := hydraClientMaker(defaultSpec)
 	if err != nil {
@@ -168,7 +175,7 @@ func createHttpClient(insecureSkipVerify bool, tlsTrustStore string) *http.Clien
 	tr := &http.Transport{}
 	httpClient := &http.Client{}
 	if insecureSkipVerify {
-	        setupLog.Info("configuring TLS with InsecureSkipVerify")
+		setupLog.Info("configuring TLS with InsecureSkipVerify")
 		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 		httpClient.Transport = tr
 	}
