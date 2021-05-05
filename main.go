@@ -16,15 +16,13 @@ limitations under the License.
 package main
 
 import (
-	"crypto/tls"
 	"flag"
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 	"time"
 
-	httptransport "github.com/go-openapi/runtime/client"
+	"github.com/ory/hydra-maester/helpers"
 
 	"github.com/ory/hydra-maester/hydra"
 
@@ -68,7 +66,7 @@ func main() {
 	flag.BoolVar(&insecureSkipVerify, "insecure-skip-verify", false, "If set, http client will be configured to skip insecure verification to connect with hydra admin")
 	flag.Parse()
 
-	ctrl.SetLogger(zap.Logger(true))
+	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	syncPeriodParsed, err := time.ParseDuration(syncPeriod)
 	if err != nil {
@@ -159,7 +157,7 @@ func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec, tlsTrustSto
 
 		client := &hydra.Client{
 			HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
-			HTTPClient: createHttpClient(insecureSkipVerify, tlsTrustStore),
+			HTTPClient: helpers.CreateHttpClient(insecureSkipVerify, tlsTrustStore),
 		}
 
 		if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
@@ -169,27 +167,4 @@ func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec, tlsTrustSto
 		return client, nil
 	})
 
-}
-
-func createHttpClient(insecureSkipVerify bool, tlsTrustStore string) *http.Client {
-	tr := &http.Transport{}
-	httpClient := &http.Client{}
-	if insecureSkipVerify {
-		setupLog.Info("configuring TLS with InsecureSkipVerify")
-		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-		httpClient.Transport = tr
-	}
-	if tlsTrustStore != "" {
-		setupLog.Info("configuring TLS with tlsTrustStore")
-		ops := httptransport.TLSClientOptions{
-			CA:                 tlsTrustStore,
-			InsecureSkipVerify: insecureSkipVerify,
-		}
-		if tlsClient, err := httptransport.TLSClient(ops); err != nil {
-			setupLog.Error(err, "Error while getting TLSClient, default http client will be used")
-		} else {
-			httpClient = tlsClient
-		}
-	}
-	return httpClient
 }
