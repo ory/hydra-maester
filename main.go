@@ -105,8 +105,7 @@ func main() {
 		}
 	}
 
-	hydraClientMaker := getHydraClientMaker(defaultSpec, tlsTrustStore, insecureSkipVerify)
-	hydraClient, err := hydraClientMaker(defaultSpec)
+	hydraClient := getHydraClient(defaultSpec, tlsTrustStore, insecureSkipVerify)
 	if err != nil {
 		setupLog.Error(err, "making default hydra client", "controller", "OAuth2Client")
 		os.Exit(1)
@@ -114,10 +113,9 @@ func main() {
 	}
 
 	err = (&controllers.OAuth2ClientReconciler{
-		Client:           mgr.GetClient(),
-		Log:              ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
-		HydraClient:      hydraClient,
-		HydraClientMaker: hydraClientMaker,
+		Client:      mgr.GetClient(),
+		Log:         ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
+		HydraClient: hydraClient,
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OAuth2Client")
@@ -132,39 +130,22 @@ func main() {
 	}
 }
 
-func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) controllers.HydraClientMakerFunc {
+func getHydraClient(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) controllers.HydraClientInterface {
 
-	return controllers.HydraClientMakerFunc(func(spec hydrav1alpha1.OAuth2ClientSpec) (controllers.HydraClientInterface, error) {
+	address := fmt.Sprintf("%s:%d", spec.HydraAdmin.URL, spec.HydraAdmin.Port)
+	u, err := url.Parse(address)
+	if err != nil {
+		return nil
+	}
 
-		if spec.HydraAdmin.URL == "" {
-			spec.HydraAdmin.URL = defaultSpec.HydraAdmin.URL
-		}
-		if spec.HydraAdmin.Port == 0 {
-			spec.HydraAdmin.Port = defaultSpec.HydraAdmin.Port
-		}
-		if spec.HydraAdmin.Endpoint == "" {
-			spec.HydraAdmin.Endpoint = defaultSpec.HydraAdmin.Endpoint
-		}
-		if spec.HydraAdmin.ForwardedProto == "" {
-			spec.HydraAdmin.ForwardedProto = defaultSpec.HydraAdmin.ForwardedProto
-		}
+	client := &hydra.Client{
+		HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
+		HTTPClient: helpers.CreateHttpClient(insecureSkipVerify, tlsTrustStore),
+	}
 
-		address := fmt.Sprintf("%s:%d", spec.HydraAdmin.URL, spec.HydraAdmin.Port)
-		u, err := url.Parse(address)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse ORY Hydra's URL: %w", err)
-		}
+	if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
+		client.ForwardedProto = spec.HydraAdmin.ForwardedProto
+	}
 
-		client := &hydra.Client{
-			HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
-			HTTPClient: helpers.CreateHttpClient(insecureSkipVerify, tlsTrustStore),
-		}
-
-		if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
-			client.ForwardedProto = spec.HydraAdmin.ForwardedProto
-		}
-
-		return client, nil
-	})
-
+	return client
 }

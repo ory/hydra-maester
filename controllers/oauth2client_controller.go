@@ -37,8 +37,6 @@ const (
 	FinalizerName   = "finalizer.ory.hydra.sh"
 )
 
-type HydraClientMakerFunc func(hydrav1alpha1.OAuth2ClientSpec) (HydraClientInterface, error)
-
 type clientMapKey struct {
 	url            string
 	port           int
@@ -56,10 +54,9 @@ type HydraClientInterface interface {
 
 // OAuth2ClientReconciler reconciles a OAuth2Client object
 type OAuth2ClientReconciler struct {
-	HydraClient      HydraClientInterface
-	HydraClientMaker HydraClientMakerFunc
-	Log              logr.Logger
-	otherClients     map[clientMapKey]HydraClientInterface
+	HydraClient  HydraClientInterface
+	Log          logr.Logger
+	otherClients map[clientMapKey]HydraClientInterface
 	client.Client
 }
 
@@ -332,10 +329,6 @@ func parseSecret(secret apiv1.Secret, authMethod hydrav1alpha1.TokenEndpointAuth
 
 func (r *OAuth2ClientReconciler) getHydraClientForClient(oauth2client hydrav1alpha1.OAuth2Client) (HydraClientInterface, error) {
 	spec := oauth2client.Spec
-	if spec.HydraAdmin == (hydrav1alpha1.HydraAdmin{}) {
-		r.Log.Info(fmt.Sprintf("using default client"))
-		return r.HydraClient, nil
-	}
 	key := clientMapKey{
 		url:            spec.HydraAdmin.URL,
 		port:           spec.HydraAdmin.Port,
@@ -345,7 +338,12 @@ func (r *OAuth2ClientReconciler) getHydraClientForClient(oauth2client hydrav1alp
 	if c, ok := r.otherClients[key]; ok {
 		return c, nil
 	}
-	return r.HydraClientMaker(spec)
+	if r.HydraClient == nil {
+		return nil, errors.New("Not default client or other clients configured")
+	}
+	r.Log.Info(fmt.Sprintf("using default client"))
+	return r.HydraClient, nil
+
 }
 
 // Helper functions to check and remove string from a slice of strings.
