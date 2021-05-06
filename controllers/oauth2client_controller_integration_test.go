@@ -55,7 +55,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 
 				// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 				// channel when it is finished.
-				mgr, err := manager.New(cfg, manager.Options{Scheme: s})
+				mgr, err := manager.New(cfg, manager.Options{Scheme: s, MetricsBindAddress: ":8080"})
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
@@ -134,7 +134,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 
 				// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 				// channel when it is finished.
-				mgr, err := manager.New(cfg, manager.Options{Scheme: s})
+				mgr, err := manager.New(cfg, manager.Options{Scheme: s, MetricsBindAddress: ":8081"})
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
@@ -200,7 +200,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 
 				// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 				// channel when it is finished.
-				mgr, err := manager.New(cfg, manager.Options{Scheme: s})
+				mgr, err := manager.New(cfg, manager.Options{Scheme: s, MetricsBindAddress: ":8082"})
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
@@ -295,7 +295,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 
 				// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 				// channel when it is finished.
-				mgr, err := manager.New(cfg, manager.Options{Scheme: s})
+				mgr, err := manager.New(cfg, manager.Options{Scheme: s, MetricsBindAddress: ":8083"})
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
@@ -365,7 +365,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 
 				// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 				// channel when it is finished.
-				mgr, err := manager.New(cfg, manager.Options{Scheme: s})
+				mgr, err := manager.New(cfg, manager.Options{Scheme: s, MetricsBindAddress: ":8084"})
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
