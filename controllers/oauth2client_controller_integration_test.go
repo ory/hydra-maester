@@ -83,7 +83,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(add(mgr, recFn)).To(Succeed())
 
 				//Start the manager and the controller
-				stopMgr, mgrStopped := StartTestManager(mgr)
+				stopMgr := StartTestManager(mgr)
 
 				instance := testInstance(tstName, tstSecretName)
 				err = c.Create(context.TODO(), instance)
@@ -117,8 +117,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				c.Delete(context.TODO(), instance)
 
 				//Ensure manager is stopped properly
-				close(stopMgr)
-				mgrStopped.Wait()
+				stopMgr.Done()
 			})
 
 			It("update object status if the call failed", func() {
@@ -150,7 +149,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(add(mgr, recFn)).To(Succeed())
 
 				//Start the manager and the controller
-				stopMgr, mgrStopped := StartTestManager(mgr)
+				stopMgr := StartTestManager(mgr)
 
 				instance := testInstance(tstName, tstSecretName)
 				err = c.Create(context.TODO(), instance)
@@ -183,8 +182,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				c.Delete(context.TODO(), instance)
 
 				//Ensure manager is stopped properly
-				close(stopMgr)
-				mgrStopped.Wait()
+				stopMgr.Done()
 			})
 
 			It("use provided Secret if it exists", func() {
@@ -232,7 +230,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(add(mgr, recFn)).To(Succeed())
 
 				//Start the manager and the controller
-				stopMgr, mgrStopped := StartTestManager(mgr)
+				stopMgr := StartTestManager(mgr)
 
 				//ensure secret exists
 				secret := apiv1.Secret{
@@ -280,8 +278,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				c.Delete(context.TODO(), instance)
 
 				//Ensure manager is stopped properly
-				close(stopMgr)
-				mgrStopped.Wait()
+				stopMgr.Done()
 			})
 
 			It("update object status if provided Secret is invalid", func() {
@@ -312,7 +309,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(add(mgr, recFn)).To(Succeed())
 
 				//Start the manager and the controller
-				stopMgr, mgrStopped := StartTestManager(mgr)
+				stopMgr := StartTestManager(mgr)
 
 				//ensure invalid secret exists
 				secret := apiv1.Secret{
@@ -352,8 +349,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				c.Delete(context.TODO(), instance)
 
 				//Ensure manager is stopped properly
-				close(stopMgr)
-				mgrStopped.Wait()
+				stopMgr.Done()
 			})
 
 			It("tolerate nil client_secret if tokenEndpointAuthMethod is none", func() {
@@ -397,7 +393,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(add(mgr, recFn)).To(Succeed())
 
 				//Start the manager and the controller
-				stopMgr, mgrStopped := StartTestManager(mgr)
+				stopMgr := StartTestManager(mgr)
 
 				instance := testInstance(tstName, tstSecretName)
 				instance.Spec.TokenEndpointAuthMethod = "none"
@@ -432,8 +428,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				c.Delete(context.TODO(), instance)
 
 				//Ensure manager is stopped properly
-				close(stopMgr)
-				mgrStopped.Wait()
+				stopMgr.Done()
 			})
 		})
 	})
