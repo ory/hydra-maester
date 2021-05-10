@@ -3,6 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Changelog](#changelog)
+  - [v0.0.20 (2021-05-10)](#v0020-2021-05-10)
   - [v0.0.19 (2020-06-29)](#v0019-2020-06-29)
   - [v0.0.18 (2020-06-08)](#v0018-2020-06-08)
   - [v0.0.17 (2020-03-26)](#v0017-2020-03-26)
@@ -29,6 +30,18 @@
 
 # Changelog
 
+## [v0.0.20](https://github.com/ory/hydra-maester/tree/v0.0.20) (2021-05-10)
+
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.19...v0.0.20)
+
+**Closed issues:**
+
+- Is there an option to update hydra clients once secrets are changed? [\#59](https://github.com/ory/hydra-maester/issues/59)
+
+**Merged pull requests:**
+
+- build: Update CRDs and k8s dependencies [\#68](https://github.com/ory/hydra-maester/pull/68) ([colunira](https://github.com/colunira))
+
 ## [v0.0.19](https://github.com/ory/hydra-maester/tree/v0.0.19) (2020-06-29)
 
 [Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.18...v0.0.19)
@@ -44,7 +57,7 @@
 
 **Closed issues:**
 
-- Distinction between `redirect\_uris ` and `post\_logout\_redirect\_uris` into maester? [\#51](https://github.com/ory/hydra-maester/issues/51)
+- Distinction between `redirect_uris ` and `post_logout_redirect_uris` into maester? [\#51](https://github.com/ory/hydra-maester/issues/51)
 
 **Merged pull requests:**
 
