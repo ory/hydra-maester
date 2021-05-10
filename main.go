@@ -105,7 +105,7 @@ func main() {
 		}
 	}
 
-	hydraClient := getHydraClient(defaultSpec, tlsTrustStore, insecureSkipVerify)
+	hydraClient, err := getHydraClient(defaultSpec, tlsTrustStore, insecureSkipVerify)
 	if err != nil {
 		setupLog.Error(err, "making default hydra client", "controller", "OAuth2Client")
 		os.Exit(1)
@@ -130,22 +130,27 @@ func main() {
 	}
 }
 
-func getHydraClient(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) controllers.HydraClientInterface {
+func getHydraClient(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) (controllers.HydraClientInterface, error) {
 
 	address := fmt.Sprintf("%s:%d", spec.HydraAdmin.URL, spec.HydraAdmin.Port)
 	u, err := url.Parse(address)
 	if err != nil {
-		return nil
+		return nil, err
+	}
+
+	c, err := helpers.CreateHttpClient(insecureSkipVerify, tlsTrustStore)
+	if err != nil {
+		return nil, err
 	}
 
 	client := &hydra.Client{
 		HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
-		HTTPClient: helpers.CreateHttpClient(insecureSkipVerify, tlsTrustStore),
+		HTTPClient: c,
 	}
 
 	if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
 		client.ForwardedProto = spec.HydraAdmin.ForwardedProto
 	}
 
-	return client
+	return client, nil
 }
