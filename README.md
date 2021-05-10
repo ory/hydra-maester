@@ -47,10 +47,12 @@ To deploy the controller, edit the value of the ```--hydra-url``` argument in th
 
 ### Command-line flags
 
-| Name            | Required | Description                  | Default value | Example values                                       |
-|-----------------|----------|------------------------------|---------------|------------------------------------------------------|
-| **hydra-url**   | yes      | ORY Hydra's service address  | -             | ` ory-hydra-admin.ory.svc.cluster.local`             |
-| **hydra-port**  | no       | ORY Hydra's service port     | `4445`        | `4445`                                               |
+| Name                       | Required | Description                            | Default value | Example values                                       |
+|----------------------------|----------|----------------------------------------|---------------|------------------------------------------------------|
+| **hydra-url**              | yes      | ORY Hydra's service address            | -             | ` ory-hydra-admin.ory.svc.cluster.local`             |
+| **hydra-port**             | no       | ORY Hydra's service port               | `4445`        | `4445`                                               |
+| **tls-trust-store**        | no       | TLS cert path for hydra client         | `""`             | `/etc/ssl/certs/ca-certificates.crt`                 |
+| **insecure-skip-verify**   | no       | Skip http client insecure verification | `false`       | `true` or `false`                                       |
 
 ## Development
 

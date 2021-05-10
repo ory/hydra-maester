@@ -465,9 +465,6 @@ func getAPIReconciler(mgr ctrl.Manager, mock controllers.HydraClientInterface) r
 		Client:      mgr.GetClient(),
 		Log:         ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
 		HydraClient: mock,
-		HydraClientMaker: func(hydrav1alpha1.OAuth2ClientSpec) (controllers.HydraClientInterface, error) {
-			return mock, nil
-		},
 	}
 }
 
