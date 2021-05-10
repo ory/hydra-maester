@@ -3,6 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Changelog](#changelog)
+  - [v0.0.21 (2021-05-10)](#v0021-2021-05-10)
   - [v0.0.20 (2021-05-10)](#v0020-2021-05-10)
   - [v0.0.19 (2020-06-29)](#v0019-2020-06-29)
   - [v0.0.18 (2020-06-08)](#v0018-2020-06-08)
@@ -29,6 +30,14 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Changelog
+
+## [v0.0.21](https://github.com/ory/hydra-maester/tree/v0.0.21) (2021-05-10)
+
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.20...v0.0.21)
+
+**Implemented enhancements:**
+
+- feat: Support to ory hydra running in secure mode [\#62](https://github.com/ory/hydra-maester/pull/62) ([fjvierap](https://github.com/fjvierap))
 
 ## [v0.0.20](https://github.com/ory/hydra-maester/tree/v0.0.20) (2021-05-10)
 
