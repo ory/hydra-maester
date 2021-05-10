@@ -8,7 +8,7 @@ all: manager
 
 # Run tests
 test: generate fmt vet manifests
-	go test ./api/... ./controllers/... ./hydra/... -coverprofile cover.out
+	go test ./api/... ./controllers/... ./hydra/... ./helpers/... -coverprofile cover.out
 
 # Run integration tests on local KIND cluster
 # TODO: modify once integration tests have been implemented

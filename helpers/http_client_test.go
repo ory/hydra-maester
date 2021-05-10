@@ -17,13 +17,6 @@ func TestCreateHttpClient(t *testing.T) {
 		require.Nil(t, err)
 	})
 
-	t.Run("should create client with insecureSkipVerify and wrong tlsTrustStore", func(t *testing.T) {
-		tlsTrustStore := "some path"
-		client, err := helpers.CreateHttpClient(true, tlsTrustStore)
-		require.Nil(t, client)
-		require.Nil(t, err)
-	})
-
 	t.Run("should create client with and tlsTrustStore", func(t *testing.T) {
 		file, err := ioutil.TempFile("/tmp", "test")
 		require.Nil(t, err)
@@ -35,8 +28,9 @@ func TestCreateHttpClient(t *testing.T) {
 
 	t.Run("should not create client with and wrong tlsTrustStore", func(t *testing.T) {
 		client, err := helpers.CreateHttpClient(true, "/somefile")
-		require.NotNil(t, client)
+		require.Nil(t, client)
 		require.NotNil(t, err)
+		require.Equal(t, err.Error(), "stat /somefile: no such file or directory")
 	})
 
 	t.Run("should create client without and tlsTrustStore", func(t *testing.T) {
