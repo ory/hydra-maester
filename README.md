@@ -1,6 +1,5 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Hydra-maester](#hydra-maester)
   - [Prerequisites](#prerequisites)
@@ -12,8 +11,13 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-# Hydra-maester
+# Ory Hydra Maester
 
+⚠️ ⚠️ ⚠️ 
+
+> Ory Hydra Maester is developed by the Ory community and is not actively maintained by Ory core maintainers due to lack of resources, time, and knolwedge. As such please be aware that there might be issues with the system. If you have ideas for better testing and development principles please open an issue or PR!
+
+⚠️ ⚠️ ⚠️
 
 This project contains a Kubernetes controller that uses Custom Resources (CR) to manage Hydra Oauth2 clients. ORY Hydra Maester watches for instances of `oauth2clients.hydra.ory.sh/v1alpha1` CR and creates, updates, or deletes corresponding OAuth2 clients by communicating with ORY Hydra's API.
 
