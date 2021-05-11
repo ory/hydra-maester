@@ -16,13 +16,18 @@ limitations under the License.
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"net/url"
 	"os"
 	"time"
 
+<<<<<<< HEAD
 	"github.com/ory/hydra-maester/helpers"
+=======
+	httptransport "github.com/go-openapi/runtime/client"
+>>>>>>> 6491a99 (Support to ory hydra running in secure mode)
 
 	"github.com/ory/hydra-maester/hydra"
 
@@ -98,6 +103,7 @@ func main() {
 			ForwardedProto: forwardedProto,
 		},
 	}
+<<<<<<< HEAD
 	if tlsTrustStore != "" {
 		if _, err := os.Stat(tlsTrustStore); err != nil {
 			setupLog.Error(err, "cannot parse tls trust store")
@@ -106,6 +112,10 @@ func main() {
 	}
 
 	hydraClient, err := getHydraClient(defaultSpec, tlsTrustStore, insecureSkipVerify)
+=======
+	hydraClientMaker := getHydraClientMaker(defaultSpec, tlsTrustStore, insecureSkipVerify)
+	hydraClient, err := hydraClientMaker(defaultSpec)
+>>>>>>> 6491a99 (Support to ory hydra running in secure mode)
 	if err != nil {
 		setupLog.Error(err, "making default hydra client", "controller", "OAuth2Client")
 		os.Exit(1)
@@ -130,7 +140,26 @@ func main() {
 	}
 }
 
+<<<<<<< HEAD
 func getHydraClient(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) (controllers.HydraClientInterface, error) {
+=======
+func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) controllers.HydraClientMakerFunc {
+
+	return controllers.HydraClientMakerFunc(func(spec hydrav1alpha1.OAuth2ClientSpec) (controllers.HydraClientInterface, error) {
+
+		if spec.HydraAdmin.URL == "" {
+			spec.HydraAdmin.URL = defaultSpec.HydraAdmin.URL
+		}
+		if spec.HydraAdmin.Port == 0 {
+			spec.HydraAdmin.Port = defaultSpec.HydraAdmin.Port
+		}
+		if spec.HydraAdmin.Endpoint == "" {
+			spec.HydraAdmin.Endpoint = defaultSpec.HydraAdmin.Endpoint
+		}
+		if spec.HydraAdmin.ForwardedProto == "" {
+			spec.HydraAdmin.ForwardedProto = defaultSpec.HydraAdmin.ForwardedProto
+		}
+>>>>>>> 6491a99 (Support to ory hydra running in secure mode)
 
 	address := fmt.Sprintf("%s:%d", spec.HydraAdmin.URL, spec.HydraAdmin.Port)
 	u, err := url.Parse(address)
@@ -138,10 +167,17 @@ func getHydraClient(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, i
 		return nil, err
 	}
 
+<<<<<<< HEAD
 	c, err := helpers.CreateHttpClient(insecureSkipVerify, tlsTrustStore)
 	if err != nil {
 		return nil, err
 	}
+=======
+		client := &hydra.Client{
+			HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
+			HTTPClient: createHttpClient(insecureSkipVerify, tlsTrustStore),
+		}
+>>>>>>> 6491a99 (Support to ory hydra running in secure mode)
 
 	client := &hydra.Client{
 		HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
@@ -153,4 +189,26 @@ func getHydraClient(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, i
 	}
 
 	return client, nil
+}
+
+func createHttpClient(insecureSkipVerify bool, tlsTrustStore string) *http.Client {
+	tr := &http.Transport{}
+	httpClient := &http.Client{}
+	if insecureSkipVerify {
+		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		httpClient.Transport = tr
+	}
+	if tlsTrustStore != "" {
+		setupLog.Info("configuring TLS with tlsTrustStore")
+		ops := httptransport.TLSClientOptions{
+			CA:                 tlsTrustStore,
+			InsecureSkipVerify: insecureSkipVerify,
+		}
+		if tlsClient, err := httptransport.TLSClient(ops); err != nil {
+			setupLog.Error(err, "Error while getting TLSClient, default http client will be used")
+		} else {
+			httpClient = tlsClient
+		}
+	}
+	return httpClient
 }
