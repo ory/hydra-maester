@@ -55,17 +55,8 @@ To deploy the controller, edit the value of the ```--hydra-url``` argument in th
 |----------------------------|----------|----------------------------------------|---------------|------------------------------------------------------|
 | **hydra-url**              | yes      | ORY Hydra's service address            | -             | ` ory-hydra-admin.ory.svc.cluster.local`             |
 | **hydra-port**             | no       | ORY Hydra's service port               | `4445`        | `4445`                                               |
-<<<<<<< HEAD
 | **tls-trust-store**        | no       | TLS cert path for hydra client         | `""`             | `/etc/ssl/certs/ca-certificates.crt`                 |
 | **insecure-skip-verify**   | no       | Skip http client insecure verification | `false`       | `true` or `false`                                       |
-=======
-| **tls-trust-store**        | no       | TLS cert path for hydra client         | -             | `/etc/ssl/certs/ca-certificates.crt`                 |
-<<<<<<< HEAD
-| **insecure-skip-verify**   | no       | Skip http client insecure verification | `false`       | `true` `false`                                       |
->>>>>>> 6491a99 (Support to ory hydra running in secure mode)
-=======
-| **insecure-skip-verify**   | no       | Skip http client insecure verification | `false`       | `true` or `false`                                       |
->>>>>>> d769f7d (feat: adjust readme)
 
 ## Development
 

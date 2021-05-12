@@ -16,18 +16,13 @@ limitations under the License.
 package main
 
 import (
-	"crypto/tls"
 	"flag"
 	"fmt"
 	"net/url"
 	"os"
 	"time"
 
-<<<<<<< HEAD
 	"github.com/ory/hydra-maester/helpers"
-=======
-	httptransport "github.com/go-openapi/runtime/client"
->>>>>>> 6491a99 (Support to ory hydra running in secure mode)
 
 	"github.com/ory/hydra-maester/hydra"
 
@@ -55,9 +50,9 @@ func init() {
 
 func main() {
 	var (
-		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod, tlsTrustStore, namespace, leaderElectorNs string
-		hydraPort                                                                                              int
-		enableLeaderElection, insecureSkipVerify                                                               bool
+		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod, tlsTrustStore string
+		hydraPort                                                                  int
+		enableLeaderElection, insecureSkipVerify                                   bool
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -69,9 +64,6 @@ func main() {
 	flag.StringVar(&syncPeriod, "sync-period", "10h", "Determines the minimum frequency at which watched resources are reconciled")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.BoolVar(&insecureSkipVerify, "insecure-skip-verify", false, "If set, http client will be configured to skip insecure verification to connect with hydra admin")
-	flag.StringVar(&namespace, "namespace", "", "Namespace in which the controller should operate. Setting this will make the controller ignore other namespaces.")
-	flag.StringVar(&leaderElectorNs, "leader-elector-namespace", "", "leader elector namespace where controller should be set.")
-
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
@@ -83,14 +75,11 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                  scheme,
-		MetricsBindAddress:      metricsAddr,
-		LeaderElection:          enableLeaderElection,
-		SyncPeriod:              &syncPeriodParsed,
-		Namespace:               namespace,
-		LeaderElectionNamespace: leaderElectorNs,
+		Scheme:             scheme,
+		MetricsBindAddress: metricsAddr,
+		LeaderElection:     enableLeaderElection,
+		SyncPeriod:         &syncPeriodParsed,
 	})
-
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
@@ -109,7 +98,6 @@ func main() {
 			ForwardedProto: forwardedProto,
 		},
 	}
-<<<<<<< HEAD
 	if tlsTrustStore != "" {
 		if _, err := os.Stat(tlsTrustStore); err != nil {
 			setupLog.Error(err, "cannot parse tls trust store")
@@ -118,10 +106,6 @@ func main() {
 	}
 
 	hydraClient, err := getHydraClient(defaultSpec, tlsTrustStore, insecureSkipVerify)
-=======
-	hydraClientMaker := getHydraClientMaker(defaultSpec, tlsTrustStore, insecureSkipVerify)
-	hydraClient, err := hydraClientMaker(defaultSpec)
->>>>>>> 6491a99 (Support to ory hydra running in secure mode)
 	if err != nil {
 		setupLog.Error(err, "making default hydra client", "controller", "OAuth2Client")
 		os.Exit(1)
@@ -129,17 +113,9 @@ func main() {
 	}
 
 	err = (&controllers.OAuth2ClientReconciler{
-<<<<<<< HEAD
 		Client:      mgr.GetClient(),
 		Log:         ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
 		HydraClient: hydraClient,
-=======
-		Client:              mgr.GetClient(),
-		Log:                 ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
-		HydraClient:         hydraClient,
-		HydraClientMaker:    hydraClientMaker,
-		ControllerNamespace: namespace,
->>>>>>> 07694ae (Add single namespace operation mode)
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OAuth2Client")
@@ -154,26 +130,7 @@ func main() {
 	}
 }
 
-<<<<<<< HEAD
 func getHydraClient(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) (controllers.HydraClientInterface, error) {
-=======
-func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) controllers.HydraClientMakerFunc {
-
-	return controllers.HydraClientMakerFunc(func(spec hydrav1alpha1.OAuth2ClientSpec) (controllers.HydraClientInterface, error) {
-
-		if spec.HydraAdmin.URL == "" {
-			spec.HydraAdmin.URL = defaultSpec.HydraAdmin.URL
-		}
-		if spec.HydraAdmin.Port == 0 {
-			spec.HydraAdmin.Port = defaultSpec.HydraAdmin.Port
-		}
-		if spec.HydraAdmin.Endpoint == "" {
-			spec.HydraAdmin.Endpoint = defaultSpec.HydraAdmin.Endpoint
-		}
-		if spec.HydraAdmin.ForwardedProto == "" {
-			spec.HydraAdmin.ForwardedProto = defaultSpec.HydraAdmin.ForwardedProto
-		}
->>>>>>> 6491a99 (Support to ory hydra running in secure mode)
 
 	address := fmt.Sprintf("%s:%d", spec.HydraAdmin.URL, spec.HydraAdmin.Port)
 	u, err := url.Parse(address)
@@ -181,17 +138,10 @@ func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec, tlsTrustSto
 		return nil, err
 	}
 
-<<<<<<< HEAD
 	c, err := helpers.CreateHttpClient(insecureSkipVerify, tlsTrustStore)
 	if err != nil {
 		return nil, err
 	}
-=======
-		client := &hydra.Client{
-			HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
-			HTTPClient: createHTTPClient(insecureSkipVerify, tlsTrustStore),
-		}
->>>>>>> 6491a99 (Support to ory hydra running in secure mode)
 
 	client := &hydra.Client{
 		HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
@@ -203,26 +153,4 @@ func getHydraClientMaker(defaultSpec hydrav1alpha1.OAuth2ClientSpec, tlsTrustSto
 	}
 
 	return client, nil
-}
-
-func createHTTPClient(insecureSkipVerify bool, tlsTrustStore string) *http.Client {
-	tr := &http.Transport{}
-	httpClient := &http.Client{}
-	if insecureSkipVerify {
-		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-		httpClient.Transport = tr
-	}
-	if tlsTrustStore != "" {
-		setupLog.Info("configuring TLS with tlsTrustStore")
-		ops := httptransport.TLSClientOptions{
-			CA:                 tlsTrustStore,
-			InsecureSkipVerify: insecureSkipVerify,
-		}
-		if tlsClient, err := httptransport.TLSClient(ops); err != nil {
-			setupLog.Error(err, "Error while getting TLSClient, default http client will be used")
-		} else {
-			httpClient = tlsClient
-		}
-	}
-	return httpClient
 }
