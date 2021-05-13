@@ -4,16 +4,39 @@ IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1"
 
+run-with-cleanup = $(1) && $(2) || (ret=$$?; $(2) && exit $$ret)
+
 all: manager
 
 # Run tests
 test: generate fmt vet manifests
 	go test ./api/... ./controllers/... ./hydra/... ./helpers/... -coverprofile cover.out
 
-# Run integration tests on local KIND cluster
-# TODO: modify once integration tests have been implemented
-test-integration:
+# Start KIND pseudo-cluster
+kind-start:
+	GO111MODULE=on go get "sigs.k8s.io/kind@v0.10.0" && kind create cluster
+
+# Stop KIND pseudo-cluster
+kind-stop:
+	GO111MODULE=on go get "sigs.k8s.io/kind@v0.10.0" && kind delete cluster
+
+# Deploy on KIND
+# Ensures the controller image is built, deploys the image to KIND cluster along with necessary configuration
+kind-deploy: manager manifests docker-build-notest kind-start
+	kubectl config set-context kind-kind
+	kind load docker-image controller:latest
+	kubectl apply -f config/crd/bases
+	kustomize build config/default | kubectl apply -f -
+
+# private
+kind-test: kind-deploy
+	kubectl config set-context kind-kind
+	go get github.com/onsi/ginkgo/ginkgo
 	ginkgo -v ./controllers/...
+
+# Run integration tests on local KIND cluster
+test-integration:
+	$(call run-with-cleanup, $(MAKE) kind-test, $(MAKE) kind-stop)
 
 # Build manager binary
 manager: generate fmt vet
@@ -49,10 +72,12 @@ generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths=./api/...
 
 # Build the docker image
-docker-build: test manager
+docker-build-notest: manager
 	docker build . -t ${IMG}
 	@echo "updating kustomize image patch file for manager resource"
 	sed -i'' -e 's@image: .*@image: '"${IMG}"'@' ./config/default/manager_image_patch.yaml
+
+docker-build: test docker-build-notest
 
 # Push the docker image
 docker-push:
@@ -63,7 +88,7 @@ docker-push:
 controller-gen:
 ifeq (, $(shell which controller-gen))
 	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0
-CONTROLLER_GEN=$(shell go env GOPATH)/bin/controller-gen
+CONTROLLER_GEN=$(shell which controller-gen)
 else
 CONTROLLER_GEN=$(shell which controller-gen)
 endif
