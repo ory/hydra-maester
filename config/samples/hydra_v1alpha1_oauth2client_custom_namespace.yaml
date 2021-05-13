@@ -1,8 +1,24 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: custom-namespace
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-secret-123
+  namespace: custom-namespace
+type: Opaque
+data:
+  client_id: NDI0MjQyNDI=
+  client_secret: czNjUjM3cDRzc1ZWMHJENDMyMQ==
+---
 apiVersion: hydra.ory.sh/v1alpha1
 kind: OAuth2Client
 metadata:
-  name: my-oauth2-client
-  namespace: default
+  name: my-oauth2-client-3
+  namespace: custom-namespace
 spec:
   grantTypes:
     - client_credentials
@@ -24,12 +40,5 @@ spec:
   audience:
     - audience-a
     - audience-b
-  hydraAdmin:
-    # if hydraAdmin is specified, all of these fields are requried,
-    # but they can be empty/0
-    url: http://hydra-admin.namespace.cluster.domain
-    port: 4445
-    endpoint: /clients
-    forwardedProto: https
+  hydraAdmin: {}
   tokenEndpointAuthMethod: client_secret_basic
-  

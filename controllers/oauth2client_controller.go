@@ -18,7 +18,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-
 	"github.com/go-logr/logr"
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
 	"github.com/ory/hydra-maester/hydra"
@@ -81,9 +80,9 @@ func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	// Check request namespace
 	if r.ControllerNamespace != "" {
-		r.Log.Info((fmt.Sprintf("ControllerNamespace is set to: %s, working only on items in this namespace", r.ControllerNamespace)))
-		if req.Namespace != r.ControllerNamespace {
-			r.Log.Info((fmt.Sprintf("Requested ns %s is not %s", req.Namespace, r.ControllerNamespace)))
+		r.Log.Info((fmt.Sprintf("ControllerNamespace is set to: %s, working only on items in this namespace. Other namespaces are ignored.", r.ControllerNamespace)))
+		if req.NamespacedName.Namespace != r.ControllerNamespace {
+			r.Log.Info((fmt.Sprintf("Requested resource %s is not in namespace: %s and will be ignored", req.String(), r.ControllerNamespace)))
 			return ctrl.Result{}, nil
 		}
 	}
