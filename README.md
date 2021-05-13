@@ -57,6 +57,8 @@ To deploy the controller, edit the value of the ```--hydra-url``` argument in th
 | **hydra-port**             | no       | ORY Hydra's service port               | `4445`        | `4445`                                               |
 | **tls-trust-store**        | no       | TLS cert path for hydra client         | `""`             | `/etc/ssl/certs/ca-certificates.crt`                 |
 | **insecure-skip-verify**   | no       | Skip http client insecure verification | `false`       | `true` or `false`                                       |
+| **namespace** | no | Namespace in which the controller should operate. Setting this will make the controller ignore other namespaces. | `""` | `"my-namespace"` |
+| **leader-elector-namespace** | no | Leader elector namespace where controller should be set. | `""` | `"my-namespace"` |
 
 ## Development
 

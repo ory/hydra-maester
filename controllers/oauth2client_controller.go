@@ -18,7 +18,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-
 	"github.com/go-logr/logr"
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
 	"github.com/ory/hydra-maester/hydra"
@@ -58,6 +57,7 @@ type OAuth2ClientReconciler struct {
 	Log          logr.Logger
 	otherClients map[clientMapKey]HydraClientInterface
 	client.Client
+	ControllerNamespace string
 }
 
 // +kubebuilder:rbac:groups=hydra.ory.sh,resources=oauth2clients,verbs=get;list;watch;create;update;patch;delete
@@ -76,6 +76,15 @@ func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, err
+	}
+
+	// Check request namespace
+	if r.ControllerNamespace != "" {
+		r.Log.Info((fmt.Sprintf("ControllerNamespace is set to: %s, working only on items in this namespace. Other namespaces are ignored.", r.ControllerNamespace)))
+		if req.NamespacedName.Namespace != r.ControllerNamespace {
+			r.Log.Info((fmt.Sprintf("Requested resource %s is not in namespace: %s and will be ignored", req.String(), r.ControllerNamespace)))
+			return ctrl.Result{}, nil
+		}
 	}
 
 	// examine DeletionTimestamp to determine if object is under deletion
