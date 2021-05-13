@@ -1,7 +1,7 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [Hydra-maester](#hydra-maester)
+- [Ory Hydra Maester](#ory-hydra-maester)
   - [Prerequisites](#prerequisites)
   - [Design](#design)
   - [How to use it](#how-to-use-it)
