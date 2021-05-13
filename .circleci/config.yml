@@ -1,109 +1,88 @@
 version: 2
 jobs:
- build:
-  docker:
-   - image: circleci/golang:1.15
-  working_directory: /go/src/github.com/ory/hydra-maester
-  steps:
-   - run:
-      name: Enable go1.11 modules
-      command: |
-       echo 'export GO111MODULE=on' >> $BASH_ENV
-       source $BASH_ENV
-   - checkout
-   - run:
-      name: Fetch kube-builder
-      command: |
-       os=$(go env GOOS)
-       arch=$(go env GOARCH)
+  build:
+    docker:
+      - image: circleci/golang:1.15
+    working_directory: /go/src/github.com/ory/hydra-maester
+    steps:
+      - checkout
+      - run:
+          name: Fetch kube-builder
+          command: |
+            os=$(go env GOOS)
+            arch=$(go env GOARCH)
+            # download kubebuilder and extract it to tmp
+            curl -sL https://go.kubebuilder.io/dl/2.0.0-alpha.4/${os}/${arch} | tar -xz -C /tmp/
+            # move to a long-term location and put it on your path
+            # (you'll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else)
+            sudo mv /tmp/kubebuilder_2.0.0-alpha.4_${os}_${arch} /usr/local/kubebuilder
+            export PATH=$PATH:/usr/local/kubebuilder/bin
+      - run: make
+  test:
+    docker:
+      - image: circleci/golang:1.15
+    working_directory: /go/src/github.com/ory/hydra-maester
+    steps:
+      - checkout
+      - run:
+          name: Fetch kube-builder
+          command: |
+            os=$(go env GOOS)
+            arch=$(go env GOARCH)
+            # download kubebuilder and extract it to tmp
+            curl -sL https://go.kubebuilder.io/dl/2.0.0-alpha.4/${os}/${arch} | tar -xz -C /tmp/
+            # move to a long-term location and put it on your path
+            # (you'll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else)
+            sudo mv /tmp/kubebuilder_2.0.0-alpha.4_${os}_${arch} /usr/local/kubebuilder
+            export PATH=$PATH:/usr/local/kubebuilder/bin
+      - run: make test
+  test-integration:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: Update golang
+          command: |
+            sudo rm -rf /usr/local/go/
+            curl -LO https://dl.google.com/go/go1.15.11.linux-amd64.tar.gz
+            sudo tar -C /usr/local -xzf go1.15.11.linux-amd64.tar.gz
+            sudo echo "export PATH=$PATH:/usr/local/go/bin" >> $HOME/.profile
+            go version
+      - run:
+          name: Download kube-builder
+          command: |
+            os=$(go env GOOS)
+            arch=$(go env GOARCH)
+            # download kubebuilder and extract it to tmp
+            curl -sL https://go.kubebuilder.io/dl/2.0.0-alpha.4/${os}/${arch} | tar -xz -C /tmp/
+            # move to a long-term location and put it on your path
+            # (you'll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else)
+            sudo mv /tmp/kubebuilder_2.0.0-alpha.4_${os}_${arch} /usr/local/kubebuilder
+            sudo echo "export PATH=$PATH:/usr/local/kubebuilder/bin" >> $HOME/.profile
+      - run:
+          name: Install kustomize
+          command: |
+            curl -sL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv3.3.0/kustomize_v3.3.0_linux_amd64.tar.gz | tar -xz -C /tmp/
+            sudo mv /tmp/kustomize /usr/local/bin/kustomize
+            kustomize version
+      - run:
+          name: Install Kind
+          command: |
+            curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.10.0/kind-linux-amd64
+            chmod +x ./kind
+            sudo mv ./kind /usr/local/bin/kind
+      - run:
+          name: Install kubectl
+          command: |
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+            chmod +x ./kubectl
+            sudo mv ./kubectl /usr/local/bin/kubectl
+            export KUBECONFIG=$(kind get kubeconfig-path)
+      - run:
+          name: Run integration tests
+          command: make test-integration
 
-       # download kubebuilder and extract it to tmp
-       curl -sL https://go.kubebuilder.io/dl/2.3.2/${os}/${arch} | tar -xz -C /tmp/
-
-       # move to a long-term location and put it on your path
-       # (you'll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else)
-       sudo mv /tmp/kubebuilder_2.3.2_${os}_${arch} /usr/local/kubebuilder
-       export PATH=$PATH:/usr/local/kubebuilder/bin
-
-   - run: make
- test:
-  docker:
-   - image: circleci/golang:1.15
-  working_directory: /go/src/github.com/ory/hydra-maester
-  steps:
-   - checkout
-   - run:
-      name: Fetch kube-builder
-      command: |
-       os=$(go env GOOS)
-       arch=$(go env GOARCH)
-
-       # download kubebuilder and extract it to tmp
-       curl -sL https://go.kubebuilder.io/dl/2.3.2/${os}/${arch} | tar -xz -C /tmp/
-
-       # move to a long-term location and put it on your path
-       # (you'll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else)
-       sudo mv /tmp/kubebuilder_2.3.2_${os}_${arch} /usr/local/kubebuilder
-       export PATH=$PATH:/usr/local/kubebuilder/bin
-   - run: make test
- test-integration:
-  machine: true
-  steps:
-   - checkout
-   - run:
-      name: Update golang
-      command: |
-       sudo rm -rf /usr/local/go/
-       curl -LO https://dl.google.com/go/go1.15.11.linux-amd64.tar.gz
-       sudo tar -C /usr/local -xzf go1.15.11.linux-amd64.tar.gz
-       sudo echo "export PATH=$PATH:/usr/local/go/bin" >> $HOME/.profile
-       go version
-
-   - run:
-      name: Download kube-builder
-      command: |
-       os=$(go env GOOS)
-       arch=$(go env GOARCH)
-
-       # download kubebuilder and extract it to tmp
-       curl -sL https://go.kubebuilder.io/dl/2.3.2/${os}/${arch} | tar -xz -C /tmp/
-
-       # move to a long-term location and put it on your path
-       # (you'll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else)
-       sudo mv /tmp/kubebuilder_2.3.2_${os}_${arch} /usr/local/kubebuilder
-       sudo echo "export PATH=$PATH:/usr/local/kubebuilder/bin" >> $HOME/.profile
-
-   - run:
-      name: Install kustomize
-      command: |
-        curl -sL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv3.3.0/kustomize_v3.3.0_linux_amd64.tar.gz | tar -xz -C /tmp/
-        sudo mv /tmp/kustomize /usr/local/bin/kustomize
-        kustomize version
-
-   - run:
-      name: Install ginkgo,controller-gen
-      command: |
-       go get github.com/onsi/ginkgo/ginkgo
-       go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0
-
-   - run:
-      name: Install Kind
-      command: |
-       curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.10.0/kind-linux-amd64
-       chmod +x ./kind
-       sudo mv ./kind /usr/local/bin/kind
-   - run:
-      name: Install kubectl
-      command: |
-       curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-       chmod +x ./kubectl
-       sudo mv ./kubectl /usr/local/bin/kubectl
-       export KUBECONFIG=$(kind get kubeconfig-path)
-   - run:
-      name: Run integration tests
-      command: make test-integration
-
- release:
+  release:
   docker:
    - image: circleci/golang:1.15
   working_directory: /go/src/github.com/ory/hydra-maester
