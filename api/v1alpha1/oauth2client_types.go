@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/ory/hydra-maester/hydra"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -120,8 +121,10 @@ type OAuth2ClientSpec struct {
 	// Indication which authentication method shoud be used for the token endpoint
 	TokenEndpointAuthMethod TokenEndpointAuthMethod `json:"tokenEndpointAuthMethod,omitempty"`
 
+	// +kubebuilder:validation:Type=object
+	//
 	// Metadata is abritrary data
-	Metadata json.RawMessage `json:"metadata,omitempty"`
+	Metadata apiextensionsv1.JSON `json:"metadata,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token
@@ -182,6 +185,8 @@ func init() {
 
 // ToOAuth2ClientJSON converts an OAuth2Client into a OAuth2ClientJSON object that represents an OAuth2 client digestible by ORY Hydra
 func (c *OAuth2Client) ToOAuth2ClientJSON() *hydra.OAuth2ClientJSON {
+	meta, _ := json.Marshal(c.Spec.Metadata)
+
 	return &hydra.OAuth2ClientJSON{
 		ClientName:              c.Spec.ClientName,
 		GrantTypes:              grantToStringSlice(c.Spec.GrantTypes),
@@ -193,7 +198,7 @@ func (c *OAuth2Client) ToOAuth2ClientJSON() *hydra.OAuth2ClientJSON {
 		Scope:                   c.Spec.Scope,
 		Owner:                   fmt.Sprintf("%s/%s", c.Name, c.Namespace),
 		TokenEndpointAuthMethod: string(c.Spec.TokenEndpointAuthMethod),
-		Metadata:                c.Spec.Metadata,
+		Metadata:                meta,
 	}
 }
 
