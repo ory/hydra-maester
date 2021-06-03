@@ -122,6 +122,8 @@ type OAuth2ClientSpec struct {
 	TokenEndpointAuthMethod TokenEndpointAuthMethod `json:"tokenEndpointAuthMethod,omitempty"`
 
 	// +kubebuilder:validation:Type=object
+	// +nullable
+	// +optional
 	//
 	// Metadata is abritrary data
 	Metadata apiextensionsv1.JSON `json:"metadata,omitempty"`
