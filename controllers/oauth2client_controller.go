@@ -205,8 +205,16 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 		return err
 	}
 
+	oauth2client, err := c.ToOAuth2ClientJSON()
+	if err != nil {
+		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
+			return updateErr
+		}
+		return errors.WithStack(err)
+	}
+
 	if credentials != nil {
-		if _, err := hydra.PostOAuth2Client(c.ToOAuth2ClientJSON().WithCredentials(credentials)); err != nil {
+		if _, err := hydra.PostOAuth2Client(oauth2client.WithCredentials(credentials)); err != nil {
 			if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
 				return updateErr
 			}
@@ -214,7 +222,7 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 		return r.ensureEmptyStatusError(ctx, c)
 	}
 
-	created, err := hydra.PostOAuth2Client(c.ToOAuth2ClientJSON())
+	created, err := hydra.PostOAuth2Client(oauth2client)
 	if err != nil {
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
 			return updateErr
@@ -257,7 +265,15 @@ func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Contex
 		return err
 	}
 
-	if _, err := hydra.PutOAuth2Client(c.ToOAuth2ClientJSON().WithCredentials(credentials)); err != nil {
+	oauth2client, err := c.ToOAuth2ClientJSON()
+	if err != nil {
+		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusUpdateFailed, err); updateErr != nil {
+			return updateErr
+		}
+		return errors.WithStack(err)
+	}
+
+	if _, err := hydra.PutOAuth2Client(oauth2client.WithCredentials(credentials)); err != nil {
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusUpdateFailed, err); updateErr != nil {
 			return updateErr
 		}
