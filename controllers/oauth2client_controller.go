@@ -210,7 +210,7 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
 			return updateErr
 		}
-		return nil
+		return err
 	}
 
 	if credentials != nil {
@@ -270,7 +270,7 @@ func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Contex
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusUpdateFailed, err); updateErr != nil {
 			return updateErr
 		}
-		return nil
+		return err
 	}
 
 	if _, err := hydra.PutOAuth2Client(oauth2client.WithCredentials(credentials)); err != nil {
