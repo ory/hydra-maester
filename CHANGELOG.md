@@ -3,6 +3,8 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Change Log](#change-log)
+  - [Unreleased](#unreleased)
+  - [v0.0.23 (2021-06-04)](#v0023-2021-06-04)
   - [v0.0.22 (2021-05-13)](#v0022-2021-05-13)
   - [v0.0.21 (2021-05-10)](#v0021-2021-05-10)
   - [v0.0.20 (2021-05-10)](#v0020-2021-05-10)
@@ -31,6 +33,25 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Change Log
+
+## [Unreleased](https://github.com/ory/hydra-maester/tree/HEAD)
+
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.23...HEAD)
+
+**Closed issues:**
+
+- CI failure on master [\#70](https://github.com/ory/hydra-maester/issues/70)
+
+## [v0.0.23](https://github.com/ory/hydra-maester/tree/v0.0.23) (2021-06-04)
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.22...v0.0.23)
+
+**Closed issues:**
+
+- OAuth2 client CRD metadata issue [\#71](https://github.com/ory/hydra-maester/issues/71)
+
+**Merged pull requests:**
+
+- fix: oauth client metadata as object in CRD \(\#71\) [\#72](https://github.com/ory/hydra-maester/pull/72) ([romanlytvyn](https://github.com/romanlytvyn))
 
 ## [v0.0.22](https://github.com/ory/hydra-maester/tree/v0.0.22) (2021-05-13)
 [Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.21...v0.0.22)
