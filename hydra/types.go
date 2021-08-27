@@ -10,7 +10,7 @@ import (
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
 )
 
-// OAuth2ClientJSON represents an OAuth2 InternalClient digestible by ORY Hydra
+// OAuth2ClientJSON represents an OAuth2 client digestible by ORY Hydra
 type OAuth2ClientJSON struct {
 	ClientName              string          `json:"client_name,omitempty"`
 	ClientID                *string         `json:"client_id,omitempty"`
@@ -27,7 +27,8 @@ type OAuth2ClientJSON struct {
 	Metadata                json.RawMessage `json:"metadata,omitempty"`
 }
 
-// Oauth2ClientCredentials represents InternalClient ID and password fetched from a Kubernetes secret
+// Oauth2ClientCredentials represents client ID and password fetched from a
+// Kubernetes secret
 type Oauth2ClientCredentials struct {
 	ID       []byte
 	Password []byte
