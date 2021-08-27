@@ -18,9 +18,8 @@ package controllers
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
-	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
-	"github.com/ory/hydra-maester/hydra"
 	"github.com/pkg/errors"
 	apiv1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
@@ -28,36 +27,49 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
+	"github.com/ory/hydra-maester/hydra"
 )
 
 const (
 	ClientIDKey     = "client_id"
 	ClientSecretKey = "client_secret"
 	FinalizerName   = "finalizer.ory.hydra.sh"
+
+	DefaultNamespace = "default"
 )
 
-type clientMapKey struct {
+type clientKey struct {
 	url            string
 	port           int
 	endpoint       string
 	forwardedProto string
 }
 
-type HydraClientInterface interface {
-	GetOAuth2Client(id string) (*hydra.OAuth2ClientJSON, bool, error)
-	ListOAuth2Client() ([]*hydra.OAuth2ClientJSON, error)
-	PostOAuth2Client(o *hydra.OAuth2ClientJSON) (*hydra.OAuth2ClientJSON, error)
-	PutOAuth2Client(o *hydra.OAuth2ClientJSON) (*hydra.OAuth2ClientJSON, error)
-	DeleteOAuth2Client(id string) error
+// OAuth2ClientReconciler reconciles a OAuth2Client object.
+type OAuth2ClientReconciler struct {
+	client.Client
+	HydraClient         hydra.Client
+	Log                 logr.Logger
+	ControllerNamespace string
+
+	oauth2Clients map[clientKey]hydra.Client
 }
 
-// OAuth2ClientReconciler reconciles a OAuth2Client object
-type OAuth2ClientReconciler struct {
-	HydraClient  HydraClientInterface
-	Log          logr.Logger
-	otherClients map[clientMapKey]HydraClientInterface
-	client.Client
-	ControllerNamespace string
+// New returns a new Oauth2ClientReconciler.
+func New(c client.Client, hydraClient hydra.Client, log logr.Logger, ns string) *OAuth2ClientReconciler {
+	if ns == "" {
+		ns = DefaultNamespace
+	}
+
+	return &OAuth2ClientReconciler{
+		Client:              c,
+		HydraClient:         hydraClient,
+		Log:                 log,
+		ControllerNamespace: ns,
+		oauth2Clients:       make(map[clientKey]hydra.Client, 0),
+	}
 }
 
 // +kubebuilder:rbac:groups=hydra.ory.sh,resources=oauth2clients,verbs=get;list;watch;create;update;patch;delete
@@ -200,12 +212,12 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 		return err
 	}
 
-	hydra, err := r.getHydraClientForClient(*c)
+	hydraClient, err := r.getHydraClientForClient(*c)
 	if err != nil {
 		return err
 	}
 
-	oauth2client, err := c.ToOAuth2ClientJSON()
+	oauth2client, err := hydra.FromOAuth2Client(c)
 	if err != nil {
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
 			return updateErr
@@ -214,7 +226,7 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 	}
 
 	if credentials != nil {
-		if _, err := hydra.PostOAuth2Client(oauth2client.WithCredentials(credentials)); err != nil {
+		if _, err := hydraClient.PostOAuth2Client(oauth2client.WithCredentials(credentials)); err != nil {
 			if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
 				return updateErr
 			}
@@ -222,7 +234,7 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 		return r.ensureEmptyStatusError(ctx, c)
 	}
 
-	created, err := hydra.PostOAuth2Client(oauth2client)
+	created, err := hydraClient.PostOAuth2Client(oauth2client)
 	if err != nil {
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
 			return updateErr
@@ -260,12 +272,12 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 }
 
 func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Context, c *hydrav1alpha1.OAuth2Client, credentials *hydra.Oauth2ClientCredentials) error {
-	hydra, err := r.getHydraClientForClient(*c)
+	hydraClient, err := r.getHydraClientForClient(*c)
 	if err != nil {
 		return err
 	}
 
-	oauth2client, err := c.ToOAuth2ClientJSON()
+	oauth2client, err := hydra.FromOAuth2Client(c)
 	if err != nil {
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusUpdateFailed, err); updateErr != nil {
 			return updateErr
@@ -273,7 +285,7 @@ func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Contex
 		return errors.WithStack(err)
 	}
 
-	if _, err := hydra.PutOAuth2Client(oauth2client.WithCredentials(credentials)); err != nil {
+	if _, err := hydraClient.PutOAuth2Client(oauth2client.WithCredentials(credentials)); err != nil {
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusUpdateFailed, err); updateErr != nil {
 			return updateErr
 		}
@@ -352,17 +364,27 @@ func parseSecret(secret apiv1.Secret, authMethod hydrav1alpha1.TokenEndpointAuth
 	}, nil
 }
 
-func (r *OAuth2ClientReconciler) getHydraClientForClient(oauth2client hydrav1alpha1.OAuth2Client) (HydraClientInterface, error) {
+func (r *OAuth2ClientReconciler) getHydraClientForClient(
+	oauth2client hydrav1alpha1.OAuth2Client) (hydra.Client, error) {
 	spec := oauth2client.Spec
-	key := clientMapKey{
-		url:            spec.HydraAdmin.URL,
-		port:           spec.HydraAdmin.Port,
-		endpoint:       spec.HydraAdmin.Endpoint,
-		forwardedProto: spec.HydraAdmin.ForwardedProto,
+	if spec.HydraAdmin.URL != "" {
+		key := clientKey{
+			url:            spec.HydraAdmin.URL,
+			port:           spec.HydraAdmin.Port,
+			endpoint:       spec.HydraAdmin.Endpoint,
+			forwardedProto: spec.HydraAdmin.ForwardedProto,
+		}
+		if c, ok := r.oauth2Clients[key]; ok {
+			return c, nil
+		}
+		client, err := hydra.New(spec, "", false)
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot create oauth2 client from CRD")
+		}
+		r.oauth2Clients[key] = client
+		return client, nil
 	}
-	if c, ok := r.otherClients[key]; ok {
-		return c, nil
-	}
+
 	if r.HydraClient == nil {
 		return nil, errors.New("Not default client or other clients configured")
 	}

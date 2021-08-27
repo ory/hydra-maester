@@ -8,15 +8,51 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+
+	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
+	"github.com/ory/hydra-maester/helpers"
 )
 
-type Client struct {
+type Client interface {
+	GetOAuth2Client(id string) (*OAuth2ClientJSON, bool, error)
+	ListOAuth2Client() ([]*OAuth2ClientJSON, error)
+	PostOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error)
+	PutOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error)
+	DeleteOAuth2Client(id string) error
+}
+
+type InternalClient struct {
 	HydraURL       url.URL
 	HTTPClient     *http.Client
 	ForwardedProto string
 }
 
-func (c *Client) GetOAuth2Client(id string) (*OAuth2ClientJSON, bool, error) {
+// New returns a new hydra InternalClient instance.
+func New(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) (Client, error) {
+	address := fmt.Sprintf("%s:%d", spec.HydraAdmin.URL, spec.HydraAdmin.Port)
+	u, err := url.Parse(address)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := helpers.CreateHttpClient(insecureSkipVerify, tlsTrustStore)
+	if err != nil {
+		return nil, err
+	}
+
+	client := &InternalClient{
+		HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
+		HTTPClient: c,
+	}
+
+	if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
+		client.ForwardedProto = spec.HydraAdmin.ForwardedProto
+	}
+
+	return client, nil
+}
+
+func (c *InternalClient) GetOAuth2Client(id string) (*OAuth2ClientJSON, bool, error) {
 
 	var jsonClient *OAuth2ClientJSON
 
@@ -40,7 +76,7 @@ func (c *Client) GetOAuth2Client(id string) (*OAuth2ClientJSON, bool, error) {
 	}
 }
 
-func (c *Client) ListOAuth2Client() ([]*OAuth2ClientJSON, error) {
+func (c *InternalClient) ListOAuth2Client() ([]*OAuth2ClientJSON, error) {
 
 	var jsonClientList []*OAuth2ClientJSON
 
@@ -62,7 +98,7 @@ func (c *Client) ListOAuth2Client() ([]*OAuth2ClientJSON, error) {
 	}
 }
 
-func (c *Client) PostOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error) {
+func (c *InternalClient) PostOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error) {
 
 	var jsonClient *OAuth2ClientJSON
 
@@ -86,7 +122,7 @@ func (c *Client) PostOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error
 	}
 }
 
-func (c *Client) PutOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error) {
+func (c *InternalClient) PutOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error) {
 
 	var jsonClient *OAuth2ClientJSON
 
@@ -107,7 +143,7 @@ func (c *Client) PutOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error)
 	return jsonClient, nil
 }
 
-func (c *Client) DeleteOAuth2Client(id string) error {
+func (c *InternalClient) DeleteOAuth2Client(id string) error {
 
 	req, err := c.newRequest(http.MethodDelete, id, nil)
 	if err != nil {
@@ -123,14 +159,14 @@ func (c *Client) DeleteOAuth2Client(id string) error {
 	case http.StatusNoContent:
 		return nil
 	case http.StatusNotFound:
-		fmt.Printf("client with id %s does not exist", id)
+		fmt.Printf("InternalClient with id %s does not exist", id)
 		return nil
 	default:
 		return fmt.Errorf("%s %s http request returned unexpected status code %s", req.Method, req.URL.String(), resp.Status)
 	}
 }
 
-func (c *Client) newRequest(method, relativePath string, body interface{}) (*http.Request, error) {
+func (c *InternalClient) newRequest(method, relativePath string, body interface{}) (*http.Request, error) {
 
 	var buf io.ReadWriter
 	if body != nil {
@@ -162,7 +198,7 @@ func (c *Client) newRequest(method, relativePath string, body interface{}) (*htt
 
 }
 
-func (c *Client) do(req *http.Request, v interface{}) (*http.Response, error) {
+func (c *InternalClient) do(req *http.Request, v interface{}) (*http.Response, error) {
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err

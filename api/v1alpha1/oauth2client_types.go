@@ -16,11 +16,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"encoding/json"
-	"fmt"
-
-	"github.com/ory/hydra-maester/hydra"
-	"github.com/pkg/errors"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -184,50 +179,4 @@ type OAuth2ClientList struct {
 
 func init() {
 	SchemeBuilder.Register(&OAuth2Client{}, &OAuth2ClientList{})
-}
-
-// ToOAuth2ClientJSON converts an OAuth2Client into a OAuth2ClientJSON object that represents an OAuth2 client digestible by ORY Hydra
-func (c *OAuth2Client) ToOAuth2ClientJSON() (*hydra.OAuth2ClientJSON, error) {
-	meta, err := json.Marshal(c.Spec.Metadata)
-	if err != nil {
-		return nil, errors.WithMessage(err, "unable to encode `metadata` property value to json")
-	}
-
-	return &hydra.OAuth2ClientJSON{
-		ClientName:              c.Spec.ClientName,
-		GrantTypes:              grantToStringSlice(c.Spec.GrantTypes),
-		ResponseTypes:           responseToStringSlice(c.Spec.ResponseTypes),
-		RedirectURIs:            redirectToStringSlice(c.Spec.RedirectURIs),
-		PostLogoutRedirectURIs:  redirectToStringSlice(c.Spec.PostLogoutRedirectURIs),
-		AllowedCorsOrigins:      redirectToStringSlice(c.Spec.AllowedCorsOrigins),
-		Audience:                c.Spec.Audience,
-		Scope:                   c.Spec.Scope,
-		Owner:                   fmt.Sprintf("%s/%s", c.Name, c.Namespace),
-		TokenEndpointAuthMethod: string(c.Spec.TokenEndpointAuthMethod),
-		Metadata:                meta,
-	}, nil
-}
-
-func responseToStringSlice(rt []ResponseType) []string {
-	var output = make([]string, len(rt))
-	for i, elem := range rt {
-		output[i] = string(elem)
-	}
-	return output
-}
-
-func grantToStringSlice(gt []GrantType) []string {
-	var output = make([]string, len(gt))
-	for i, elem := range gt {
-		output[i] = string(elem)
-	}
-	return output
-}
-
-func redirectToStringSlice(ru []RedirectURI) []string {
-	var output = make([]string, len(ru))
-	for i, elem := range ru {
-		output[i] = string(elem)
-	}
-	return output
 }

@@ -18,21 +18,19 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net/url"
 	"os"
 	"time"
 
-	"github.com/ory/hydra-maester/helpers"
-
 	"github.com/ory/hydra-maester/hydra"
 
-	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
-	"github.com/ory/hydra-maester/controllers"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
+	"github.com/ory/hydra-maester/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -109,19 +107,19 @@ func main() {
 		}
 	}
 
-	hydraClient, err := getHydraClient(defaultSpec, tlsTrustStore, insecureSkipVerify)
+	hydraClient, err := hydra.New(defaultSpec, tlsTrustStore, insecureSkipVerify)
 	if err != nil {
 		setupLog.Error(err, "making default hydra client", "controller", "OAuth2Client")
 		os.Exit(1)
 
 	}
 
-	err = (&controllers.OAuth2ClientReconciler{
-		Client:              mgr.GetClient(),
-		Log:                 ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
-		HydraClient:         hydraClient,
-		ControllerNamespace: namespace,
-	}).SetupWithManager(mgr)
+	err = controllers.New(
+		mgr.GetClient(),
+		hydraClient,
+		ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
+		namespace,
+	).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OAuth2Client")
 		os.Exit(1)
@@ -133,29 +131,4 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
-}
-
-func getHydraClient(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) (controllers.HydraClientInterface, error) {
-
-	address := fmt.Sprintf("%s:%d", spec.HydraAdmin.URL, spec.HydraAdmin.Port)
-	u, err := url.Parse(address)
-	if err != nil {
-		return nil, err
-	}
-
-	c, err := helpers.CreateHttpClient(insecureSkipVerify, tlsTrustStore)
-	if err != nil {
-		return nil, err
-	}
-
-	client := &hydra.Client{
-		HydraURL:   *u.ResolveReference(&url.URL{Path: spec.HydraAdmin.Endpoint}),
-		HTTPClient: c,
-	}
-
-	if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
-		client.ForwardedProto = spec.HydraAdmin.ForwardedProto
-	}
-
-	return client, nil
 }

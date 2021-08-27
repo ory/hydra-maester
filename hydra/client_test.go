@@ -12,9 +12,10 @@ import (
 
 	"k8s.io/utils/pointer"
 
-	"github.com/ory/hydra-maester/hydra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ory/hydra-maester/hydra"
 )
 
 const (
@@ -60,7 +61,7 @@ func TestCRUD(t *testing.T) {
 
 	assert := assert.New(t)
 
-	c := hydra.Client{
+	c := hydra.InternalClient{
 		HTTPClient: &http.Client{},
 		HydraURL:   url.URL{Scheme: schemeHTTP},
 	}
@@ -397,7 +398,7 @@ func TestCRUD(t *testing.T) {
 	})
 }
 
-func runServer(c *hydra.Client, h http.HandlerFunc) {
+func runServer(c *hydra.InternalClient, h http.HandlerFunc) {
 	s := httptest.NewServer(h)
 	serverUrl, _ := url.Parse(s.URL)
 	c.HydraURL = *serverUrl.ResolveReference(&url.URL{Path: clientsEndpoint})

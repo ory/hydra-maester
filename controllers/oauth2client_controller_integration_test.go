@@ -10,10 +10,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
-	"github.com/ory/hydra-maester/controllers"
-	"github.com/ory/hydra-maester/controllers/mocks"
-	"github.com/ory/hydra-maester/hydra"
 	. "github.com/stretchr/testify/mock"
 	apiv1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,6 +23,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
+	"github.com/ory/hydra-maester/controllers"
+	"github.com/ory/hydra-maester/controllers/mocks"
+	"github.com/ory/hydra-maester/hydra"
 )
 
 const (
@@ -460,12 +461,13 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-func getAPIReconciler(mgr ctrl.Manager, mock controllers.HydraClientInterface) reconcile.Reconciler {
-	return &controllers.OAuth2ClientReconciler{
-		Client:      mgr.GetClient(),
-		Log:         ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
-		HydraClient: mock,
-	}
+func getAPIReconciler(mgr ctrl.Manager, mock hydra.Client) reconcile.Reconciler {
+	return controllers.New(
+		mgr.GetClient(),
+		mock,
+		ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
+		"",
+	)
 }
 
 func testInstance(name, secretName string) *hydrav1alpha1.OAuth2Client {
