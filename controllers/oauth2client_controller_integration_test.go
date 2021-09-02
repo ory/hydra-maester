@@ -26,7 +26,7 @@ import (
 
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
 	"github.com/ory/hydra-maester/controllers"
-	"github.com/ory/hydra-maester/controllers/mocks"
+	mocks "github.com/ory/hydra-maester/controllers/mocks/hydra"
 	"github.com/ory/hydra-maester/hydra"
 )
 
@@ -60,7 +60,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
-				mch := &mocks.HydraClientInterface{}
+				mch := &mocks.Client{}
 				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
 				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
@@ -139,7 +139,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
-				mch := &mocks.HydraClientInterface{}
+				mch := &mocks.Client{}
 				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
 				mch.On("PostOAuth2Client", Anything).Return(nil, errors.New("error"))
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
@@ -205,7 +205,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
-				mch := mocks.HydraClientInterface{}
+				mch := mocks.Client{}
 				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
 				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
@@ -300,7 +300,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
-				mch := mocks.HydraClientInterface{}
+				mch := mocks.Client{}
 				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
 				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
@@ -370,7 +370,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
-				mch := &mocks.HydraClientInterface{}
+				mch := &mocks.Client{}
 				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
 				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
