@@ -48,6 +48,9 @@ type clientKey struct {
 	forwardedProto string
 }
 
+// OAuth2ClientFactory is a function that creates oauth2 client.
+// The OAuth2ClientReconciler defaults to use hydra.New and the factory allows
+// to override this behavior for mocks during tests.
 type OAuth2ClientFactory func(
 	spec hydrav1alpha1.OAuth2ClientSpec,
 	tlsTrustStore string,
@@ -66,19 +69,24 @@ type OAuth2ClientReconciler struct {
 	mu                  sync.Mutex
 }
 
+// Options represent options to pass to the oauth2 client reconciler.
 type Options struct {
 	Namespace           string
 	OAuth2ClientFactory OAuth2ClientFactory
 }
 
+// Option is a functional option.
 type Option func(*Options)
 
+// WithNamespace sets the kubernetes namespace for the controller.
+// The default is "default".
 func WithNamespace(ns string) Option {
 	return func(o *Options) {
 		o.Namespace = ns
 	}
 }
 
+// WithClientFactory sets a function to create new oauth2 clients during the reconciliation logic.
 func WithClientFactory(factory OAuth2ClientFactory) Option {
 	return func(o *Options) {
 		o.OAuth2ClientFactory = factory
