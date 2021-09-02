@@ -18,6 +18,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -47,6 +48,12 @@ type clientKey struct {
 	forwardedProto string
 }
 
+type OAuth2ClientFactory func(
+	spec hydrav1alpha1.OAuth2ClientSpec,
+	tlsTrustStore string,
+	insecureSkipVerify bool,
+) (hydra.Client, error)
+
 // OAuth2ClientReconciler reconciles a OAuth2Client object.
 type OAuth2ClientReconciler struct {
 	client.Client
@@ -54,21 +61,47 @@ type OAuth2ClientReconciler struct {
 	Log                 logr.Logger
 	ControllerNamespace string
 
-	oauth2Clients map[clientKey]hydra.Client
+	oauth2Clients       map[clientKey]hydra.Client
+	oauth2ClientFactory OAuth2ClientFactory
+	mu                  sync.Mutex
+}
+
+type Options struct {
+	Namespace           string
+	OAuth2ClientFactory OAuth2ClientFactory
+}
+
+type Option func(*Options)
+
+func WithNamespace(ns string) Option {
+	return func(o *Options) {
+		o.Namespace = ns
+	}
+}
+
+func WithClientFactory(factory OAuth2ClientFactory) Option {
+	return func(o *Options) {
+		o.OAuth2ClientFactory = factory
+	}
 }
 
 // New returns a new Oauth2ClientReconciler.
-func New(c client.Client, hydraClient hydra.Client, log logr.Logger, ns string) *OAuth2ClientReconciler {
-	if ns == "" {
-		ns = DefaultNamespace
+func New(c client.Client, hydraClient hydra.Client, log logr.Logger, opts ...Option) *OAuth2ClientReconciler {
+	options := &Options{
+		Namespace:           DefaultNamespace,
+		OAuth2ClientFactory: hydra.New,
+	}
+	for _, opt := range opts {
+		opt(options)
 	}
 
 	return &OAuth2ClientReconciler{
 		Client:              c,
 		HydraClient:         hydraClient,
 		Log:                 log,
-		ControllerNamespace: ns,
+		ControllerNamespace: options.Namespace,
 		oauth2Clients:       make(map[clientKey]hydra.Client, 0),
+		oauth2ClientFactory: options.OAuth2ClientFactory,
 	}
 }
 
@@ -374,13 +407,17 @@ func (r *OAuth2ClientReconciler) getHydraClientForClient(
 			endpoint:       spec.HydraAdmin.Endpoint,
 			forwardedProto: spec.HydraAdmin.ForwardedProto,
 		}
+		r.mu.Lock()
+		defer r.mu.Unlock()
 		if c, ok := r.oauth2Clients[key]; ok {
 			return c, nil
 		}
-		client, err := hydra.New(spec, "", false)
+
+		client, err := r.oauth2ClientFactory(spec, "", false)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot create oauth2 client from CRD")
 		}
+
 		r.oauth2Clients[key] = client
 		return client, nil
 	}

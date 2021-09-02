@@ -118,7 +118,7 @@ func main() {
 		mgr.GetClient(),
 		hydraClient,
 		ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
-		namespace,
+		controllers.WithNamespace(namespace),
 	).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OAuth2Client")

@@ -65,6 +65,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
 				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
 				mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
+					fmt.Println("in PostOauth2Client")
 					return &hydra.OAuth2ClientJSON{
 						ClientID:      &tstClientID,
 						Secret:        pointer.StringPtr(tstSecret),
@@ -169,6 +170,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				err = c.Get(context.TODO(), ok, &retrieved)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(retrieved.Status.ReconciliationError).NotTo(BeNil())
+
 				Expect(retrieved.Status.ReconciliationError.Code).To(Equal(hydrav1alpha1.StatusRegistrationFailed))
 				Expect(retrieved.Status.ReconciliationError.Description).To(Equal("error"))
 
@@ -462,11 +464,15 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 }
 
 func getAPIReconciler(mgr ctrl.Manager, mock hydra.Client) reconcile.Reconciler {
+	clientMocker := func(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) (hydra.Client, error) {
+		return mock, nil
+	}
+
 	return controllers.New(
 		mgr.GetClient(),
 		mock,
 		ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
-		"",
+		controllers.WithClientFactory(clientMocker),
 	)
 }
 
