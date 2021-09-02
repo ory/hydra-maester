@@ -65,7 +65,6 @@ var _ = Describe("OAuth2Client Controller", func() {
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
 				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
 				mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
-					fmt.Println("in PostOauth2Client")
 					return &hydra.OAuth2ClientJSON{
 						ClientID:      &tstClientID,
 						Secret:        pointer.StringPtr(tstSecret),
