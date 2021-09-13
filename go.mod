@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/go-logr/logr v0.4.0
 	github.com/go-openapi/runtime v0.19.28
-	github.com/onsi/ginkgo v1.16.2
+	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.10.2
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.6.1
