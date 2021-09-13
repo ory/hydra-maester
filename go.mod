@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/go-logr/logr v0.4.0
 	github.com/go-openapi/runtime v0.19.28
-	github.com/onsi/ginkgo v1.16.2
+	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.10.2
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.6.1
@@ -16,5 +16,5 @@ require (
 	k8s.io/client-go v0.20.2
 	k8s.io/utils v0.0.0-20210305010621-2afb4311ab10
 	sigs.k8s.io/controller-runtime v0.8.3
-	sigs.k8s.io/kind v0.10.0 // indirect
+	sigs.k8s.io/kind v0.11.1 // indirect
 )
