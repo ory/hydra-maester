@@ -16,5 +16,5 @@ require (
 	k8s.io/client-go v0.20.2
 	k8s.io/utils v0.0.0-20210305010621-2afb4311ab10
 	sigs.k8s.io/controller-runtime v0.8.3
-	sigs.k8s.io/kind v0.10.0 // indirect
+	sigs.k8s.io/kind v0.11.1 // indirect
 )
