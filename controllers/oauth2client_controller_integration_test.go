@@ -10,10 +10,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
-	"github.com/ory/hydra-maester/controllers"
-	"github.com/ory/hydra-maester/controllers/mocks"
-	"github.com/ory/hydra-maester/hydra"
 	. "github.com/stretchr/testify/mock"
 	apiv1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,6 +23,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
+	"github.com/ory/hydra-maester/controllers"
+	mocks "github.com/ory/hydra-maester/controllers/mocks/hydra"
+	"github.com/ory/hydra-maester/hydra"
 )
 
 const (
@@ -59,7 +60,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
-				mch := &mocks.HydraClientInterface{}
+				mch := &mocks.Client{}
 				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
 				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
@@ -138,7 +139,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
-				mch := &mocks.HydraClientInterface{}
+				mch := &mocks.Client{}
 				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
 				mch.On("PostOAuth2Client", Anything).Return(nil, errors.New("error"))
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
@@ -168,6 +169,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				err = c.Get(context.TODO(), ok, &retrieved)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(retrieved.Status.ReconciliationError).NotTo(BeNil())
+
 				Expect(retrieved.Status.ReconciliationError.Code).To(Equal(hydrav1alpha1.StatusRegistrationFailed))
 				Expect(retrieved.Status.ReconciliationError.Description).To(Equal("error"))
 
@@ -204,7 +206,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
-				mch := mocks.HydraClientInterface{}
+				mch := mocks.Client{}
 				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
 				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
@@ -299,7 +301,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
-				mch := mocks.HydraClientInterface{}
+				mch := mocks.Client{}
 				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
 				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
@@ -369,7 +371,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
-				mch := &mocks.HydraClientInterface{}
+				mch := &mocks.Client{}
 				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
 				mch.On("DeleteOAuth2Client", Anything).Return(nil)
 				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
@@ -460,12 +462,17 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-func getAPIReconciler(mgr ctrl.Manager, mock controllers.HydraClientInterface) reconcile.Reconciler {
-	return &controllers.OAuth2ClientReconciler{
-		Client:      mgr.GetClient(),
-		Log:         ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
-		HydraClient: mock,
+func getAPIReconciler(mgr ctrl.Manager, mock hydra.Client) reconcile.Reconciler {
+	clientMocker := func(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) (hydra.Client, error) {
+		return mock, nil
 	}
+
+	return controllers.New(
+		mgr.GetClient(),
+		mock,
+		ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
+		controllers.WithClientFactory(clientMocker),
+	)
 }
 
 func testInstance(name, secretName string) *hydrav1alpha1.OAuth2Client {
