@@ -4,6 +4,7 @@
 
 - [Change Log](#change-log)
   - [Unreleased](#unreleased)
+  - [v0.0.24 (2021-09-14)](#v0024-2021-09-14)
   - [v0.0.23 (2021-06-04)](#v0023-2021-06-04)
   - [v0.0.22 (2021-05-13)](#v0022-2021-05-13)
   - [v0.0.21 (2021-05-10)](#v0021-2021-05-10)
@@ -36,11 +37,36 @@
 
 ## [Unreleased](https://github.com/ory/hydra-maester/tree/HEAD)
 
-[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.23...HEAD)
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.24...HEAD)
+
+**Fixed bugs:**
+
+- Oauth2 clients registered in Hydra miss`redirect\_uris` [\#60](https://github.com/ory/hydra-maester/issues/60)
+
+## [v0.0.24](https://github.com/ory/hydra-maester/tree/v0.0.24) (2021-09-14)
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.23...v0.0.24)
 
 **Closed issues:**
 
 - CI failure on master [\#70](https://github.com/ory/hydra-maester/issues/70)
+- Hydra Maester requesting for secret at cluster scope [\#18](https://github.com/ory/hydra-maester/issues/18)
+- Synchronization mode [\#4](https://github.com/ory/hydra-maester/issues/4)
+
+**Merged pull requests:**
+
+- chore: update kind [\#88](https://github.com/ory/hydra-maester/pull/88) ([Demonsthere](https://github.com/Demonsthere))
+- fix: installing kubebuilder binary. [\#87](https://github.com/ory/hydra-maester/pull/87) ([piotrmsc](https://github.com/piotrmsc))
+- chore: update codeowners of the repository [\#86](https://github.com/ory/hydra-maester/pull/86) ([piotrmsc](https://github.com/piotrmsc))
+- chore: update repository template to ed8a3628 [\#85](https://github.com/ory/hydra-maester/pull/85) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to ed8a3628 [\#84](https://github.com/ory/hydra-maester/pull/84) ([aeneasr](https://github.com/aeneasr))
+- fix\(controller\): Ensure that OAuth2Client reconciliation creates hydra client for specs [\#83](https://github.com/ory/hydra-maester/pull/83) ([alexandrem](https://github.com/alexandrem))
+- chore: update repository template to 7f8a3988 [\#81](https://github.com/ory/hydra-maester/pull/81) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to d066e55a [\#80](https://github.com/ory/hydra-maester/pull/80) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to d066e55a [\#79](https://github.com/ory/hydra-maester/pull/79) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to 39c4c3db [\#78](https://github.com/ory/hydra-maester/pull/78) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to 3ac3c476 [\#77](https://github.com/ory/hydra-maester/pull/77) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to 0f4b64a2 [\#76](https://github.com/ory/hydra-maester/pull/76) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to ad9a6404 [\#74](https://github.com/ory/hydra-maester/pull/74) ([aeneasr](https://github.com/aeneasr))
 
 ## [v0.0.23](https://github.com/ory/hydra-maester/tree/v0.0.23) (2021-06-04)
 [Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.22...v0.0.23)
@@ -67,7 +93,7 @@
 ## [v0.0.21](https://github.com/ory/hydra-maester/tree/v0.0.21) (2021-05-10)
 [Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.20...v0.0.21)
 
-**Implemented enhancements:**
+**Merged pull requests:**
 
 - feat: Support to ory hydra running in secure mode [\#62](https://github.com/ory/hydra-maester/pull/62) ([fjvierap](https://github.com/fjvierap))
 
@@ -218,7 +244,6 @@
 
 **Merged pull requests:**
 
-- Feature: multi hydra [\#35](https://github.com/ory/hydra-maester/pull/35) ([paulbdavis](https://github.com/paulbdavis))
 - README: add kubebuilder as a prerequisite [\#31](https://github.com/ory/hydra-maester/pull/31) ([paulbdavis](https://github.com/paulbdavis))
 
 ## [v0.0.4](https://github.com/ory/hydra-maester/tree/v0.0.4) (2019-09-19)
@@ -236,6 +261,7 @@
 
 **Merged pull requests:**
 
+- Feature: multi hydra [\#35](https://github.com/ory/hydra-maester/pull/35) ([paulbdavis](https://github.com/paulbdavis))
 - fix JSON decode bug [\#25](https://github.com/ory/hydra-maester/pull/25) ([jakkab](https://github.com/jakkab))
 - Fix override clients bug [\#23](https://github.com/ory/hydra-maester/pull/23) ([jakkab](https://github.com/jakkab))
 - Full upgrade [\#19](https://github.com/ory/hydra-maester/pull/19) ([jakkab](https://github.com/jakkab))
