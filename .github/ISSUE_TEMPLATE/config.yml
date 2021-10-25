@@ -1,6 +1,6 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Ory Ory Hydra Maester Forum
+  - name: Ory Ory Oathkeeper Maester Forum
     url: https://github.com/ory/hydra-maester/discussions
     about: Please ask and answer questions here, show your implementations and discuss ideas.
   - name: Ory Chat
@@ -8,4 +8,4 @@ contact_links:
     about: Hang out with other Ory community members to ask and answer questions.
   - name: Ory Support for Business
     url: https://github.com/ory/open-source-support/blob/master/README.md
-    about: Buy professional support for Ory Ory Hydra Maester.
+    about: Buy professional support for Ory Ory Oathkeeper Maester.
