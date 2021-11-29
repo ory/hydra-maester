@@ -95,8 +95,8 @@ endif
 
 # Download and setup kubebuilder
 kubebuilder:
-	os=$(go env GOOS)
-	arch=$(go env GOARCH)
-	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v2.3.2/kubebuilder_2.3.2_${os}_${arch}.tar.gz | tar -xz -C /tmp/
-	mv /tmp/kubebuilder_2.3.2_${os}_${arch} /usr/local/kubebuilder
+	os=$$(go env GOOS)
+	arch=$$(go env GOARCH)
+	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v2.3.2/kubebuilder_2.3.2_$${os}_$${arch}.tar.gz | tar -xz -C /tmp/
+	mv /tmp/kubebuilder_2.3.2_$${os}_$${arch} /usr/local/kubebuilder
 	export PATH=$PATH:/usr/local/kubebuilder/bin
