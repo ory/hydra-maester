@@ -1,4 +1,21 @@
+ifeq ($(OS),Windows_NT)
+	ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
+		ARCH=amd64
+		OS=windows
+	endif
+else
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Linux)
+		OS=linux
+		ARCH=amd64
+	endif
+	ifeq ($(UNAME_S),Darwin)
+		OS=darwin
+		ARCH=amd64
+	endif
+endif
 
+HELL=/bin/bash -o pipefail
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
@@ -95,8 +112,6 @@ endif
 
 # Download and setup kubebuilder
 kubebuilder:
-	os=$$(go env GOOS)
-	arch=$$(go env GOARCH)
-	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v2.3.2/kubebuilder_2.3.2_$${os}_$${arch}.tar.gz | tar -xz -C /tmp/
-	mv /tmp/kubebuilder_2.3.2_$${os}_$${arch} /usr/local/kubebuilder
+	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v2.3.2/kubebuilder_2.3.2_${OS}_${ARCH}.tar.gz | tar -xz -C /tmp/
+	mv /tmp/kubebuilder_2.3.2_${OS}_${ARCH} /usr/local/kubebuilder
 	export PATH=$PATH:/usr/local/kubebuilder/bin
