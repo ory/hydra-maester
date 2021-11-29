@@ -113,5 +113,5 @@ endif
 # Download and setup kubebuilder
 kubebuilder:
 	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v2.3.2/kubebuilder_2.3.2_${OS}_${ARCH}.tar.gz | tar -xz -C /tmp/
-	mv /tmp/kubebuilder_2.3.2_${OS}_${ARCH} /usr/local/kubebuilder
-	export PATH=$PATH:/usr/local/kubebuilder/bin
+	mv /tmp/kubebuilder_2.3.2_${OS}_${ARCH} ${PWD}/kubebuilder
+	export PATH=${PATH}:${PWD}/kubebuilder/bin
