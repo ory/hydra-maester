@@ -3,7 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Change Log](#change-log)
-  - [Unreleased](#unreleased)
+  - [v0.0.25 (2021-11-30)](#v0025-2021-11-30)
   - [v0.0.24 (2021-09-14)](#v0024-2021-09-14)
   - [v0.0.23 (2021-06-04)](#v0023-2021-06-04)
   - [v0.0.22 (2021-05-13)](#v0022-2021-05-13)
@@ -35,13 +35,33 @@
 
 # Change Log
 
-## [Unreleased](https://github.com/ory/hydra-maester/tree/HEAD)
-
-[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.24...HEAD)
+## [v0.0.25](https://github.com/ory/hydra-maester/tree/v0.0.25) (2021-11-30)
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.24...v0.0.25)
 
 **Fixed bugs:**
 
+- Update dependencies to fix CVE issues [\#102](https://github.com/ory/hydra-maester/issues/102)
+- Reconciler is not using Hydra admin url from spec [\#82](https://github.com/ory/hydra-maester/issues/82)
 - Oauth2 clients registered in Hydra miss`redirect\_uris` [\#60](https://github.com/ory/hydra-maester/issues/60)
+
+**Closed issues:**
+
+- Multiple deployments cause problems [\#55](https://github.com/ory/hydra-maester/issues/55)
+- Add all missing oauth client properties to the CRD spec [\#36](https://github.com/ory/hydra-maester/issues/36)
+
+**Merged pull requests:**
+
+- chore: upgrade golang to 1.16 [\#103](https://github.com/ory/hydra-maester/pull/103) ([Demonsthere](https://github.com/Demonsthere))
+- chore: update repository template to 6989295f [\#100](https://github.com/ory/hydra-maester/pull/100) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to f4135705 [\#99](https://github.com/ory/hydra-maester/pull/99) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to f0344cdf [\#98](https://github.com/ory/hydra-maester/pull/98) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to 8ac84b7f [\#97](https://github.com/ory/hydra-maester/pull/97) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to 455ef889 [\#96](https://github.com/ory/hydra-maester/pull/96) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to 455ef889 [\#95](https://github.com/ory/hydra-maester/pull/95) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to ec210015 [\#94](https://github.com/ory/hydra-maester/pull/94) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to ec210015 [\#93](https://github.com/ory/hydra-maester/pull/93) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to e424c0a0 [\#90](https://github.com/ory/hydra-maester/pull/90) ([aeneasr](https://github.com/aeneasr))
+- chore: update repository template to e424c0a0 [\#89](https://github.com/ory/hydra-maester/pull/89) ([aeneasr](https://github.com/aeneasr))
 
 ## [v0.0.24](https://github.com/ory/hydra-maester/tree/v0.0.24) (2021-09-14)
 [Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.23...v0.0.24)
@@ -244,6 +264,7 @@
 
 **Merged pull requests:**
 
+- Feature: multi hydra [\#35](https://github.com/ory/hydra-maester/pull/35) ([paulbdavis](https://github.com/paulbdavis))
 - README: add kubebuilder as a prerequisite [\#31](https://github.com/ory/hydra-maester/pull/31) ([paulbdavis](https://github.com/paulbdavis))
 
 ## [v0.0.4](https://github.com/ory/hydra-maester/tree/v0.0.4) (2019-09-19)
@@ -261,7 +282,6 @@
 
 **Merged pull requests:**
 
-- Feature: multi hydra [\#35](https://github.com/ory/hydra-maester/pull/35) ([paulbdavis](https://github.com/paulbdavis))
 - fix JSON decode bug [\#25](https://github.com/ory/hydra-maester/pull/25) ([jakkab](https://github.com/jakkab))
 - Fix override clients bug [\#23](https://github.com/ory/hydra-maester/pull/23) ([jakkab](https://github.com/jakkab))
 - Full upgrade [\#19](https://github.com/ory/hydra-maester/pull/19) ([jakkab](https://github.com/jakkab))
