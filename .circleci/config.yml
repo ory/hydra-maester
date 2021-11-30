@@ -15,7 +15,7 @@ kube-builder: &install-kube-builder
     sudo mv /tmp/kubebuilder_2.3.2_${os}_${arch} /usr/local/kubebuilder
     export PATH=$PATH:/usr/local/kubebuilder/bin
 golaing_image: &golang_image
-  image: circleci/golang:1.16
+  image: circleci/golang:1.16.10
 version: 2
 jobs:
   build:
