@@ -131,8 +131,8 @@ func TestCreateAPI(t *testing.T) {
 				t.Run(fmt.Sprintf("case=%s", desc), func(t *testing.T) {
 					resetTestClient()
 					modifyClient()
-					createErr = k8sClient.Create(context.TODO(), created)
-					require.NoError(t, createErr)
+					require.NoError(t, k8sClient.Create(context.TODO(), created))
+					require.NoError(t, k8sClient.Delete(context.TODO(), created))
 				})
 			}
 		})
