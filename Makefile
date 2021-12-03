@@ -34,12 +34,12 @@ test: generate fmt vet manifests
 # Start KIND pseudo-cluster
 .PHONY: kind-start
 kind-start:
-	GO111MODULE=on go get "sigs.k8s.io/kind@v0.11.1" && kind create cluster
+	kind create cluster
 
 # Stop KIND pseudo-cluster
 .PHONY: kind-stop
 kind-stop:
-	GO111MODULE=on go get "sigs.k8s.io/kind@v0.11.1" && kind delete cluster
+	kind delete cluster
 
 # Deploy on KIND
 # Ensures the controller image is built, deploys the image to KIND cluster along with necessary configuration

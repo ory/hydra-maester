@@ -129,7 +129,7 @@ type OAuth2ClientSpec struct {
 // GrantType represents an OAuth 2.0 grant type
 type GrantType string
 
-// +kubebuilder:validation:Enum=id_token;code;token
+// +kubebuilder:validation:Enum=id_token;code;token;id_token code;id_token token;id_token token code;code token
 // ResponseType represents an OAuth 2.0 response type strings
 type ResponseType string
 
