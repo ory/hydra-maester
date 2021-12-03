@@ -108,10 +108,10 @@ spec:
                   - id_token
                   - code
                   - token
-                  - id_token code
-                  - id_token token
-                  - id_token token code
                   - code token
+                  - code id_token
+                  - id_token token
+                  - code id_token token
                   type: string
                 maxItems: 3
                 minItems: 1
