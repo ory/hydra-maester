@@ -124,9 +124,12 @@ func TestCreateAPI(t *testing.T) {
 
 		t.Run("by creating an object if it passes validation", func(t *testing.T) {
 			for desc, modifyClient := range map[string]func(){
-				"single response type": func() { created.Spec.ResponseTypes = []ResponseType{"token", "code id_token", "code token"} },
-				"double response type": func() { created.Spec.ResponseTypes = []ResponseType{"id_token token"} },
-				"triple response type": func() { created.Spec.ResponseTypes = []ResponseType{"code id_token token"} },
+				"single response type":        func() { created.Spec.ResponseTypes = []ResponseType{"token", "id_token", "code"} },
+				"double response type":        func() { created.Spec.ResponseTypes = []ResponseType{"id_token token", "code id_token", "code token"} },
+				"reverse order response type": func() { created.Spec.ResponseTypes = []ResponseType{"token id_token", "id_token code", "token code"} },
+				"triple response type": func() {
+					created.Spec.ResponseTypes = []ResponseType{"code id_token token", "id_token token code", "code token id_token"}
+				},
 			} {
 				t.Run(fmt.Sprintf("case=%s", desc), func(t *testing.T) {
 					resetTestClient()
