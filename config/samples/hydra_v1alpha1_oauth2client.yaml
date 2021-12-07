@@ -13,6 +13,10 @@ spec:
     - id_token
     - code
     - token
+    - code token
+    - code id_token
+    - id_token token
+    - code id_token token
   scope: "read write"
   secretName: my-secret-123
   # these are optional
