@@ -101,23 +101,38 @@ func TestCreateAPI(t *testing.T) {
 		t.Run("by failing if the requested object doesn't meet CRD requirements", func(t *testing.T) {
 
 			for desc, modifyClient := range map[string]func(){
-				"invalid grant type":            func() { created.Spec.GrantTypes = []GrantType{"invalid"} },
-				"invalid response type":         func() { created.Spec.ResponseTypes = []ResponseType{"invalid"} },
-				"invalid scope":                 func() { created.Spec.Scope = "" },
-				"missing secret name":           func() { created.Spec.SecretName = "" },
-				"invalid redirect URI":          func() { created.Spec.RedirectURIs = []RedirectURI{"invalid"} },
-				"invalid logout redirect URI":   func() { created.Spec.PostLogoutRedirectURIs = []RedirectURI{"invalid"} },
-				"invalid hydra url":             func() { created.Spec.HydraAdmin.URL = "invalid" },
-				"invalid hydra port high":       func() { created.Spec.HydraAdmin.Port = 65536 },
-				"invalid hydra endpoint":        func() { created.Spec.HydraAdmin.Endpoint = "invalid" },
-				"invalid hydra forwarded proto": func() { created.Spec.HydraAdmin.Endpoint = "invalid" },
+				"invalid grant type":              func() { created.Spec.GrantTypes = []GrantType{"invalid"} },
+				"invalid response type":           func() { created.Spec.ResponseTypes = []ResponseType{"invalid", "code"} },
+				"invalid composite response type": func() { created.Spec.ResponseTypes = []ResponseType{"invalid code", "code id_token"} },
+				"invalid scope":                   func() { created.Spec.Scope = "" },
+				"missing secret name":             func() { created.Spec.SecretName = "" },
+				"invalid redirect URI":            func() { created.Spec.RedirectURIs = []RedirectURI{"invalid"} },
+				"invalid logout redirect URI":     func() { created.Spec.PostLogoutRedirectURIs = []RedirectURI{"invalid"} },
+				"invalid hydra url":               func() { created.Spec.HydraAdmin.URL = "invalid" },
+				"invalid hydra port high":         func() { created.Spec.HydraAdmin.Port = 65536 },
+				"invalid hydra endpoint":          func() { created.Spec.HydraAdmin.Endpoint = "invalid" },
+				"invalid hydra forwarded proto":   func() { created.Spec.HydraAdmin.Endpoint = "invalid" },
 			} {
 				t.Run(fmt.Sprintf("case=%s", desc), func(t *testing.T) {
-
 					resetTestClient()
 					modifyClient()
 					createErr = k8sClient.Create(context.TODO(), created)
 					require.Error(t, createErr)
+				})
+			}
+		})
+
+		t.Run("by creating an object if it passes validation", func(t *testing.T) {
+			for desc, modifyClient := range map[string]func(){
+				"single response type": func() { created.Spec.ResponseTypes = []ResponseType{"token", "id_token", "code"} },
+				"double response type": func() { created.Spec.ResponseTypes = []ResponseType{"id_token token", "code id_token", "code token"} },
+				"triple response type": func() { created.Spec.ResponseTypes = []ResponseType{"code id_token token"} },
+			} {
+				t.Run(fmt.Sprintf("case=%s", desc), func(t *testing.T) {
+					resetTestClient()
+					modifyClient()
+					require.NoError(t, k8sClient.Create(context.TODO(), created))
+					require.NoError(t, k8sClient.Delete(context.TODO(), created))
 				})
 			}
 		})
