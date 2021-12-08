@@ -3,6 +3,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Change Log](#change-log)
+  - [v0.0.26 (2021-12-08)](#v0026-2021-12-08)
   - [v0.0.25 (2021-11-30)](#v0025-2021-11-30)
   - [v0.0.24 (2021-09-14)](#v0024-2021-09-14)
   - [v0.0.23 (2021-06-04)](#v0023-2021-06-04)
@@ -34,6 +35,14 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Change Log
+
+## [v0.0.26](https://github.com/ory/hydra-maester/tree/v0.0.26) (2021-12-08)
+[Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.25...v0.0.26)
+
+**Fixed bugs:**
+
+- response\_type=id\_token+token [\#101](https://github.com/ory/hydra-maester/issues/101)
+- feat: support all variations of responseTypes [\#104](https://github.com/ory/hydra-maester/pull/104) ([Demonsthere](https://github.com/Demonsthere))
 
 ## [v0.0.25](https://github.com/ory/hydra-maester/tree/v0.0.25) (2021-11-30)
 [Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.24...v0.0.25)
@@ -83,7 +92,6 @@
 - chore: update repository template to 7f8a3988 [\#81](https://github.com/ory/hydra-maester/pull/81) ([aeneasr](https://github.com/aeneasr))
 - chore: update repository template to d066e55a [\#80](https://github.com/ory/hydra-maester/pull/80) ([aeneasr](https://github.com/aeneasr))
 - chore: update repository template to d066e55a [\#79](https://github.com/ory/hydra-maester/pull/79) ([aeneasr](https://github.com/aeneasr))
-- chore: update repository template to 39c4c3db [\#78](https://github.com/ory/hydra-maester/pull/78) ([aeneasr](https://github.com/aeneasr))
 - chore: update repository template to 3ac3c476 [\#77](https://github.com/ory/hydra-maester/pull/77) ([aeneasr](https://github.com/aeneasr))
 - chore: update repository template to 0f4b64a2 [\#76](https://github.com/ory/hydra-maester/pull/76) ([aeneasr](https://github.com/aeneasr))
 - chore: update repository template to ad9a6404 [\#74](https://github.com/ory/hydra-maester/pull/74) ([aeneasr](https://github.com/aeneasr))
@@ -133,6 +141,7 @@
 
 **Merged pull requests:**
 
+- chore: update repository template to 39c4c3db [\#78](https://github.com/ory/hydra-maester/pull/78) ([aeneasr](https://github.com/aeneasr))
 - feat: Add AllowedCorsOrigins [\#58](https://github.com/ory/hydra-maester/pull/58) ([greenboxal](https://github.com/greenboxal))
 - feat: Adding oauth client name to the CRD spec [\#56](https://github.com/ory/hydra-maester/pull/56) ([angelokurtis](https://github.com/angelokurtis))
 
@@ -290,10 +299,6 @@
 ## [v0.0.3](https://github.com/ory/hydra-maester/tree/v0.0.3) (2019-08-30)
 [Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.2-test2...v0.0.3)
 
-**Merged pull requests:**
-
-- Extend readme: command-line flags [\#15](https://github.com/ory/hydra-maester/pull/15) ([jakkab](https://github.com/jakkab))
-
 ## [v0.0.2-test2](https://github.com/ory/hydra-maester/tree/v0.0.2-test2) (2019-08-30)
 [Full Changelog](https://github.com/ory/hydra-maester/compare/v0.0.2-test1...v0.0.2-test2)
 
@@ -318,6 +323,7 @@
 ## [v0.0.1](https://github.com/ory/hydra-maester/tree/v0.0.1) (2019-08-29)
 **Merged pull requests:**
 
+- Extend readme: command-line flags [\#15](https://github.com/ory/hydra-maester/pull/15) ([jakkab](https://github.com/jakkab))
 - Scaffold controller [\#12](https://github.com/ory/hydra-maester/pull/12) ([jakkab](https://github.com/jakkab))
 - Add goreleaser file [\#11](https://github.com/ory/hydra-maester/pull/11) ([piotrmsc](https://github.com/piotrmsc))
 - Small info [\#10](https://github.com/ory/hydra-maester/pull/10) ([piotrmsc](https://github.com/piotrmsc))
