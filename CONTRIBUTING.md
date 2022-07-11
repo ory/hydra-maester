@@ -8,7 +8,7 @@ https://github.com/ory/meta/blob/master/templates/repository/common/CONTRIBUTING
 
 -->
 
-# Contribute to Ory Ory Hydra Maester
+# Contribute to Ory Ory Oathkeeper Maester
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -29,8 +29,8 @@ https://github.com/ory/meta/blob/master/templates/repository/common/CONTRIBUTING
 
 ## Introduction
 
-_Please note_: We take Ory Ory Hydra Maester's security and our users' trust very
-seriously. If you believe you have found a security issue in Ory Ory Hydra Maester,
+_Please note_: We take Ory Ory Oathkeeper Maester's security and our users' trust very
+seriously. If you believe you have found a security issue in Ory Ory Oathkeeper Maester,
 please disclose by contacting us at security@ory.sh.
 
 There are many ways in which you can contribute. The goal of this document is to
@@ -48,9 +48,9 @@ contributions, and don't want a wall of rules to get in the way of that.
 That said, if you want to ensure that a pull request is likely to be merged,
 talk to us! You can find out our thoughts and ensure that your contribution
 won't clash with Ory
-Ory Hydra Maester's direction. A great way to
+Ory Oathkeeper Maester's direction. A great way to
 do this is via
-[Ory Ory Hydra Maester Discussions](https://github.com/orgs/ory/discussions)
+[Ory Ory Oathkeeper Maester Discussions](https://github.com/orgs/ory/discussions)
 or the [Ory Chat](https://www.ory.sh/chat).
 
 ## FAQ
@@ -59,21 +59,21 @@ or the [Ory Chat](https://www.ory.sh/chat).
   [Ory Community Code of Conduct?](https://github.com/ory/hydra-maester/blob/master/CODE_OF_CONDUCT.md)
 
 - I have a question. Where can I get
-  [answers to questions regarding Ory Ory Hydra Maester?](#communication)
+  [answers to questions regarding Ory Ory Oathkeeper Maester?](#communication)
 
 - I would like to contribute but I am not sure how. Are there
   [easy ways to contribute?](#how-can-i-contribute)
   [Or good first issues?](https://github.com/search?l=&o=desc&q=label%3A%22help+wanted%22+label%3A%22good+first+issue%22+is%3Aopen+user%3Aory+user%3Aory-corp&s=updated&type=Issues)
 
-- I want to talk to other Ory Ory Hydra Maester users.
+- I want to talk to other Ory Ory Oathkeeper Maester users.
   [How can I become a part of the community?](#communication)
 
 - I would like to know what I am agreeing to when I contribute to Ory
-  Ory Hydra Maester.
+  Ory Oathkeeper Maester.
   Does Ory have
   [a Contributors License Agreement?](https://cla-assistant.io/ory/hydra-maester)
 
-- I would like updates about new versions of Ory Ory Hydra Maester.
+- I would like updates about new versions of Ory Ory Oathkeeper Maester.
   [How are new releases announced?](https://ory.us10.list-manage.com/subscribe?u=ffb1a878e4ec6c0ed312a3480&id=f605a41b53)
 
 ## How can I contribute?
@@ -85,7 +85,7 @@ There are many other ways you can contribute. Here are a few things you can do
 to help out:
 
 - **Give us a star.** It may not seem like much, but it really makes a
-  difference. This is something that everyone can do to help out Ory Ory Hydra Maester.
+  difference. This is something that everyone can do to help out Ory Ory Oathkeeper Maester.
   Github stars help the project gain visibility and stand out.
 
 - **Join the community.** Sometimes helping people can be as easy as listening
@@ -100,7 +100,7 @@ to help out:
   help, please share it! Bonus: You get GitHub achievements for answered
   discussions.
 
-- **Help with open issues.** We have a lot of open issues for Ory Ory Hydra Maester and
+- **Help with open issues.** We have a lot of open issues for Ory Ory Oathkeeper Maester and
   some of them may lack necessary information, some are duplicates of older
   issues. You can help out by guiding people through the process of filling out
   the issue template, asking for clarifying information, or pointing them to
@@ -119,14 +119,14 @@ to help out:
 We use [Slack](https://www.ory.sh/chat). You are welcome to drop in and ask
 questions, discuss bugs and feature requests, talk to other users of Ory, etc.
 
-Check out [Ory Ory Hydra Maester Discussions](https://github.com/orgs/ory/discussions). This is a great place for
+Check out [Ory Ory Oathkeeper Maester Discussions](https://github.com/orgs/ory/discussions). This is a great place for
 in-depth discussions and lots of code examples, logs and similar data.
 
 You can also join our community calls, if you want to speak to the Ory team
 directly or ask some questions. You can find more info and participate in
 [Slack](https://www.ory.sh/chat) in the #community-call channel.
 
-If you want to receive regular notifications about updates to Ory Ory Hydra Maester,
+If you want to receive regular notifications about updates to Ory Ory Oathkeeper Maester,
 consider joining the mailing list. We will _only_ send you vital information on
 the projects that you are interested in.
 
@@ -153,7 +153,7 @@ checklist to contribute an example:
    not get mixed up.
 1. Add a descriptive prefix to commits. This ensures a uniform commit history
    and helps structure the changelog. Please refer to this
-   [list of prefixes for Ory Hydra Maester](https://github.com/ory/hydra-maester/blob/master/.github/semantic.yml)
+   [list of prefixes for Ory Oathkeeper Maester](https://github.com/ory/hydra-maester/blob/master/.github/semantic.yml)
    for an overview.
 1. Create a `README.md` that explains how to use the example. (Use
    [the README template](https://github.com/ory/examples/blob/master/_common/README)).
@@ -163,7 +163,7 @@ checklist to contribute an example:
 
 Unless you are fixing a known bug, we **strongly** recommend discussing it with
 the core team via a GitHub issue or [in our chat](https://www.ory.sh/chat)
-before getting started to ensure your work is consistent with Ory Ory Hydra Maester's
+before getting started to ensure your work is consistent with Ory Ory Oathkeeper Maester's
 roadmap and architecture.
 
 All contributions are made via pull requests. To make a pull request, you will
@@ -183,7 +183,7 @@ request, go through this checklist:
 1. Add a descriptive prefix to commits. This ensures a uniform commit history
    and helps structure the changelog.  
    Please refer to this
-   [list of prefixes for Ory Hydra Maester](https://github.com/ory/hydra-maester/blob/master/.github/semantic.yml)
+   [list of prefixes for Ory Oathkeeper Maester](https://github.com/ory/hydra-maester/blob/master/.github/semantic.yml)
    for an overview.
 1. Sign-up with CircleCI so that it has access to your repository with the
    branch containing your PR. Simply creating a CircleCI account is sufficient
