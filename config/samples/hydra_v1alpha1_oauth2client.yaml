@@ -36,4 +36,3 @@ spec:
     endpoint: /clients
     forwardedProto: https
   tokenEndpointAuthMethod: client_secret_basic
-  

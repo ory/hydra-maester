@@ -1,6 +1,5 @@
 # Design
 
-
 ## Controller design
 
 The controller listens for Custom Resource which defines client registration request. Once Custom resource is created, the controller register oauth2 client in hydra using hydra's REST API.
@@ -9,7 +8,7 @@ Reference is used to identify in which kubernetes secret are stored mentioned pr
 By default controller should be deployed in the same pod as hydra. Service discovery will come in place in the future.
 
 Custom Resource should be Namespace scoped to enable isolation in k8s.
-It is represented in the diagram 
+It is represented in the diagram
 
 ![diagram](./assets/workflow.svg)
 

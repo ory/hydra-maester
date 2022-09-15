@@ -89,9 +89,9 @@ manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 # Run go fmt against code
-.PHONY: fmt
-fmt:
+format: node_modules
 	go fmt ./...
+	npm exec -- prettier --write .
 
 # Run go vet against code
 .PHONY: vet
@@ -135,3 +135,7 @@ kubebuilder:
 	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v2.3.2/kubebuilder_2.3.2_${OS}_${ARCH}.tar.gz | tar -xz -C /tmp/
 	mv /tmp/kubebuilder_2.3.2_${OS}_${ARCH} ${PWD}/.bin/kubebuilder
 	export PATH=${PATH}:${PWD}/.bin/kubebuilder/bin
+
+node_modules: package-lock.json
+	npm ci
+	touch node_modules
