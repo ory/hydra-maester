@@ -28,7 +28,7 @@ all: manager
 
 # Run tests
 .PHONY: test
-test: generate fmt vet manifests
+test: generate format vet manifests
 	go test ./api/... ./controllers/... ./hydra/... ./helpers/... -coverprofile cover.out
 
 # Start KIND pseudo-cluster
@@ -64,12 +64,12 @@ test-integration:
 
 # Build manager binary
 .PHONY: manager
-manager: generate fmt vet
+manager: generate format vet
 	CGO_ENABLED=0 GO111MODULE=on GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 .PHONY: run
-run: generate fmt vet
+run: generate format vet
 	go run ./main.go --hydra-url ${HYDRA_URL}
 
 # Install CRDs into a cluster
@@ -88,7 +88,7 @@ deploy: manifests
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
-# Run go fmt against code
+# Format the source code
 format: node_modules
 	go fmt ./...
 	npm exec -- prettier --write .
