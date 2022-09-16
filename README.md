@@ -15,15 +15,26 @@
 
 ⚠️ ⚠️ ⚠️
 
-> Ory Hydra Maester is developed by the Ory community and is not actively maintained by Ory core maintainers due to lack of resources, time, and knolwedge. As such please be aware that there might be issues with the system. If you have ideas for better testing and development principles please open an issue or PR!
+> Ory Hydra Maester is developed by the Ory community and is not actively
+> maintained by Ory core maintainers due to lack of resources, time, and
+> knolwedge. As such please be aware that there might be issues with the system.
+> If you have ideas for better testing and development principles please open an
+> issue or PR!
 
 ⚠️ ⚠️ ⚠️
 
-This project contains a Kubernetes controller that uses Custom Resources (CR) to manage Hydra Oauth2 clients. ORY Hydra Maester watches for instances of `oauth2clients.hydra.ory.sh/v1alpha1` CR and creates, updates, or deletes corresponding OAuth2 clients by communicating with ORY Hydra's API.
+This project contains a Kubernetes controller that uses Custom Resources (CR) to
+manage Hydra Oauth2 clients. ORY Hydra Maester watches for instances of
+`oauth2clients.hydra.ory.sh/v1alpha1` CR and creates, updates, or deletes
+corresponding OAuth2 clients by communicating with ORY Hydra's API.
 
-Visit Hydra-maester's [chart documentation](https://github.com/ory/k8s/blob/master/docs/helm/hydra-maester.md) and view [sample OAuth2 client resources](config/samples) to learn more about the `oauth2clients.hydra.ory.sh/v1alpha1` CR.
+Visit Hydra-maester's
+[chart documentation](https://github.com/ory/k8s/blob/master/docs/helm/hydra-maester.md)
+and view [sample OAuth2 client resources](config/samples) to learn more about
+the `oauth2clients.hydra.ory.sh/v1alpha1` CR.
 
-The project is based on [Kubebuilder](https://github.com/kubernetes-sigs/kubebuilder).
+The project is based on
+[Kubebuilder](https://github.com/kubernetes-sigs/kubebuilder).
 
 ## Prerequisites
 
@@ -31,10 +42,12 @@ The project is based on [Kubebuilder](https://github.com/kubernetes-sigs/kubebui
 - make
 - kubectl
 - kustomize
-- [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder) for running tests
+- [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder) for running
+  tests
 - [ginkgo](https://onsi.github.io/ginkgo/) for local integration testing
 - access to K8s environment: minikube or a remote K8s cluster
-- [mockery](https://github.com/vektra/mockery) to generate mocks for testing purposes
+- [mockery](https://github.com/vektra/mockery) to generate mocks for testing
+  purposes
 
 ## Design
 
@@ -44,10 +57,12 @@ Take a look at [Design Readme](./docs/README.md).
 
 - `make test` to run tests
 - `make test-integration` to run integration tests
-- `make install` to generate CRD file from go sources and install it on the cluster
+- `make install` to generate CRD file from go sources and install it on the
+  cluster
 - `export HYDRA_URL={HYDRA_SERVICE_URL} && make run` to run the controller
 
-To deploy the controller, edit the value of the `--hydra-url` argument in the [manager.yaml](config/manager/manager.yaml) file and run `make deploy`.
+To deploy the controller, edit the value of the `--hydra-url` argument in the
+[manager.yaml](config/manager/manager.yaml) file and run `make deploy`.
 
 ### Command-line flags
 
@@ -64,7 +79,9 @@ To deploy the controller, edit the value of the `--hydra-url` argument in the [m
 
 ### Testing
 
-Use mockery to generate mock types that implement existing interfaces. To generate a mock type for an interface, navigate to the directory containing that interface and run this command:
+Use mockery to generate mock types that implement existing interfaces. To
+generate a mock type for an interface, navigate to the directory containing that
+interface and run this command:
 
 ```
 mockery -name={INTERFACE_NAME}
