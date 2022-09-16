@@ -28,7 +28,7 @@ all: manager
 
 # Run tests
 .PHONY: test
-test: generate format vet manifests
+test: generate vet manifests
 	go test ./api/... ./controllers/... ./hydra/... ./helpers/... -coverprofile cover.out
 
 # Start KIND pseudo-cluster
@@ -64,12 +64,12 @@ test-integration:
 
 # Build manager binary
 .PHONY: manager
-manager: generate format vet
+manager: generate vet
 	CGO_ENABLED=0 GO111MODULE=on GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 .PHONY: run
-run: generate format vet
+run: generate vet
 	go run ./main.go --hydra-url ${HYDRA_URL}
 
 # Install CRDs into a cluster
