@@ -1,0 +1,4 @@
+api/v1alpha1/zz_generated.deepcopy.go
+CHANGELOG.md
+.github/pull_request_template.md
+CONTRIBUTING.md

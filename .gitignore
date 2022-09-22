@@ -1,4 +1,3 @@
-
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -25,3 +24,5 @@ bin
 
 config/default/manager_image_patch.yaml-e
 /manager
+
+node_modules/
