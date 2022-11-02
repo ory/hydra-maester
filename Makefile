@@ -1,5 +1,4 @@
 ifeq ($(OS),Windows_NT)
-
 	ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
 		ARCH=amd64
 		OS=windows
