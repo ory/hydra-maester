@@ -142,6 +142,12 @@ kubebuilder:
 	curl https://raw.githubusercontent.com/ory/meta/master/install.sh | bash -s -- -b .bin ory v0.1.44
 	touch .bin/ory
 
+licenses: .bin/licenses node_modules  # checks open-source licenses
+	.bin/licenses
+
+.bin/licenses: Makefile
+	curl https://raw.githubusercontent.com/ory/ci/master/licenses/install | sh
+
 node_modules: package-lock.json
 	npm ci
 	touch node_modules
