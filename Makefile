@@ -136,6 +136,12 @@ kubebuilder:
 	mv /tmp/kubebuilder_2.3.2_${OS}_${ARCH} ${PWD}/.bin/kubebuilder
 	export PATH=${PATH}:${PWD}/.bin/kubebuilder/bin
 
+licenses: .bin/licenses node_modules  # checks open-source licenses
+	.bin/licenses
+
+.bin/licenses: Makefile
+	curl https://raw.githubusercontent.com/ory/ci/master/licenses/install | sh
+
 node_modules: package-lock.json
 	npm ci
 	touch node_modules
