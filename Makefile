@@ -89,7 +89,8 @@ manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 # Format the source code
-format: node_modules
+format: .bin/ory node_modules
+	.bin/ory dev headers license
 	go fmt ./...
 	npm exec -- prettier --write .
 
@@ -135,6 +136,10 @@ kubebuilder:
 	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v2.3.2/kubebuilder_2.3.2_${OS}_${ARCH}.tar.gz | tar -xz -C /tmp/
 	mv /tmp/kubebuilder_2.3.2_${OS}_${ARCH} ${PWD}/.bin/kubebuilder
 	export PATH=${PATH}:${PWD}/.bin/kubebuilder/bin
+
+.bin/ory: Makefile
+	curl https://raw.githubusercontent.com/ory/meta/master/install.sh | bash -s -- -b .bin ory v0.1.47
+	touch .bin/ory
 
 licenses: .bin/licenses node_modules  # checks open-source licenses
 	.bin/licenses
