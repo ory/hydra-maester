@@ -90,7 +90,7 @@ manifests: controller-gen
 
 # Format the source code
 format: .bin/ory node_modules
-	.bin/ory dev headers copyright
+	.bin/ory dev headers copyright --type=open-source
 	go fmt ./...
 	npm exec -- prettier --write .
 
