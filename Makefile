@@ -90,7 +90,7 @@ manifests: controller-gen
 
 # Format the source code
 format: .bin/ory node_modules
-	.bin/ory dev headers license
+	.bin/ory dev headers copyright --type=open-source
 	go fmt ./...
 	npm exec -- prettier --write .
 
@@ -138,7 +138,7 @@ kubebuilder:
 	export PATH=${PATH}:${PWD}/.bin/kubebuilder/bin
 
 .bin/ory: Makefile
-	curl https://raw.githubusercontent.com/ory/meta/master/install.sh | bash -s -- -b .bin ory v0.1.47
+	curl https://raw.githubusercontent.com/ory/meta/master/install.sh | bash -s -- -b .bin ory v0.1.48
 	touch .bin/ory
 
 licenses: .bin/licenses node_modules  # checks open-source licenses
