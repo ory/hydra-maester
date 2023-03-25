@@ -357,12 +357,24 @@ func (r *OAuth2ClientReconciler) updateReconciliationStatusError(ctx context.Con
 		Code:        code,
 		Description: err.Error(),
 	}
+	c.Status.Conditions = []hydrav1alpha1.OAuth2ClientCondition{
+		{
+			Type:   hydrav1alpha1.OAuth2ClientConditionReady,
+			Status: hydrav1alpha1.ConditionFalse,
+		},
+	}
 
 	return r.updateClientStatus(ctx, c)
 }
 
 func (r *OAuth2ClientReconciler) ensureEmptyStatusError(ctx context.Context, c *hydrav1alpha1.OAuth2Client) error {
 	c.Status.ReconciliationError = hydrav1alpha1.ReconciliationError{}
+	c.Status.Conditions = []hydrav1alpha1.OAuth2ClientCondition{
+		{
+			Type:   hydrav1alpha1.OAuth2ClientConditionReady,
+			Status: hydrav1alpha1.ConditionTrue,
+		},
+	}
 	return r.updateClientStatus(ctx, c)
 }
 
