@@ -21,7 +21,6 @@ jobs:
   build:
     docker:
       - <<: *golang_image
-    working_directory: /go/src/github.com/ory/hydra-maester
     steps:
       - checkout
       - run:
@@ -30,7 +29,6 @@ jobs:
   test:
     docker:
       - <<: *golang_image
-    working_directory: /go/src/github.com/ory/hydra-maester
     steps:
       - checkout
       - run:
@@ -68,7 +66,6 @@ jobs:
   release:
     docker:
       - <<: *golang_image
-    working_directory: /go/src/github.com/ory/hydra-maester
     steps:
       - checkout
       - run:
