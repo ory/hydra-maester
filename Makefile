@@ -54,7 +54,7 @@ kind-deploy: manager manifests docker-build-notest kind-start
 .PHONY: kind-test
 kind-test: kind-deploy
 	kubectl config set-context kind-kind
-	go get github.com/onsi/ginkgo/ginkgo
+	go install github.com/onsi/ginkgo/ginkgo@latest
 	ginkgo -v ./controllers/...
 
 # Run integration tests on local KIND cluster
@@ -124,7 +124,7 @@ docker-push:
 .PHONY: controller-gen
 controller-gen:
 ifeq (, $(shell which controller-gen))
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0
+	go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0
 CONTROLLER_GEN=$(shell which controller-gen)
 else
 CONTROLLER_GEN=$(shell which controller-gen)
