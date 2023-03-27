@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.9
+    controller-gen.kubebuilder.io/version: v0.5.0
   creationTimestamp: null
   name: oauth2clients.hydra.ory.sh
 spec:
@@ -199,6 +199,25 @@ spec:
               description:
                 OAuth2ClientStatus defines the observed state of OAuth2Client
               properties:
+                conditions:
+                  items:
+                    description:
+                      OAuth2ClientCondition contains condition information for
+                      an OAuth2Client
+                    properties:
+                      status:
+                        enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                        type: string
+                      type:
+                        type: string
+                    required:
+                      - status
+                      - type
+                    type: object
+                  type: array
                 observedGeneration:
                   description:
                     ObservedGeneration represents the most recent generation

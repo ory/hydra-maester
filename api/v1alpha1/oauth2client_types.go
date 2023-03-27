@@ -1,4 +1,4 @@
-// Copyright © 2022 Ory Corp
+// Copyright © 2023 Ory Corp
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha1
@@ -132,8 +132,9 @@ type TokenEndpointAuthMethod string
 // OAuth2ClientStatus defines the observed state of OAuth2Client
 type OAuth2ClientStatus struct {
 	// ObservedGeneration represents the most recent generation observed by the daemon set controller.
-	ObservedGeneration  int64               `json:"observedGeneration,omitempty"`
-	ReconciliationError ReconciliationError `json:"reconciliationError,omitempty"`
+	ObservedGeneration  int64                   `json:"observedGeneration,omitempty"`
+	ReconciliationError ReconciliationError     `json:"reconciliationError,omitempty"`
+	Conditions          []OAuth2ClientCondition `json:"conditions,omitempty"`
 }
 
 // ReconciliationError represents an error that occurred during the reconciliation process
@@ -143,6 +144,27 @@ type ReconciliationError struct {
 	// Description is the description of the reconciliation error
 	Description string `json:"description,omitempty"`
 }
+
+// OAuth2ClientCondition contains condition information for an OAuth2Client
+type OAuth2ClientCondition struct {
+	Type   OAuth2ClientConditionType `json:"type"`
+	Status ConditionStatus           `json:"status"`
+}
+
+type OAuth2ClientConditionType string
+
+const (
+	OAuth2ClientConditionReady = "Ready"
+)
+
+// +kubebuilder:validation:Enum=True;False;Unknown
+type ConditionStatus string
+
+const (
+	ConditionTrue    ConditionStatus = "True"
+	ConditionFalse   ConditionStatus = "False"
+	ConditionUnknown ConditionStatus = "Unknown"
+)
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
