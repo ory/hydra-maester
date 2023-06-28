@@ -96,6 +96,10 @@ type OAuth2ClientSpec struct {
 	// SecretName points to the K8s secret that contains this client's ID and password
 	SecretName string `json:"secretName"`
 
+	// +kubebuilder:validation:type=bool
+	// +kubebuilder:default=false
+	SkipConsent bool `json:"skipConsent,omitempty"`
+
 	// HydraAdmin is the optional configuration to use for managing
 	// this client
 	HydraAdmin HydraAdmin `json:"hydraAdmin,omitempty"`
