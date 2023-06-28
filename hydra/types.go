@@ -25,6 +25,7 @@ type OAuth2ClientJSON struct {
 	ResponseTypes           []string        `json:"response_types,omitempty"`
 	Audience                []string        `json:"audience,omitempty"`
 	Scope                   string          `json:"scope"`
+	SkipConsent             bool            `json:"skip_consent,omitempty"`
 	Owner                   string          `json:"owner"`
 	TokenEndpointAuthMethod string          `json:"token_endpoint_auth_method,omitempty"`
 	Metadata                json.RawMessage `json:"metadata,omitempty"`
@@ -61,6 +62,7 @@ func FromOAuth2Client(c *hydrav1alpha1.OAuth2Client) (*OAuth2ClientJSON, error) 
 		AllowedCorsOrigins:      redirectToStringSlice(c.Spec.AllowedCorsOrigins),
 		Audience:                c.Spec.Audience,
 		Scope:                   c.Spec.Scope,
+		SkipConsent:             c.Spec.SkipConsent,
 		Owner:                   fmt.Sprintf("%s/%s", c.Name, c.Namespace),
 		TokenEndpointAuthMethod: string(c.Spec.TokenEndpointAuthMethod),
 		Metadata:                meta,
