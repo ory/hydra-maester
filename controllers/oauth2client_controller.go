@@ -6,6 +6,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/go-logr/logr"
@@ -22,11 +23,16 @@ import (
 )
 
 const (
-	ClientIDKey     = "client_id"
-	ClientSecretKey = "client_secret"
-	FinalizerName   = "finalizer.ory.hydra.sh"
+	DefaultClientID  = "CLIENT_ID"
+	DefaultSecretKey = "CLIENT_SECRET"
+	FinalizerName    = "finalizer.ory.hydra.sh"
 
 	DefaultNamespace = "default"
+)
+
+var (
+	ClientIDKey     = DefaultClientID
+	ClientSecretKey = DefaultSecretKey
 )
 
 type clientKey struct {
@@ -65,6 +71,15 @@ type Options struct {
 
 // Option is a functional option.
 type Option func(*Options)
+
+func init() {
+	if os.Getenv("CLIENT_ID_KEY") != "" {
+		ClientIDKey = os.Getenv("CLIENT_ID_KEY")
+	}
+	if os.Getenv("CLIENT_SECRET_KEY") != "" {
+		ClientSecretKey = os.Getenv("CLIENT_SECRET_KEY")
+	}
+}
 
 // WithNamespace sets the kubernetes namespace for the controller.
 // The default is "default".
