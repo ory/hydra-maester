@@ -1,6 +1,6 @@
 kube-builder: &install-kube-builder
 golang_image: &golang_image
-  image: cimg/go:1.17
+  image: cimg/go:1.20
 version: 2
 jobs:
   build:
