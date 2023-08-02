@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
 )
@@ -39,9 +39,9 @@ type Oauth2ClientCredentials struct {
 }
 
 func (oj *OAuth2ClientJSON) WithCredentials(credentials *Oauth2ClientCredentials) *OAuth2ClientJSON {
-	oj.ClientID = pointer.StringPtr(string(credentials.ID))
+	oj.ClientID = ptr.To(string(credentials.ID))
 	if credentials.Password != nil {
-		oj.Secret = pointer.StringPtr(string(credentials.Password))
+		oj.Secret = ptr.To(string(credentials.Password))
 	}
 	return oj
 }

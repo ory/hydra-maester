@@ -13,6 +13,7 @@ import (
 
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -61,8 +62,15 @@ var _ = BeforeSuite(func(done Done) {
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
-	err := testEnv.Stop()
-	Expect(err).ToNot(HaveOccurred())
+
+	// Need to retry a bit if the first stop fails due to a bug:
+	// https://github.com/kubernetes-sigs/controller-runtime/issues/1571
+	err := retry.OnError(retry.DefaultBackoff, func(err error) bool {
+		return true
+	}, func() error {
+		return testEnv.Stop()
+	})
+	Expect(err).NotTo(HaveOccurred())
 })
 
 // SetupTestReconcile returns a reconcile.Reconcile implementation that delegates to inner and

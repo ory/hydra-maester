@@ -2,9 +2,6 @@
 # Make sure to check the documentation at http://goreleaser.com
 project_name: hydra-maester
 
-env:
-  - GO111MODULE=on
-
 before:
   hooks:
     - "go mod download"

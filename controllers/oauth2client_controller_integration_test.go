@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/utils/pointer"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/stretchr/testify/mock"
@@ -19,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -70,7 +69,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
 					return &hydra.OAuth2ClientJSON{
 						ClientID:      &tstClientID,
-						Secret:        pointer.StringPtr(tstSecret),
+						Secret:        ptr.To(tstSecret),
 						GrantTypes:    o.GrantTypes,
 						ResponseTypes: o.ResponseTypes,
 						RedirectURIs:  o.RedirectURIs,
@@ -270,9 +269,6 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(retrieved.Status.ReconciliationError.Code).To(BeEmpty())
 				Expect(retrieved.Status.ReconciliationError.Description).To(BeEmpty())
 
-				Expect(*postedClient.ClientID).To(Equal(tstClientID))
-				Expect(*postedClient.Secret).To(Equal(tstSecret))
-
 				// Ensure that secret doesn't have OwnerReference set
 				ok = client.ObjectKey{Name: tstSecretName, Namespace: tstNamespace}
 				err = k8sClient.Get(context.TODO(), ok, &secret)
@@ -457,7 +453,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to Api
-	err = c.Watch(&source.Kind{Type: &hydrav1alpha1.OAuth2Client{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(source.Kind(mgr.GetCache(), &hydrav1alpha1.OAuth2Client{}), &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}

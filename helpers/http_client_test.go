@@ -4,7 +4,6 @@
 package helpers_test
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -21,7 +20,7 @@ func TestCreateHttpClient(t *testing.T) {
 	})
 
 	t.Run("should create client with and tlsTrustStore", func(t *testing.T) {
-		file, err := ioutil.TempFile("/tmp", "test")
+		file, err := os.CreateTemp("", "test")
 		require.Nil(t, err)
 		client, err := helpers.CreateHttpClient(true, file.Name())
 		defer os.Remove(file.Name())
