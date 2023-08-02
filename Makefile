@@ -80,7 +80,7 @@ test-integration:
 # Build manager binary
 .PHONY: manager
 manager: generate vet
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
+	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -a -o manager main.go
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 .PHONY: run
