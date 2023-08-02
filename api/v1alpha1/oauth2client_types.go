@@ -96,6 +96,7 @@ type OAuth2ClientSpec struct {
 	// SecretName points to the K8s secret that contains this client's ID and password
 	SecretName string `json:"secretName"`
 
+	// SkipConsent skips the consent screen for this client.
 	// +kubebuilder:validation:type=bool
 	// +kubebuilder:default=false
 	SkipConsent bool `json:"skipConsent,omitempty"`

@@ -176,6 +176,8 @@ spec:
                   type: string
                 skipConsent:
                   default: false
+                  description:
+                    SkipConsent skips the consent screen for this client.
                   type: boolean
                 tokenEndpointAuthMethod:
                   allOf:
