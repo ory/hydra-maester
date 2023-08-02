@@ -344,7 +344,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(retrieved.Status.ReconciliationError).NotTo(BeNil())
 				Expect(retrieved.Status.ReconciliationError.Code).To(Equal(hydrav1alpha1.StatusInvalidSecret))
-				Expect(retrieved.Status.ReconciliationError.Description).To(Equal(`"client_secret property missing"`))
+				Expect(retrieved.Status.ReconciliationError.Description).To(Equal("client_secret property missing"))
 
 				//delete instance
 				c.Delete(context.TODO(), instance)
