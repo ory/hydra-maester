@@ -15,8 +15,8 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -49,7 +49,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				tstName, tstClientID, tstSecretName := "test", "testClientID", "my-secret-123"
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
-				s := scheme.Scheme
+				s := runtime.NewScheme()
 				err := hydrav1alpha1.AddToScheme(s)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -128,7 +128,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				tstName, tstSecretName := "test2", "my-secret-456"
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
-				s := scheme.Scheme
+				s := runtime.NewScheme()
 				err := hydrav1alpha1.AddToScheme(s)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -195,7 +195,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				var postedClient *hydra.OAuth2ClientJSON
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
-				s := scheme.Scheme
+				s := runtime.NewScheme()
 				err := hydrav1alpha1.AddToScheme(s)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -287,7 +287,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				tstName, tstClientID, tstSecretName := "test4", "testClientID-4", "my-secret-000"
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
-				s := scheme.Scheme
+				s := runtime.NewScheme()
 				err := hydrav1alpha1.AddToScheme(s)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -357,7 +357,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				tstName, tstClientID, tstSecretName := "test5", "testClientID-5", "my-secret-without-client-secret"
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
-				s := scheme.Scheme
+				s := runtime.NewScheme()
 				err := hydrav1alpha1.AddToScheme(s)
 				Expect(err).NotTo(HaveOccurred())
 
