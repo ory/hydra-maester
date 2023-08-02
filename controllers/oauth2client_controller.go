@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	apiv1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -212,7 +211,7 @@ func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 
 		if fetched.Owner != fmt.Sprintf("%s/%s", oauth2client.Name, oauth2client.Namespace) {
-			conflictErr := errors.Errorf("ID provided in secret %s/%s is assigned to another resource", secret.Name, secret.Namespace)
+			conflictErr := fmt.Errorf("ID provided in secret %s/%s is assigned to another resource", secret.Name, secret.Namespace)
 			if updateErr := r.updateReconciliationStatusError(ctx, &oauth2client, hydrav1alpha1.StatusInvalidSecret, conflictErr); updateErr != nil {
 				return ctrl.Result{}, updateErr
 			}
@@ -249,7 +248,8 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
 			return updateErr
 		}
-		return errors.WithStack(err)
+
+		return fmt.Errorf("failed to construct hydra client for object: %w", err)
 	}
 
 	created, err := hydraClient.PostOAuth2Client(oauth2client)
@@ -300,7 +300,8 @@ func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Contex
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusUpdateFailed, err); updateErr != nil {
 			return updateErr
 		}
-		return errors.WithStack(err)
+
+		return fmt.Errorf("failed to construct hydra client for object: %w", err)
 	}
 
 	if _, err := hydraClient.PutOAuth2Client(oauth2client.WithCredentials(credentials)); err != nil {
@@ -388,12 +389,12 @@ func (r *OAuth2ClientReconciler) ensureEmptyStatusError(ctx context.Context, c *
 func parseSecret(secret apiv1.Secret, authMethod hydrav1alpha1.TokenEndpointAuthMethod) (*hydra.Oauth2ClientCredentials, error) {
 	id, found := secret.Data[ClientIDKey]
 	if !found {
-		return nil, errors.New(`"client_id property missing"`)
+		return nil, fmt.Errorf("client_id property missing")
 	}
 
 	psw, found := secret.Data[ClientSecretKey]
 	if !found && authMethod != "none" {
-		return nil, errors.New(`"client_secret property missing"`)
+		return nil, fmt.Errorf("client_secret property missing")
 	}
 
 	return &hydra.Oauth2ClientCredentials{
@@ -420,7 +421,7 @@ func (r *OAuth2ClientReconciler) getHydraClientForClient(
 
 		client, err := r.oauth2ClientFactory(spec, "", false)
 		if err != nil {
-			return nil, errors.Wrap(err, "cannot create oauth2 client from CRD")
+			return nil, fmt.Errorf("cannot create oauth2 client from CRD: %w", err)
 		}
 
 		r.oauth2Clients[key] = client
@@ -428,7 +429,7 @@ func (r *OAuth2ClientReconciler) getHydraClientForClient(
 	}
 
 	if r.HydraClient == nil {
-		return nil, errors.New("Not default client or other clients configured")
+		return nil, fmt.Errorf("no default client configured")
 	}
 
 	r.Log.Info("Using default client")

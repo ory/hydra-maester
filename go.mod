@@ -1,13 +1,12 @@
 module github.com/ory/hydra-maester
 
-go 1.19
+go 1.20
 
 require (
 	github.com/go-logr/logr v1.2.4
 	github.com/go-openapi/runtime v0.26.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.27.10
-	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/net v0.13.0
 	k8s.io/api v0.27.4
@@ -56,6 +55,7 @@ require (
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.15.1 // indirect
 	github.com/prometheus/client_model v0.4.0 // indirect
