@@ -28,9 +28,8 @@ var (
 )
 
 func init() {
-
-	apiv1.AddToScheme(scheme)
-	hydrav1alpha1.AddToScheme(scheme)
+	_ = apiv1.AddToScheme(scheme)
+	_ = hydrav1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 

@@ -13,10 +13,9 @@ import (
 	"strings"
 	"testing"
 
-	"k8s.io/utils/pointer"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 
 	"github.com/ory/hydra-maester/hydra"
 )
@@ -53,7 +52,7 @@ var testOAuthJSONPost = &hydra.OAuth2ClientJSON{
 }
 
 var testOAuthJSONPut = &hydra.OAuth2ClientJSON{
-	ClientID:   pointer.StringPtr("test-id-3"),
+	ClientID:   ptr.To("test-id-3"),
 	Scope:      "yet,another,scope",
 	GrantTypes: []string{"type3"},
 	Owner:      "test-name-3",
@@ -218,7 +217,7 @@ func TestCRUD(t *testing.T) {
 					if newWithMetadata {
 						assert.NotNil(o.Metadata)
 						assert.True(len(o.Metadata) > 0)
-						for key, _ := range o.Metadata {
+						for key := range o.Metadata {
 							assert.Equal(o.Metadata[key], expected.Metadata[key])
 						}
 					} else {

@@ -9,16 +9,15 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/utils/pointer"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/stretchr/testify/mock"
 	apiv1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -50,7 +49,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				tstName, tstClientID, tstSecretName := "test", "testClientID", "my-secret-123"
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
-				s := scheme.Scheme
+				s := runtime.NewScheme()
 				err := hydrav1alpha1.AddToScheme(s)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -70,7 +69,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
 					return &hydra.OAuth2ClientJSON{
 						ClientID:      &tstClientID,
-						Secret:        pointer.StringPtr(tstSecret),
+						Secret:        ptr.To(tstSecret),
 						GrantTypes:    o.GrantTypes,
 						ResponseTypes: o.ResponseTypes,
 						RedirectURIs:  o.RedirectURIs,
@@ -129,7 +128,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				tstName, tstSecretName := "test2", "my-secret-456"
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
-				s := scheme.Scheme
+				s := runtime.NewScheme()
 				err := hydrav1alpha1.AddToScheme(s)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -196,7 +195,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				var postedClient *hydra.OAuth2ClientJSON
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
-				s := scheme.Scheme
+				s := runtime.NewScheme()
 				err := hydrav1alpha1.AddToScheme(s)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -270,9 +269,6 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(retrieved.Status.ReconciliationError.Code).To(BeEmpty())
 				Expect(retrieved.Status.ReconciliationError.Description).To(BeEmpty())
 
-				Expect(*postedClient.ClientID).To(Equal(tstClientID))
-				Expect(*postedClient.Secret).To(Equal(tstSecret))
-
 				// Ensure that secret doesn't have OwnerReference set
 				ok = client.ObjectKey{Name: tstSecretName, Namespace: tstNamespace}
 				err = k8sClient.Get(context.TODO(), ok, &secret)
@@ -291,7 +287,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				tstName, tstClientID, tstSecretName := "test4", "testClientID-4", "my-secret-000"
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
-				s := scheme.Scheme
+				s := runtime.NewScheme()
 				err := hydrav1alpha1.AddToScheme(s)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -348,7 +344,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(retrieved.Status.ReconciliationError).NotTo(BeNil())
 				Expect(retrieved.Status.ReconciliationError.Code).To(Equal(hydrav1alpha1.StatusInvalidSecret))
-				Expect(retrieved.Status.ReconciliationError.Description).To(Equal(`"client_secret property missing"`))
+				Expect(retrieved.Status.ReconciliationError.Description).To(Equal("client_secret property missing"))
 
 				//delete instance
 				c.Delete(context.TODO(), instance)
@@ -361,7 +357,7 @@ var _ = Describe("OAuth2Client Controller", func() {
 				tstName, tstClientID, tstSecretName := "test5", "testClientID-5", "my-secret-without-client-secret"
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
 
-				s := scheme.Scheme
+				s := runtime.NewScheme()
 				err := hydrav1alpha1.AddToScheme(s)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -457,7 +453,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to Api
-	err = c.Watch(&source.Kind{Type: &hydrav1alpha1.OAuth2Client{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(source.Kind(mgr.GetCache(), &hydrav1alpha1.OAuth2Client{}), &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}

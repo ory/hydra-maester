@@ -15,11 +15,26 @@ else
 	endif
 endif
 
+##@ Build Dependencies
+
+## Location to install dependencies to
+LOCALBIN ?= $(shell pwd)/.bin
+$(LOCALBIN):
+	mkdir -p $(LOCALBIN)
+
+## Tool Binaries
+KUSTOMIZE ?= $(LOCALBIN)/kustomize
+CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
+ENVTEST ?= $(LOCALBIN)/setup-envtest
+
+## Tool Versions
+KUSTOMIZE_VERSION ?= v5.0.0
+CONTROLLER_TOOLS_VERSION ?= v0.11.3
+ENVTEST_K8S_VERSION = 1.26.1
+
 HELL=/bin/bash -o pipefail
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
-# Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1"
 
 run-with-cleanup = $(1) && $(2) || (ret=$$?; $(2) && exit $$ret)
 
@@ -28,8 +43,8 @@ all: manager
 
 # Run tests
 .PHONY: test
-test: generate vet manifests
-	go test ./api/... ./controllers/... ./hydra/... ./helpers/... -coverprofile cover.out
+test: manifests generate vet envtest
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
 
 # Start KIND pseudo-cluster
 .PHONY: kind-start
@@ -44,18 +59,18 @@ kind-stop:
 # Deploy on KIND
 # Ensures the controller image is built, deploys the image to KIND cluster along with necessary configuration
 .PHONY: kind-deploy
-kind-deploy: manager manifests docker-build-notest kind-start
+kind-deploy: manager manifests docker-build-notest kind-start kustomize
 	kubectl config set-context kind-kind
 	kind load docker-image controller:latest
 	kubectl apply -f config/crd/bases
-	kustomize build config/default | kubectl apply -f -
+	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 # private
 .PHONY: kind-test
 kind-test: kind-deploy
 	kubectl config set-context kind-kind
 	go install github.com/onsi/ginkgo/ginkgo@latest
-	ginkgo -v ./controllers/...
+	USE_EXISTING_CLUSTER=true ginkgo -v ./controllers/...
 
 # Run integration tests on local KIND cluster
 .PHONY: test-integration
@@ -65,7 +80,7 @@ test-integration:
 # Build manager binary
 .PHONY: manager
 manager: generate vet
-	CGO_ENABLED=0 GO111MODULE=on GOOS=linux GOARCH=amd64 go build -a -o manager main.go
+	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -a -o manager main.go
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 .PHONY: run
@@ -79,14 +94,14 @@ install: manifests
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 .PHONY: deploy
-deploy: manifests
+deploy: manifests kustomize
 	kubectl apply -f config/crd/bases
-	kustomize build config/default | kubectl apply -f -
+	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 .PHONY: manifests
 manifests: controller-gen
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 # Format the source code
 format: .bin/ory node_modules
@@ -102,7 +117,7 @@ vet:
 # Generate code
 .PHONY: generate
 generate: controller-gen
-	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths=./api/...
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 # Build the docker image
 .PHONY: docker-build-notest
@@ -119,23 +134,30 @@ docker-build: test docker-build-notest
 docker-push:
 	docker push ${IMG}
 
+## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
+KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
+.PHONY: kustomize
+kustomize: $(KUSTOMIZE)
+$(KUSTOMIZE): $(LOCALBIN)
+	@if test -x $(LOCALBIN)/kustomize && ! $(LOCALBIN)/kustomize version | grep -q $(KUSTOMIZE_VERSION); then \
+		echo "$(LOCALBIN)/kustomize version is not expected $(KUSTOMIZE_VERSION). Removing it before installing."; \
+		rm -rf $(LOCALBIN)/kustomize; \
+	fi
+	test -s $(LOCALBIN)/kustomize || { curl -Ss $(KUSTOMIZE_INSTALL_SCRIPT) --output install_kustomize.sh && bash install_kustomize.sh $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); rm install_kustomize.sh; }
+
 # find or download controller-gen
 # download controller-gen if necessary
 .PHONY: controller-gen
-controller-gen:
-ifeq (, $(shell which controller-gen))
-	go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.5.0
-CONTROLLER_GEN=$(shell which controller-gen)
-else
-CONTROLLER_GEN=$(shell which controller-gen)
-endif
+controller-gen: $(CONTROLLER_GEN)
+$(CONTROLLER_GEN): $(LOCALBIN)
+	test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
+	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
 
-# Download and setup kubebuilder
-.PHONY: kubebuilder
-kubebuilder:
-	curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v2.3.2/kubebuilder_2.3.2_${OS}_${ARCH}.tar.gz | tar -xz -C /tmp/
-	mv /tmp/kubebuilder_2.3.2_${OS}_${ARCH} ${PWD}/.bin/kubebuilder
-	export PATH=${PATH}:${PWD}/.bin/kubebuilder/bin
+## Download envtest-setup locally if necessary.
+.PHONY: envtest
+envtest: $(ENVTEST)
+$(ENVTEST): $(LOCALBIN)
+	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
 .bin/ory: Makefile
 	curl https://raw.githubusercontent.com/ory/meta/master/install.sh | bash -s -- -b .bin ory v0.1.48

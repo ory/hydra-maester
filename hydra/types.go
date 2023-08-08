@@ -7,8 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
 )
@@ -39,9 +38,9 @@ type Oauth2ClientCredentials struct {
 }
 
 func (oj *OAuth2ClientJSON) WithCredentials(credentials *Oauth2ClientCredentials) *OAuth2ClientJSON {
-	oj.ClientID = pointer.StringPtr(string(credentials.ID))
+	oj.ClientID = ptr.To(string(credentials.ID))
 	if credentials.Password != nil {
-		oj.Secret = pointer.StringPtr(string(credentials.Password))
+		oj.Secret = ptr.To(string(credentials.Password))
 	}
 	return oj
 }
@@ -50,7 +49,7 @@ func (oj *OAuth2ClientJSON) WithCredentials(credentials *Oauth2ClientCredentials
 func FromOAuth2Client(c *hydrav1alpha1.OAuth2Client) (*OAuth2ClientJSON, error) {
 	meta, err := json.Marshal(c.Spec.Metadata)
 	if err != nil {
-		return nil, errors.WithMessage(err, "unable to encode `metadata` property value to json")
+		return nil, fmt.Errorf("unable to encode `metadata` property value to json: %w", err)
 	}
 
 	return &OAuth2ClientJSON{

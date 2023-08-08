@@ -1,6 +1,9 @@
-version: "2"
+version: "3"
 domain: ory.sh
 repo: github.com/ory/hydra-maester
+projectName: hydra-maester
+layout:
+- go.kubebuilder.io/v4
 resources:
 - group: hydra
   version: v1alpha1

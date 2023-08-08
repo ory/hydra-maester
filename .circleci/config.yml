@@ -1,21 +1,6 @@
 kube-builder: &install-kube-builder
-  name: Fetch kube-builder
-  command: |
-    os=$(go env GOOS)
-    arch=$(go env GOARCH)
-
-    # Download kubebuilder and extract it to tmp
-    # Temporary solution, older versions of kubebuilder are nolonger available under old urls.
-    # Upgrading kubebuilder to latest version is a bigger story and needs more work.
-    # We will use direct GH release URL for now.
-    curl -sL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v2.3.2/kubebuilder_2.3.2_${os}_${arch}.tar.gz | tar -xz -C /tmp/
-
-    # move to a long-term location and put it on your path
-    # (you'll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else)
-    sudo mv /tmp/kubebuilder_2.3.2_${os}_${arch} /usr/local/kubebuilder
-    export PATH=$PATH:/usr/local/kubebuilder/bin
-golaing_image: &golang_image
-  image: cimg/go:1.17
+golang_image: &golang_image
+  image: cimg/go:1.20
 version: 2
 jobs:
   build:
@@ -23,29 +8,17 @@ jobs:
       - <<: *golang_image
     steps:
       - checkout
-      - run:
-          <<: *install-kube-builder
       - run: make
   test:
     docker:
       - <<: *golang_image
     steps:
       - checkout
-      - run:
-          <<: *install-kube-builder
       - run: make test
   test-integration:
     machine: true
     steps:
       - checkout
-      - run:
-          <<: *install-kube-builder
-      - run:
-          name: Install kustomize
-          command: |
-            curl -sL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.1.2/kustomize_v4.1.2_linux_amd64.tar.gz | tar -xz -C /tmp/
-            sudo mv /tmp/kustomize /usr/local/bin/kustomize
-            kustomize version
       - run:
           name: Install Kind
           command: |

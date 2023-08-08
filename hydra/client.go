@@ -56,7 +56,6 @@ func New(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkip
 }
 
 func (c *InternalClient) GetOAuth2Client(id string) (*OAuth2ClientJSON, bool, error) {
-
 	var jsonClient *OAuth2ClientJSON
 
 	req, err := c.newRequest(http.MethodGet, id, nil)
@@ -80,7 +79,6 @@ func (c *InternalClient) GetOAuth2Client(id string) (*OAuth2ClientJSON, bool, er
 }
 
 func (c *InternalClient) ListOAuth2Client() ([]*OAuth2ClientJSON, error) {
-
 	var jsonClientList []*OAuth2ClientJSON
 
 	req, err := c.newRequest(http.MethodGet, "", nil)
@@ -102,7 +100,6 @@ func (c *InternalClient) ListOAuth2Client() ([]*OAuth2ClientJSON, error) {
 }
 
 func (c *InternalClient) PostOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error) {
-
 	var jsonClient *OAuth2ClientJSON
 
 	req, err := c.newRequest(http.MethodPost, "", o)
@@ -126,7 +123,6 @@ func (c *InternalClient) PostOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSO
 }
 
 func (c *InternalClient) PutOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON, error) {
-
 	var jsonClient *OAuth2ClientJSON
 
 	req, err := c.newRequest(http.MethodPut, *o.ClientID, o)
@@ -147,7 +143,6 @@ func (c *InternalClient) PutOAuth2Client(o *OAuth2ClientJSON) (*OAuth2ClientJSON
 }
 
 func (c *InternalClient) DeleteOAuth2Client(id string) error {
-
 	req, err := c.newRequest(http.MethodDelete, id, nil)
 	if err != nil {
 		return err
@@ -170,7 +165,6 @@ func (c *InternalClient) DeleteOAuth2Client(id string) error {
 }
 
 func (c *InternalClient) newRequest(method, relativePath string, body interface{}) (*http.Request, error) {
-
 	var buf io.ReadWriter
 	if body != nil {
 		buf = new(bytes.Buffer)
