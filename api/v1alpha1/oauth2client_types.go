@@ -116,6 +116,12 @@ type OAuth2ClientSpec struct {
 	//
 	// Metadata is abritrary data
 	Metadata apiextensionsv1.JSON `json:"metadata,omitempty"`
+
+	// +kubebuilder:validation:type=string
+	// +kubebuilder:validation:Pattern=`(^$|^https?://.*)`
+	//
+	// JwksUri Define the URL where the JSON Web Key Set should be fetched from when performing the private_key_jwt client authentication method.
+	JwksUri string `json:"jwksUri,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token

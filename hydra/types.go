@@ -28,6 +28,7 @@ type OAuth2ClientJSON struct {
 	Owner                   string          `json:"owner"`
 	TokenEndpointAuthMethod string          `json:"token_endpoint_auth_method,omitempty"`
 	Metadata                json.RawMessage `json:"metadata,omitempty"`
+	JwksUri                 string          `json:"jwks_uri,omitempty"`
 }
 
 // Oauth2ClientCredentials represents client ID and password fetched from a
