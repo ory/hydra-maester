@@ -58,20 +58,20 @@ jobs:
               - '.github/actions/**'
 
   gha-lint:
-      name: Lint GithubAction files
-      if: |
-        needs.detect-repo-changes.outputs.cicd-definition-changed == 'true'
-      needs:
-        - detect-repo-changes
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v3
-        - name: actionlint
-          id: actionlint
-          uses: raven-actions/actionlint@v1
-          with:
-            fail-on-error: true
+    name: Lint GithubAction files
+    if: |
+      needs.detect-repo-changes.outputs.cicd-definition-changed == 'true'
+    needs:
+      - detect-repo-changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: actionlint
+        id: actionlint
+        uses: raven-actions/actionlint@v1
+        with:
+          fail-on-error: true
 
   test-build:
     name: Compile and test
@@ -105,6 +105,10 @@ jobs:
         uses: actions/checkout@v3
       - name: Checkout dependencies
         uses: ./.github/actions/deps-setup
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+          cache: false
       - name: Test
         run: make test-integration
 
