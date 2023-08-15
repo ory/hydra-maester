@@ -30,9 +30,8 @@ SHELL=/bin/bash -euo pipefail
 
 export PATH := .bin:${PATH}
 export PWD := $(shell pwd)
-
+export K3SIMAGE := docker.io/rancher/k3s:v1.26.1-k3s1
 ## Tool Binaries
-KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 
@@ -75,6 +74,15 @@ $(ENVTEST): $(LOCALBIN)
 	curl -L $${URL} | tar -xmz -C .bin kustomize; \
 	chmod +x .bin/kustomize;
 
+.bin/k3d: Makefile
+	@URL=$$(.bin/ory dev ci deps url -o ${OS} -a ${ARCH} -c .deps/k3d.yaml); \
+	echo "Downloading 'k3d' $${URL}...."; \
+	curl -Lo .bin/k3d $${URL}; \
+	chmod +x .bin/k3d;
+
+.PHONY: deps
+deps: .bin/ory .bin/k3d .bin/kubectl .bin/kustomize
+
 .PHONY: all
 all: manager
 
@@ -83,36 +91,33 @@ all: manager
 test: manifests generate vet envtest
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
 
-# Start KIND pseudo-cluster
-.PHONY: kind-start
-kind-start:
-	kind create cluster
+.PHONY: k3d-up
+k3d-up:
+	k3d cluster create --image $${K3SIMAGE} ory -p "8080:80@server:0" \
+		--k3s-arg=--kube-apiserver-arg="enable-admission-plugins=NodeRestriction,ServiceAccount@server:0" \
+		--k3s-arg=feature-gates="NamespaceDefaultLabelName=true@server:0";
 
-# Stop KIND pseudo-cluster
-.PHONY: kind-stop
-kind-stop:
-	kind delete cluster
+.PHONY: k3d-down
+k3d-down:
+	k3d cluster delete ory || true
 
-# Deploy on KIND
-# Ensures the controller image is built, deploys the image to KIND cluster along with necessary configuration
-.PHONY: kind-deploy
-kind-deploy: manager manifests docker-build-notest kind-start kustomize
-	kubectl config set-context kind-kind
-	kind load docker-image controller:latest
+.PHONY: k3d-deploy
+k3d-deploy: manager manifests docker-build-notest k3d-up
+	kubectl config set-context k3d-ory
+	k3d image load controller:latest
 	kubectl apply -f config/crd/bases
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	kustomize build config/default | kubectl apply -f -
 
-# private
-.PHONY: kind-test
-kind-test: kind-deploy
-	kubectl config set-context kind-kind
+.PHONY: k3d-test
+k3d-test: k3d-deploy
+	kubectl config set-context k3d-ory
 	go install github.com/onsi/ginkgo/ginkgo@latest
 	USE_EXISTING_CLUSTER=true ginkgo -v ./controllers/...
 
-# Run integration tests on local KIND cluster
+# Run integration tests on local cluster
 .PHONY: test-integration
 test-integration:
-	$(call run-with-cleanup, $(MAKE) kind-test, $(MAKE) kind-stop)
+	$(call run-with-cleanup, $(MAKE) k3d-test, $(MAKE) k3d-down)
 
 # Build manager binary
 .PHONY: manager
@@ -131,9 +136,9 @@ install: manifests
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 .PHONY: deploy
-deploy: manifests kustomize
+deploy: manifests
 	kubectl apply -f config/crd/bases
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	kustomize build config/default | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 .PHONY: manifests

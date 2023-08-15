@@ -20,18 +20,9 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install Kind
+          name: Install dependencies
           command: |
-            curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-linux-amd64
-            chmod +x ./kind
-            sudo mv ./kind /usr/local/bin/kind
-      - run:
-          name: Install kubectl
-          command: |
-            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-            chmod +x ./kubectl
-            sudo mv ./kubectl /usr/local/bin/kubectl
-            export KUBECONFIG=$(kind get kubeconfig-path)
+            make deps
       - run:
           name: Run integration tests
           command: make test-integration
