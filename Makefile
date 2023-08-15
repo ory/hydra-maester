@@ -11,10 +11,14 @@ else
 	endif
 	ifeq ($(UNAME_S),Darwin)
 		OS=darwin
-		ARCH=amd64
+		ifeq ($(shell uname -m),x86_64)
+			ARCH=amd64
+		endif
+		ifeq ($(shell uname -m),arm64)
+			ARCH=arm64
+		endif
 	endif
 endif
-
 ##@ Build Dependencies
 
 ## Location to install dependencies to
@@ -22,21 +26,54 @@ LOCALBIN ?= $(shell pwd)/.bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
+SHELL=/bin/bash -euo pipefail
+
+export PATH := .bin:${PATH}
+export PWD := $(shell pwd)
+
 ## Tool Binaries
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 
 ## Tool Versions
-KUSTOMIZE_VERSION ?= v5.1.1
 CONTROLLER_TOOLS_VERSION ?= v0.11.3
 ENVTEST_K8S_VERSION = 1.26.1
 
-HELL=/bin/bash -o pipefail
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
 
 run-with-cleanup = $(1) && $(2) || (ret=$$?; $(2) && exit $$ret)
+
+# find or download controller-gen
+# download controller-gen if necessary
+.PHONY: controller-gen
+controller-gen: $(CONTROLLER_GEN)
+$(CONTROLLER_GEN): $(LOCALBIN)
+	test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
+	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+
+## Download envtest-setup locally if necessary.
+.PHONY: envtest
+envtest: $(ENVTEST)
+$(ENVTEST): $(LOCALBIN)
+	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+
+.bin/ory: Makefile
+	curl https://raw.githubusercontent.com/ory/meta/master/install.sh | bash -s -- -b .bin ory
+	touch .bin/ory
+
+.bin/kubectl: Makefile
+	@URL=$$(.bin/ory dev ci deps url -o ${OS} -a ${ARCH} -c .deps/kubectl.yaml); \
+	echo "Downloading 'kubectl' $${URL}...."; \
+	curl -Lo .bin/kubectl $${URL}; \
+	chmod +x .bin/kubectl;
+
+.bin/kustomize: Makefile
+	@URL=$$(.bin/ory dev ci deps url -o ${OS} -a ${ARCH} -c .deps/kustomize.yaml); \
+	echo "Downloading 'kustomize' $${URL}...."; \
+	curl -L $${URL} | tar -xmz -C .bin kustomize; \
+	chmod +x .bin/kustomize;
 
 .PHONY: all
 all: manager
@@ -133,35 +170,6 @@ docker-build: test docker-build-notest
 .PHONY: docker-push
 docker-push:
 	docker push ${IMG}
-
-## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
-KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
-.PHONY: kustomize
-kustomize: $(KUSTOMIZE)
-$(KUSTOMIZE): $(LOCALBIN)
-	@if test -x $(LOCALBIN)/kustomize && ! $(LOCALBIN)/kustomize version | grep -q $(KUSTOMIZE_VERSION); then \
-		echo "$(LOCALBIN)/kustomize version is not expected $(KUSTOMIZE_VERSION). Removing it before installing."; \
-		rm -rf $(LOCALBIN)/kustomize; \
-	fi
-	test -s $(LOCALBIN)/kustomize || { curl -Ss $(KUSTOMIZE_INSTALL_SCRIPT) --output install_kustomize.sh && bash install_kustomize.sh $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); rm install_kustomize.sh; }
-
-# find or download controller-gen
-# download controller-gen if necessary
-.PHONY: controller-gen
-controller-gen: $(CONTROLLER_GEN)
-$(CONTROLLER_GEN): $(LOCALBIN)
-	test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
-	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
-
-## Download envtest-setup locally if necessary.
-.PHONY: envtest
-envtest: $(ENVTEST)
-$(ENVTEST): $(LOCALBIN)
-	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
-
-.bin/ory: Makefile
-	curl https://raw.githubusercontent.com/ory/meta/master/install.sh | bash -s -- -b .bin ory v0.1.48
-	touch .bin/ory
 
 licenses: .bin/licenses node_modules  # checks open-source licenses
 	.bin/licenses
