@@ -1,0 +1,39 @@
+name: "Dependencies setup"
+description: "Sets up dependencies, uses cache to speedup execution"
+runs:
+  using: "composite"
+  steps:
+    - name: Extract branch name
+      shell: bash
+      run: |
+        echo "branch=$(echo ${GITHUB_REF#refs/heads/})" >> "$GITHUB_ENV"
+      id: extract_branch
+
+    - uses: actions/cache@v3
+      id: cache-packages
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/go/bin
+          ~/.config/helm
+          ~/.local/share/helm
+          ~/.cache/helm
+          ${{ github.workspace }}/.bin
+        key:
+          ${{ runner.os }}-${{ steps.extract_branch.outputs.branch }}-${{
+          hashFiles('**/go.sum', '.deps/*') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ steps.extract_branch.outputs.branch }}-
+
+    - name: Setup dependencies
+      if: steps.cache-packages.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        HELM_INSTALL_DIR: ${{ github.workspace }}/.bin
+        HELM_PLUGINS: ${{ github.workspace }}/.bin/plugins
+        K3D_INSTALL_DIR: ${{ github.workspace }}/.bin
+      run: |
+        #Export .bin into PATH so k3d doesn't fail when installing
+        export PATH=".bin:$PATH"
+        echo "PATH=.bin:$PATH" >> $GITHUB_ENV
+        make deps

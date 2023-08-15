@@ -93,7 +93,7 @@ test: manifests generate vet envtest
 
 .PHONY: k3d-up
 k3d-up:
-	k3d cluster create --image $${K3SIMAGE} ory -p "8080:80@server:0" \
+	k3d cluster create --image $${K3SIMAGE} ory \
 		--k3s-arg=--kube-apiserver-arg="enable-admission-plugins=NodeRestriction,ServiceAccount@server:0" \
 		--k3s-arg=feature-gates="NamespaceDefaultLabelName=true@server:0";
 

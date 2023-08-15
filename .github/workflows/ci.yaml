@@ -1,0 +1,125 @@
+name: CI
+on:
+  create:
+  push:
+    branches:
+      - "master"
+    tags:
+      - "v*"
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependencies:
+    name: Prepare Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: "1.20"
+      - name: Setup dependencies
+        uses: ./.github/actions/deps-setup
+
+  detect-repo-changes:
+    name: Detected Repo Changes
+    runs-on: ubuntu-latest
+    outputs:
+      code-changed: ${{ steps.filter.outputs.code }}
+      dockerfile-changed: ${{ steps.filter.outputs.docker }}
+      cicd-definition-changed: ${{ steps.filter.outputs.cicd-definitions }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v2.11.1
+        id: filter
+        with:
+          base: master
+          filters: |
+            code:
+              - 'api/**'
+              - 'config/**'
+              - 'controllers/**'
+              - 'helpers/**'
+              - 'hydra/**'
+              - 'go.mod'
+              - 'go.sum'
+              - '*.go'
+              - 'PROJECT'
+            docker:
+              - 'Dockerfile'
+              - 'Dockerfile-kubebuilder'
+            cicd-definitions:
+              - '.github/workflows/**'
+              - '.github/actions/**'
+
+  gha-lint:
+      name: Lint GithubAction files
+      if: |
+        needs.detect-repo-changes.outputs.cicd-definition-changed == 'true'
+      needs:
+        - detect-repo-changes
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+        - name: actionlint
+          id: actionlint
+          uses: raven-actions/actionlint@v1
+          with:
+            fail-on-error: true
+
+  test-build:
+    name: Compile and test
+    runs-on: ubuntu-latest
+    if: |
+      needs.detect-repo-changes.outputs.code-changed == 'true'
+    needs:
+      - detect-repo-changes
+      - dependencies
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Checkout dependencies
+        uses: ./.github/actions/deps-setup
+      - name: Build
+        run: make manager
+      - name: Test
+        run: make test
+
+  test-integration:
+    name: Run integration tests
+    runs-on: ubuntu-latest
+    if: |
+      needs.detect-repo-changes.outputs.code-changed == 'true' ||
+      needs.detect-repo-changes.outputs.dockerfile-changed == 'true'
+    needs:
+      - detect-repo-changes
+      - dependencies
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Checkout dependencies
+        uses: ./.github/actions/deps-setup
+      - name: Test
+        run: make test-integration
+
+  test-docker:
+    name: Build docker image
+    runs-on: ubuntu-latest
+    if: |
+      needs.detect-repo-changes.outputs.dockerfile-changed == 'true'
+    needs:
+      - detect-repo-changes
+      - dependencies
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Checkout dependencies
+        uses: ./.github/actions/deps-setup
+      - name: Test
+        run: make test-integration
