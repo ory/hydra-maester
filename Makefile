@@ -104,7 +104,7 @@ k3d-down:
 .PHONY: k3d-deploy
 k3d-deploy: manager manifests docker-build-notest k3d-up
 	kubectl config set-context k3d-ory
-	k3d image load controller:latest
+	k3d image load controller:latest -c ory
 	kubectl apply -f config/crd/bases
 	kustomize build config/default | kubectl apply -f -
 
