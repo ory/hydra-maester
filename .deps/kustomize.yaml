@@ -1,0 +1,2 @@
+version: v5.0.3
+url: https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F{{.Version}}/kustomize_{{.Version}}_{{.Os}}_{{.Architecture}}.tar.gz

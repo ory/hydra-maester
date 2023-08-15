@@ -116,8 +116,8 @@ spec:
                   type: object
                 jwksUri:
                   description:
-                    Define the URL where the JSON Web Key Set should be fetched
-                    from when performing the private_key_jwt client
+                    JwksUri Define the URL where the JSON Web Key Set should be
+                    fetched from when performing the private_key_jwt client
                     authentication method.
                   pattern: (^$|^https?://.*)
                   type: string
