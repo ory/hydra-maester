@@ -15,8 +15,10 @@ builds:
     goarch:
       - amd64
       - 386
+      - arm64
     goos:
       - linux
+      - darwin
 
 snapshot:
   name_template: "{{ .Tag }}-next"
