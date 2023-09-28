@@ -32,7 +32,7 @@ spec:
     # if hydraAdmin is specified, all of these fields are requried,
     # but they can be empty/0
     url: https://foobar.projects.oryapis.com
-    port: 4445
-    endpoint: /clients
+    endpoint: /admin/clients
+    port: 443
     apiKey: 123456
   tokenEndpointAuthMethod: client_secret_basic
