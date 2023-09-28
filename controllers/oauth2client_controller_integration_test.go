@@ -494,6 +494,7 @@ func testInstance(name, secretName string) *hydrav1alpha1.OAuth2Client {
 				Port:           4445,
 				Endpoint:       "/client",
 				ForwardedProto: "https",
+				ApiKey:         "1234",
 			},
 		}}
 }

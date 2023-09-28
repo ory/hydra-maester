@@ -49,6 +49,10 @@ type HydraAdmin struct {
 	// value "off" will force this to be off even if
 	// `--forwarded-proto` is specified
 	ForwardedProto string `json:"forwardedProto,omitempty"`
+
+	// ApiKey overrides the `--api-key` flag.
+	// The Api Key is used to authenticate with Ory Network
+	ApiKey string `json:"apiKey,omitempty"`
 }
 
 // OAuth2ClientSpec defines the desired state of OAuth2Client

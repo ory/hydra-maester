@@ -34,6 +34,7 @@ type clientKey struct {
 	port           int
 	endpoint       string
 	forwardedProto string
+	apiKey         string
 }
 
 // OAuth2ClientFactory is a function that creates oauth2 client.
@@ -412,6 +413,7 @@ func (r *OAuth2ClientReconciler) getHydraClientForClient(
 			port:           spec.HydraAdmin.Port,
 			endpoint:       spec.HydraAdmin.Endpoint,
 			forwardedProto: spec.HydraAdmin.ForwardedProto,
+			apiKey:         spec.HydraAdmin.ApiKey,
 		}
 		r.mu.Lock()
 		defer r.mu.Unlock()

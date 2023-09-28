@@ -28,6 +28,7 @@ type InternalClient struct {
 	HydraURL       url.URL
 	HTTPClient     *http.Client
 	ForwardedProto string
+	ApiKey         string
 }
 
 // New returns a new hydra InternalClient instance.
@@ -50,6 +51,10 @@ func New(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkip
 
 	if spec.HydraAdmin.ForwardedProto != "" && spec.HydraAdmin.ForwardedProto != "off" {
 		client.ForwardedProto = spec.HydraAdmin.ForwardedProto
+	}
+
+	if spec.HydraAdmin.ApiKey != "" {
+		client.ApiKey = spec.HydraAdmin.ApiKey
 	}
 
 	return client, nil
@@ -184,6 +189,10 @@ func (c *InternalClient) newRequest(method, relativePath string, body interface{
 
 	if c.ForwardedProto != "" {
 		req.Header.Add("X-Forwarded-Proto", c.ForwardedProto)
+	}
+
+	if c.ApiKey != "" {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.ApiKey))
 	}
 
 	if body != nil {

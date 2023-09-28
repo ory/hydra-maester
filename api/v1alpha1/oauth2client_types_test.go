@@ -69,6 +69,7 @@ func TestCreateAPI(t *testing.T) {
 				Port: 4445,
 				// Endpoint:       "/clients",
 				ForwardedProto: "https",
+				ApiKey:         "1234",
 			}
 
 			createErr = k8sClient.Create(context.TODO(), created)
