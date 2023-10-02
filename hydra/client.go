@@ -5,15 +5,22 @@ package hydra
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
 	"github.com/ory/hydra-maester/helpers"
+	apiv1 "k8s.io/api/core/v1"
+	apierrs "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Client interface {
@@ -53,8 +60,16 @@ func New(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkip
 		client.ForwardedProto = spec.HydraAdmin.ForwardedProto
 	}
 
-	if spec.HydraAdmin.ApiKey != "" {
-		client.ApiKey = spec.HydraAdmin.ApiKey
+	apiKey, err := fetchApiKey(spec.HydraAdmin.ApiKeySecretRef)
+	if err != nil {
+		return nil, err
+	}
+
+	getEnv := os.Getenv("HYDRA_API_KEY")
+	if getEnv != "" {
+		client.ApiKey = getEnv
+	} else if apiKey != "" {
+		client.ApiKey = apiKey
 	}
 
 	return client, nil
@@ -215,4 +230,40 @@ func (c *InternalClient) do(req *http.Request, v interface{}) (*http.Response, e
 		err = json.NewDecoder(resp.Body).Decode(v)
 	}
 	return resp, err
+}
+
+func fetchApiKey(spec hydrav1alpha1.ApiKeySecretRef) (string, error) {
+
+	secretName := spec.Name
+	secretNamespace := spec.Namespace
+
+	if secretName == "" || secretNamespace == "" {
+		return "", nil
+	}
+
+	cfg := ctrl.GetConfigOrDie()
+	kubeClient, err := client.New(cfg, client.Options{})
+	if err != nil {
+		ctrl.Log.Error(err, "unable to create client to fetch secret")
+		return "", err
+	}
+
+	var secret apiv1.Secret
+	err = kubeClient.Get(context.Background(), types.NamespacedName{Name: secretName, Namespace: secretNamespace}, &secret)
+	if err != nil {
+		if apierrs.IsNotFound(err) {
+			ctrl.Log.Error(err, fmt.Sprintf("secret %s/%s does not exist", secretName, secretNamespace))
+			return "", fmt.Errorf("secret %s/%s does not exist", secretNamespace, secretName)
+		}
+		ctrl.Log.Error(err, fmt.Sprintf("error fetching secret %s/%s", secretName, secretNamespace))
+		return "", fmt.Errorf("error fetching secret %s/%s: %s", secretNamespace, secretName, err)
+	}
+
+	secretValue, ok := secret.Data[spec.Key]
+	if !ok {
+		ctrl.Log.Error(err, fmt.Sprintf("key %s doesn't exist within secret %s/%s", secretName, secretNamespace, spec.Key))
+		return "", fmt.Errorf("key %s doesn't exist within secret %s/%s", secretName, secretNamespace, spec.Key)
+	}
+
+	return string(secretValue), nil
 }

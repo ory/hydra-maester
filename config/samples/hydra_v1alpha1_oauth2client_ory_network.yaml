@@ -34,5 +34,6 @@ spec:
     url: https://foobar.projects.oryapis.com
     endpoint: /admin/clients
     port: 443
-    apiKey: 123456
+    apiKeySecretRef:
+      name: ory_network_key
   tokenEndpointAuthMethod: client_secret_basic

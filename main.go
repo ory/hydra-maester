@@ -35,9 +35,9 @@ func init() {
 
 func main() {
 	var (
-		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod, tlsTrustStore, namespace, leaderElectorNs, apiKey string
-		hydraPort                                                                                                      int
-		enableLeaderElection, insecureSkipVerify                                                                       bool
+		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod, tlsTrustStore, namespace, leaderElectorNs string
+		hydraPort                                                                                              int
+		enableLeaderElection, insecureSkipVerify                                                               bool
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -51,7 +51,6 @@ func main() {
 	flag.BoolVar(&insecureSkipVerify, "insecure-skip-verify", false, "If set, http client will be configured to skip insecure verification to connect with hydra admin")
 	flag.StringVar(&namespace, "namespace", "", "Namespace in which the controller should operate. Setting this will make the controller ignore other namespaces.")
 	flag.StringVar(&leaderElectorNs, "leader-elector-namespace", "", "Leader elector namespace where controller should be set.")
-	flag.StringVar(&apiKey, "api-key", "", "If set, this adds the Ory Network API Key as the Authorization header in requests to the ORY Hydra admin server")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
@@ -86,7 +85,6 @@ func main() {
 			Port:           hydraPort,
 			Endpoint:       endpoint,
 			ForwardedProto: forwardedProto,
-			ApiKey:         apiKey,
 		},
 	}
 	if tlsTrustStore != "" {

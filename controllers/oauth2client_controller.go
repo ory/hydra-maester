@@ -30,11 +30,16 @@ const (
 )
 
 type clientKey struct {
-	url            string
-	port           int
-	endpoint       string
-	forwardedProto string
-	apiKey         string
+	url             string
+	port            int
+	endpoint        string
+	forwardedProto  string
+	apiKeySecretRef ApiKeySecretRef
+}
+
+type ApiKeySecretRef struct {
+	Name      string
+	Namespace string
 }
 
 // OAuth2ClientFactory is a function that creates oauth2 client.
@@ -413,8 +418,23 @@ func (r *OAuth2ClientReconciler) getHydraClientForClient(
 			port:           spec.HydraAdmin.Port,
 			endpoint:       spec.HydraAdmin.Endpoint,
 			forwardedProto: spec.HydraAdmin.ForwardedProto,
-			apiKey:         spec.HydraAdmin.ApiKey,
 		}
+
+		secretName := determineApiSecretName(&spec.HydraAdmin)
+		secretNamespace := determineApiSecretNamespace(&oauth2client)
+
+		if secretName != "" && secretNamespace != "" {
+			key.apiKeySecretRef = ApiKeySecretRef{
+				Name:      secretName,
+				Namespace: secretNamespace,
+			}
+			spec.HydraAdmin.ApiKeySecretRef.Name = secretName
+			spec.HydraAdmin.ApiKeySecretRef.Namespace = secretNamespace
+			if spec.HydraAdmin.ApiKeySecretRef.Key == "" {
+				spec.HydraAdmin.ApiKeySecretRef.Key = "hydra_api_key"
+			}
+		}
+
 		r.mu.Lock()
 		defer r.mu.Unlock()
 		if c, ok := r.oauth2Clients[key]; ok {
@@ -458,4 +478,18 @@ func removeString(slice []string, s string) (result []string) {
 		result = append(result, item)
 	}
 	return
+}
+
+func determineApiSecretName(spec *hydrav1alpha1.HydraAdmin) string {
+	if spec.ApiKeySecretRef.Name != "" {
+		return spec.ApiKeySecretRef.Name
+	}
+	return ""
+}
+
+func determineApiSecretNamespace(spec *hydrav1alpha1.OAuth2Client) string {
+	if spec.Spec.HydraAdmin.ApiKeySecretRef.Namespace != "" {
+		return spec.Spec.HydraAdmin.ApiKeySecretRef.Namespace
+	}
+	return spec.ObjectMeta.Namespace
 }
