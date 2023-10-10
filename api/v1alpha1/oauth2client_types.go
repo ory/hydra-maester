@@ -114,7 +114,7 @@ type OAuth2ClientSpec struct {
 	// +nullable
 	// +optional
 	//
-	// Metadata is abritrary data
+	// Metadata is arbitrary data
 	Metadata apiextensionsv1.JSON `json:"metadata,omitempty"`
 
 	// +kubebuilder:validation:type=string
@@ -122,22 +122,46 @@ type OAuth2ClientSpec struct {
 	//
 	// JwksUri Define the URL where the JSON Web Key Set should be fetched from when performing the private_key_jwt client authentication method.
 	JwksUri string `json:"jwksUri,omitempty"`
+
+	// +kubebuilder:validation:type=bool
+	// +kubebuilder:default=false
+	//
+	// FrontChannelLogoutSessionRequired Boolean value specifying whether the RP requires that iss (issuer) and sid (session ID) query parameters be included to identify the RP session with the OP when the frontchannel_logout_uri is used
+	FrontChannelLogoutSessionRequired bool `json:"frontChannelLogoutSessionRequired,omitempty"`
+
+	// +kubebuilder:validation:type=string
+	// +kubebuilder:validation:Pattern=`(^$|^https?://.*)`
+	//
+	// FrontChannelLogoutURI RP URL that will cause the RP to log itself out when rendered in an iframe by the OP. An iss (issuer) query parameter and a sid (session ID) query parameter MAY be included by the OP to enable the RP to validate the request and to determine which of the potentially multiple sessions is to be logged out; if either is included, both MUST be
+	FrontChannelLogoutURI string `json:"frontChannelLogoutURI,omitempty"`
+
+	// +kubebuilder:validation:type=bool
+	// +kubebuilder:default=false
+	//
+	// BackChannelLogoutSessionRequired Boolean value specifying whether the RP requires that a sid (session ID) Claim be included in the Logout Token to identify the RP session with the OP when the backchannel_logout_uri is used. If omitted, the default value is false.
+	BackChannelLogoutSessionRequired bool `json:"backChannelLogoutSessionRequired,omitempty"`
+
+	// +kubebuilder:validation:type=string
+	// +kubebuilder:validation:Pattern=`(^$|^https?://.*)`
+	//
+	// BackChannelLogoutURI RP URL that will cause the RP to log itself out when sent a Logout Token by the OP
+	BackChannelLogoutURI string `json:"backChannelLogoutURI,omitempty"`
 }
 
-// +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token
 // GrantType represents an OAuth 2.0 grant type
+// +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token
 type GrantType string
 
-// +kubebuilder:validation:Enum=id_token;code;token;code token;code id_token;id_token token;code id_token token
 // ResponseType represents an OAuth 2.0 response type strings
+// +kubebuilder:validation:Enum=id_token;code;token;code token;code id_token;id_token token;code id_token token
 type ResponseType string
 
-// +kubebuilder:validation:Pattern=`\w+:/?/?[^\s]+`
 // RedirectURI represents a redirect URI for the client
+// +kubebuilder:validation:Pattern=`\w+:/?/?[^\s]+`
 type RedirectURI string
 
-// +kubebuilder:validation:Enum=client_secret_basic;client_secret_post;private_key_jwt;none
 // TokenEndpointAuthMethod represents an authentication method for token endpoint
+// +kubebuilder:validation:Enum=client_secret_basic;client_secret_post;private_key_jwt;none
 type TokenEndpointAuthMethod string
 
 // OAuth2ClientStatus defines the observed state of OAuth2Client

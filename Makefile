@@ -102,7 +102,7 @@ k3d-down:
 	k3d cluster delete ory || true
 
 .PHONY: k3d-deploy
-k3d-deploy: manager manifests docker-build-notest k3d-up
+k3d-deploy: manager-ci manifests docker-build-notest k3d-up
 	kubectl config set-context k3d-ory
 	k3d image load controller:latest -c ory
 	kubectl apply -f config/crd/bases
@@ -123,6 +123,11 @@ test-integration:
 .PHONY: manager
 manager: generate vet
 	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -a -o manager main.go
+
+# Build manager binary for CI
+.PHONY: manager-ci
+manager: generate vet
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 .PHONY: run
