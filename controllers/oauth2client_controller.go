@@ -121,9 +121,9 @@ func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	// Check request namespace
 	if r.ControllerNamespace != "" {
-		r.Log.Info((fmt.Sprintf("ControllerNamespace is set to: %s, working only on items in this namespace. Other namespaces are ignored.", r.ControllerNamespace)))
+		r.Log.Info(fmt.Sprintf("ControllerNamespace is set to: %s, working only on items in this namespace. Other namespaces are ignored.", r.ControllerNamespace))
 		if req.NamespacedName.Namespace != r.ControllerNamespace {
-			r.Log.Info((fmt.Sprintf("Requested resource %s is not in namespace: %s and will be ignored", req.String(), r.ControllerNamespace)))
+			r.Log.Info(fmt.Sprintf("Requested resource %s is not in namespace: %s and will be ignored", req.String(), r.ControllerNamespace))
 			return ctrl.Result{}, nil
 		}
 	}
@@ -314,25 +314,25 @@ func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Contex
 
 func (r *OAuth2ClientReconciler) unregisterOAuth2Clients(ctx context.Context, c *hydrav1alpha1.OAuth2Client) error {
 
-	// if a reqired field is empty, that means this is a delete after
+	// if a required field is empty, that means this is deleted after
 	// the finalizers have done their job, so just return
 	if c.Spec.Scope == "" || c.Spec.SecretName == "" {
 		return nil
 	}
 
-	hydra, err := r.getHydraClientForClient(*c)
+	h, err := r.getHydraClientForClient(*c)
 	if err != nil {
 		return err
 	}
 
-	clients, err := hydra.ListOAuth2Client()
+	clients, err := h.ListOAuth2Client()
 	if err != nil {
 		return err
 	}
 
 	for _, cJSON := range clients {
 		if cJSON.Owner == fmt.Sprintf("%s/%s", c.Name, c.Namespace) {
-			if err := hydra.DeleteOAuth2Client(*cJSON.ClientID); err != nil {
+			if err := h.DeleteOAuth2Client(*cJSON.ClientID); err != nil {
 				return err
 			}
 		}
@@ -419,13 +419,13 @@ func (r *OAuth2ClientReconciler) getHydraClientForClient(
 			return c, nil
 		}
 
-		client, err := r.oauth2ClientFactory(spec, "", false)
+		c, err := r.oauth2ClientFactory(spec, "", false)
 		if err != nil {
-			return nil, fmt.Errorf("cannot create oauth2 client from CRD: %w", err)
+			return nil, fmt.Errorf("cannot create oauth2 c from CRD: %w", err)
 		}
 
-		r.oauth2Clients[key] = client
-		return client, nil
+		r.oauth2Clients[key] = c
+		return c, nil
 	}
 
 	if r.HydraClient == nil {
