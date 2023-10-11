@@ -8,7 +8,7 @@ jobs:
       - <<: *golang_image
     steps:
       - checkout
-      - run: make
+      - run: make manager
   test:
     docker:
       - <<: *golang_image
