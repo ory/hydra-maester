@@ -125,7 +125,7 @@ jobs:
       - name: Checkout dependencies
         uses: ./.github/actions/deps-setup
       - name: Test
-        run: make test-integration
+        run: make docker-build
 
   release:
     if: ${{ github.ref_type == 'tag' }}

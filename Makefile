@@ -126,7 +126,7 @@ manager: generate vet
 
 # Build manager binary for CI
 .PHONY: manager-ci
-manager: generate vet
+manager-ci: generate vet
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
