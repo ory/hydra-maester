@@ -1,6 +1,5 @@
 name: CI
 on:
-  create:
   push:
     branches:
       - "master"
@@ -149,7 +148,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
