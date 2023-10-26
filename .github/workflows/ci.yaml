@@ -1,5 +1,6 @@
 name: CI
 on:
+  create:
   push:
     branches:
       - "master"
@@ -76,7 +77,8 @@ jobs:
     name: Compile and test
     runs-on: ubuntu-latest
     if: |
-      needs.detect-repo-changes.outputs.code-changed == 'true'
+      needs.detect-repo-changes.outputs.code-changed == 'true' ||
+      github.ref_type == 'tag'
     needs:
       - detect-repo-changes
       - dependencies
@@ -95,7 +97,8 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       needs.detect-repo-changes.outputs.code-changed == 'true' ||
-      needs.detect-repo-changes.outputs.dockerfile-changed == 'true'
+      needs.detect-repo-changes.outputs.dockerfile-changed == 'true' ||
+      github.ref_type == 'tag'
     needs:
       - detect-repo-changes
       - dependencies
@@ -115,7 +118,8 @@ jobs:
     name: Build docker image
     runs-on: ubuntu-latest
     if: |
-      needs.detect-repo-changes.outputs.dockerfile-changed == 'true'
+      needs.detect-repo-changes.outputs.dockerfile-changed == 'true' ||
+      github.ref_type == 'tag'
     needs:
       - detect-repo-changes
       - dependencies
@@ -128,7 +132,7 @@ jobs:
         run: make docker-build
 
   release:
-    if: ${{ github.ref_type == 'tag' }}
+    if: github.ref_type == 'tag'
     needs:
       - test-build
       - test-integration
