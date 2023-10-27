@@ -149,10 +149,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-      - name: Set short SHA
-        shell: bash
-        run: |
-          echo "DOCKER_SHORT_TAG=${${{ github.sha }}:0:7}" >> "$GITHUB_ENV"
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:

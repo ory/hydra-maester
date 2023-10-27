@@ -31,9 +31,9 @@ dockers:
       - "oryd/hydra-maester:v{{ .Major }}"
       - "oryd/hydra-maester:v{{ .Major }}.{{ .Minor }}"
       - "oryd/hydra-maester:v{{ .Major }}.{{ .Minor }}.{{ .Patch }}"
-      - "oryd/hydra-maester:{{ .Env.DOCKER_SHORT_TAG }}"
+      - "oryd/hydra-maester:{{ .ShortCommit }}"
       - "oryd/hydra-maester:latest"
 
 release:
   prerelease: auto
-  name_template: "{{.Env.RELEASE_NAME}}"
+  name_template: "{{ .Tag }}"
