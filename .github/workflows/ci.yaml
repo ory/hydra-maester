@@ -50,8 +50,7 @@ jobs:
               - '*.go'
               - 'PROJECT'
             docker:
-              - 'Dockerfile'
-              - 'Dockerfile-kubebuilder'
+              - '.docker/**'
             cicd-definitions:
               - '.github/workflows/**'
               - '.github/actions/**'

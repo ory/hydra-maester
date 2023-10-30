@@ -169,7 +169,7 @@ generate: controller-gen
 # Build the docker image
 .PHONY: docker-build-notest
 docker-build-notest:
-	docker build . -t ${IMG}
+	docker build . -t ${IMG} -f .docker/Dockerfile-build
 	@echo "updating kustomize image patch file for manager resource"
 	sed -i'' -e 's@image: .*@image: '"${IMG}"'@' ./config/default/manager_image_patch.yaml
 
