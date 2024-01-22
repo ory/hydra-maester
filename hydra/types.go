@@ -14,21 +14,25 @@ import (
 
 // OAuth2ClientJSON represents an OAuth2 client digestible by ORY Hydra
 type OAuth2ClientJSON struct {
-	ClientName              string          `json:"client_name,omitempty"`
-	ClientID                *string         `json:"client_id,omitempty"`
-	Secret                  *string         `json:"client_secret,omitempty"`
-	GrantTypes              []string        `json:"grant_types"`
-	RedirectURIs            []string        `json:"redirect_uris,omitempty"`
-	PostLogoutRedirectURIs  []string        `json:"post_logout_redirect_uris,omitempty"`
-	AllowedCorsOrigins      []string        `json:"allowed_cors_origins,omitempty"`
-	ResponseTypes           []string        `json:"response_types,omitempty"`
-	Audience                []string        `json:"audience,omitempty"`
-	Scope                   string          `json:"scope"`
-	SkipConsent             bool            `json:"skip_consent,omitempty"`
-	Owner                   string          `json:"owner"`
-	TokenEndpointAuthMethod string          `json:"token_endpoint_auth_method,omitempty"`
-	Metadata                json.RawMessage `json:"metadata,omitempty"`
-	JwksUri                 string          `json:"jwks_uri,omitempty"`
+	ClientName                        string          `json:"client_name,omitempty"`
+	ClientID                          *string         `json:"client_id,omitempty"`
+	Secret                            *string         `json:"client_secret,omitempty"`
+	GrantTypes                        []string        `json:"grant_types"`
+	RedirectURIs                      []string        `json:"redirect_uris,omitempty"`
+	PostLogoutRedirectURIs            []string        `json:"post_logout_redirect_uris,omitempty"`
+	AllowedCorsOrigins                []string        `json:"allowed_cors_origins,omitempty"`
+	ResponseTypes                     []string        `json:"response_types,omitempty"`
+	Audience                          []string        `json:"audience,omitempty"`
+	Scope                             string          `json:"scope"`
+	SkipConsent                       bool            `json:"skip_consent,omitempty"`
+	Owner                             string          `json:"owner"`
+	TokenEndpointAuthMethod           string          `json:"token_endpoint_auth_method,omitempty"`
+	Metadata                          json.RawMessage `json:"metadata,omitempty"`
+	JwksUri                           string          `json:"jwks_uri,omitempty"`
+	FrontChannelLogoutSessionRequired bool            `json:"frontchannel_logout_session_required"`
+	FrontChannelLogoutURI             string          `json:"frontchannel_logout_uri"`
+	BackChannelLogoutSessionRequired  bool            `json:"backchannel_logout_session_required"`
+	BackChannelLogoutURI              string          `json:"backchannel_logout_uri"`
 }
 
 // Oauth2ClientCredentials represents client ID and password fetched from a
@@ -54,18 +58,22 @@ func FromOAuth2Client(c *hydrav1alpha1.OAuth2Client) (*OAuth2ClientJSON, error) 
 	}
 
 	return &OAuth2ClientJSON{
-		ClientName:              c.Spec.ClientName,
-		GrantTypes:              grantToStringSlice(c.Spec.GrantTypes),
-		ResponseTypes:           responseToStringSlice(c.Spec.ResponseTypes),
-		RedirectURIs:            redirectToStringSlice(c.Spec.RedirectURIs),
-		PostLogoutRedirectURIs:  redirectToStringSlice(c.Spec.PostLogoutRedirectURIs),
-		AllowedCorsOrigins:      redirectToStringSlice(c.Spec.AllowedCorsOrigins),
-		Audience:                c.Spec.Audience,
-		Scope:                   c.Spec.Scope,
-		SkipConsent:             c.Spec.SkipConsent,
-		Owner:                   fmt.Sprintf("%s/%s", c.Name, c.Namespace),
-		TokenEndpointAuthMethod: string(c.Spec.TokenEndpointAuthMethod),
-		Metadata:                meta,
+		ClientName:                        c.Spec.ClientName,
+		GrantTypes:                        grantToStringSlice(c.Spec.GrantTypes),
+		ResponseTypes:                     responseToStringSlice(c.Spec.ResponseTypes),
+		RedirectURIs:                      redirectToStringSlice(c.Spec.RedirectURIs),
+		PostLogoutRedirectURIs:            redirectToStringSlice(c.Spec.PostLogoutRedirectURIs),
+		AllowedCorsOrigins:                redirectToStringSlice(c.Spec.AllowedCorsOrigins),
+		Audience:                          c.Spec.Audience,
+		Scope:                             c.Spec.Scope,
+		SkipConsent:                       c.Spec.SkipConsent,
+		Owner:                             fmt.Sprintf("%s/%s", c.Name, c.Namespace),
+		TokenEndpointAuthMethod:           string(c.Spec.TokenEndpointAuthMethod),
+		Metadata:                          meta,
+		FrontChannelLogoutURI:             c.Spec.BackChannelLogoutURI,
+		FrontChannelLogoutSessionRequired: c.Spec.BackChannelLogoutSessionRequired,
+		BackChannelLogoutSessionRequired:  c.Spec.BackChannelLogoutSessionRequired,
+		BackChannelLogoutURI:              c.Spec.BackChannelLogoutURI,
 	}, nil
 }
 

@@ -26,11 +26,11 @@ const (
 
 	testID                        = "test-id"
 	testClient                    = `{"client_id":"test-id","owner":"test-name","scope":"some,scopes","grant_types":["type1"],"token_endpoint_auth_method":"client_secret_basic"}`
-	testClientCreated             = `{"client_id":"test-id-2","client_secret":"TmGkvcY7k526","owner":"test-name-2","scope":"some,other,scopes","grant_types":["type2"],"audience":["audience-a","audience-b"],"token_endpoint_auth_method":"client_secret_basic"}`
+	testClientCreated             = `{"client_id":"test-id-2","client_secret":"TmGkvcY7k526","owner":"test-name-2","scope":"some,other,scopes","grant_types":["type2"],"audience":["audience-a","audience-b"],"token_endpoint_auth_method":"client_secret_basic","backchannel_logout_uri":"https://localhost/backchannel-logout","frontchannel_logout_uri":"https://localhost/frontchannel-logout"}`
 	testClientUpdated             = `{"client_id":"test-id-3","client_secret":"xFoPPm654por","owner":"test-name-3","scope":"yet,another,scope","grant_types":["type3"],"audience":["audience-c"],"token_endpoint_auth_method":"client_secret_basic"}`
 	testClientList                = `{"client_id":"test-id-4","owner":"test-name-4","scope":"scope1 scope2","grant_types":["type4"],"token_endpoint_auth_method":"client_secret_basic"}`
 	testClientList2               = `{"client_id":"test-id-5","owner":"test-name-5","scope":"scope3 scope4","grant_types":["type5"],"token_endpoint_auth_method":"client_secret_basic"}`
-	testClientWithMetadataCreated = `{"client_id":"test-id-21","client_secret":"TmGkvcY7k526","owner":"test-name-21","scope":"some,other,scopes","grant_types":["type2"],"token_endpoint_auth_method":"client_secret_basic","metadata":{"property1":1,"property2":"2"}}`
+	testClientWithMetadataCreated = `{"client_id":"test-id-21","client_secret":"TmGkvcY7k526","owner":"test-name-21","scope":"some,other,scopes","grant_types":["type2"],"token_endpoint_auth_method":"client_secret_basic","metadata":{"property1":1,"property2":"2"},"backchannel_logout_uri":"https://localhost/backchannel-logout","frontchannel_logout_uri":"https://localhost/frontchannel-logout"}`
 
 	statusNotFoundBody            = `{"error":"Not Found","error_description":"Unable to locate the requested resource","status_code":404,"request_id":"id"}`
 	statusUnauthorizedBody        = `{"error":"The request could not be authorized","error_description":"The requested OAuth 2.0 client does not exist or you did not provide the necessary credentials","status_code":401,"request_id":"id"}`
@@ -45,10 +45,14 @@ type server struct {
 }
 
 var testOAuthJSONPost = &hydra.OAuth2ClientJSON{
-	Scope:      "some,other,scopes",
-	GrantTypes: []string{"type2"},
-	Owner:      "test-name-2",
-	Audience:   []string{"audience-a", "audience-b"},
+	Scope:                             "some,other,scopes",
+	GrantTypes:                        []string{"type2"},
+	Owner:                             "test-name-2",
+	Audience:                          []string{"audience-a", "audience-b"},
+	FrontChannelLogoutURI:             "https://localhost/frontchannel-logout",
+	FrontChannelLogoutSessionRequired: false,
+	BackChannelLogoutURI:              "https://localhost/backchannel-logout",
+	BackChannelLogoutSessionRequired:  false,
 }
 
 var testOAuthJSONPut = &hydra.OAuth2ClientJSON{
@@ -182,10 +186,14 @@ func TestCRUD(t *testing.T) {
 						"property2": "2",
 					})
 					var testOAuthJSONPost2 = &hydra.OAuth2ClientJSON{
-						Scope:      "some,other,scopes",
-						GrantTypes: []string{"type2"},
-						Owner:      "test-name-21",
-						Metadata:   meta,
+						Scope:                             "some,other,scopes",
+						GrantTypes:                        []string{"type2"},
+						Owner:                             "test-name-21",
+						Metadata:                          meta,
+						FrontChannelLogoutURI:             "https://localhost/frontchannel-logout",
+						FrontChannelLogoutSessionRequired: false,
+						BackChannelLogoutURI:              "https://localhost/backchannel-logout",
+						BackChannelLogoutSessionRequired:  false,
 					}
 					o, err = c.PostOAuth2Client(testOAuthJSONPost2)
 					expected = testOAuthJSONPost2
@@ -211,6 +219,10 @@ func TestCRUD(t *testing.T) {
 					assert.NotNil(o.Secret)
 					assert.NotNil(o.ClientID)
 					assert.NotNil(o.TokenEndpointAuthMethod)
+					assert.Equal(expected.FrontChannelLogoutURI, o.FrontChannelLogoutURI)
+					assert.Equal(expected.FrontChannelLogoutSessionRequired, o.FrontChannelLogoutSessionRequired)
+					assert.Equal(expected.BackChannelLogoutURI, o.BackChannelLogoutURI)
+					assert.Equal(expected.BackChannelLogoutSessionRequired, o.BackChannelLogoutSessionRequired)
 					if expected.TokenEndpointAuthMethod != "" {
 						assert.Equal(expected.TokenEndpointAuthMethod, o.TokenEndpointAuthMethod)
 					}
