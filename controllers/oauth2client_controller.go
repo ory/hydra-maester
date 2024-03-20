@@ -404,12 +404,12 @@ func (r *OAuth2ClientReconciler) ensureEmptyStatusError(ctx context.Context, c *
 func parseSecret(secret apiv1.Secret, authMethod hydrav1alpha1.TokenEndpointAuthMethod) (*hydra.Oauth2ClientCredentials, error) {
 	id, found := secret.Data[ClientIDKey]
 	if !found {
-		return nil, fmt.Errorf("client_id property missing")
+		return nil, fmt.Errorf("%s property missing", ClientIDKey)
 	}
 
 	psw, found := secret.Data[ClientSecretKey]
 	if !found && authMethod != "none" {
-		return nil, fmt.Errorf("client_secret property missing")
+		return nil, fmt.Errorf("%s property missing", ClientSecretKey)
 	}
 
 	return &hydra.Oauth2ClientCredentials{
