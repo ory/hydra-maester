@@ -89,17 +89,27 @@ func TestCreateAPI(t *testing.T) {
 		t.Run("by failing if the requested object doesn't meet CRD requirements", func(t *testing.T) {
 
 			for desc, modifyClient := range map[string]func(){
-				"invalid grant type":              func() { created.Spec.GrantTypes = []GrantType{"invalid"} },
-				"invalid response type":           func() { created.Spec.ResponseTypes = []ResponseType{"invalid", "code"} },
-				"invalid composite response type": func() { created.Spec.ResponseTypes = []ResponseType{"invalid code", "code id_token"} },
-				"invalid scope":                   func() { created.Spec.Scope = "" },
-				"missing secret name":             func() { created.Spec.SecretName = "" },
-				"invalid redirect URI":            func() { created.Spec.RedirectURIs = []RedirectURI{"invalid"} },
-				"invalid logout redirect URI":     func() { created.Spec.PostLogoutRedirectURIs = []RedirectURI{"invalid"} },
-				"invalid hydra url":               func() { created.Spec.HydraAdmin.URL = "invalid" },
-				"invalid hydra port high":         func() { created.Spec.HydraAdmin.Port = 65536 },
-				"invalid hydra endpoint":          func() { created.Spec.HydraAdmin.Endpoint = "invalid" },
-				"invalid hydra forwarded proto":   func() { created.Spec.HydraAdmin.Endpoint = "invalid" },
+				"invalid grant type":                                func() { created.Spec.GrantTypes = []GrantType{"invalid"} },
+				"invalid response type":                             func() { created.Spec.ResponseTypes = []ResponseType{"invalid", "code"} },
+				"invalid composite response type":                   func() { created.Spec.ResponseTypes = []ResponseType{"invalid code", "code id_token"} },
+				"invalid scope":                                     func() { created.Spec.Scope = "" },
+				"missing secret name":                               func() { created.Spec.SecretName = "" },
+				"invalid redirect URI":                              func() { created.Spec.RedirectURIs = []RedirectURI{"invalid"} },
+				"invalid logout redirect URI":                       func() { created.Spec.PostLogoutRedirectURIs = []RedirectURI{"invalid"} },
+				"invalid hydra url":                                 func() { created.Spec.HydraAdmin.URL = "invalid" },
+				"invalid hydra port high":                           func() { created.Spec.HydraAdmin.Port = 65536 },
+				"invalid hydra endpoint":                            func() { created.Spec.HydraAdmin.Endpoint = "invalid" },
+				"invalid hydra forwarded proto":                     func() { created.Spec.HydraAdmin.ForwardedProto = "invalid" },
+				"invalid lifespan authorization code access token":  func() { created.Spec.TokenLifespans.AuthorizationCodeGrantAccessTokenLifespan = "invalid" },
+				"invalid lifespan authorization code id token":      func() { created.Spec.TokenLifespans.AuthorizationCodeGrantIdTokenLifespan = "invalid" },
+				"invalid lifespan authorization code refresh token": func() { created.Spec.TokenLifespans.AuthorizationCodeGrantRefreshTokenLifespan = "invalid" },
+				"invalid lifespan client credentials access token":  func() { created.Spec.TokenLifespans.ClientCredentialsGrantAccessTokenLifespan = "invalid" },
+				"invalid lifespan implicit access token":            func() { created.Spec.TokenLifespans.ImplicitGrantAccessTokenLifespan = "invalid" },
+				"invalid lifespan implicit id token":                func() { created.Spec.TokenLifespans.ImplicitGrantIdTokenLifespan = "invalid" },
+				"invalid lifespan jwt bearer access token":          func() { created.Spec.TokenLifespans.JwtBearerGrantAccessTokenLifespan = "invalid" },
+				"invalid lifespan refresh token access token":       func() { created.Spec.TokenLifespans.RefreshTokenGrantAccessTokenLifespan = "invalid" },
+				"invalid lifespan refresh token id token":           func() { created.Spec.TokenLifespans.RefreshTokenGrantIdTokenLifespan = "invalid" },
+				"invalid lifespan refresh token refresh token":      func() { created.Spec.TokenLifespans.RefreshTokenGrantRefreshTokenLifespan = "invalid" },
 			} {
 				t.Run(fmt.Sprintf("case=%s", desc), func(t *testing.T) {
 					resetTestClient()
@@ -158,10 +168,11 @@ func resetTestClient() {
 			Namespace: "default",
 		},
 		Spec: OAuth2ClientSpec{
-			GrantTypes:    []GrantType{"implicit", "client_credentials", "authorization_code", "refresh_token"},
-			ResponseTypes: []ResponseType{"id_token", "code", "token"},
-			Scope:         "read,write",
-			SecretName:    "secret-name",
+			GrantTypes:     []GrantType{"implicit", "client_credentials", "authorization_code", "refresh_token"},
+			ResponseTypes:  []ResponseType{"id_token", "code", "token"},
+			Scope:          "read,write",
+			SecretName:     "secret-name",
+			TokenLifespans: TokenLifespans{},
 		},
 	}
 }
