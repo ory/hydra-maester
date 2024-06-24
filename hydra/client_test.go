@@ -53,6 +53,7 @@ var testOAuthJSONPost = &hydra.OAuth2ClientJSON{
 	FrontChannelLogoutSessionRequired: false,
 	BackChannelLogoutURI:              "https://localhost/backchannel-logout",
 	BackChannelLogoutSessionRequired:  false,
+	AuthorizationCodeGrantAccessTokenLifespan: "6h",
 }
 
 var testOAuthJSONPut = &hydra.OAuth2ClientJSON{

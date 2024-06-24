@@ -51,6 +51,69 @@ type HydraAdmin struct {
 	ForwardedProto string `json:"forwardedProto,omitempty"`
 }
 
+// TokenLifespans defines the desired token durations by grant type for OAuth2Client
+type TokenLifespans struct {
+	// +kubebuilder:validation:Pattern=[0-9]+(ns|us|ms|s|m|h)
+	//
+	// AuthorizationCodeGrantAccessTokenLifespan is the access token lifespan
+	// issued on an authorization_code grant.
+	AuthorizationCodeGrantAccessTokenLifespan string `json:"authorization_code_grant_access_token_lifespan,omitempty"`
+
+	// +kubebuilder:validation:Pattern=[0-9]+(ns|us|ms|s|m|h)
+	//
+	// AuthorizationCodeGrantIdTokenLifespan is the id token lifespan
+	// issued on an authorization_code grant.
+	AuthorizationCodeGrantIdTokenLifespan string `json:"authorization_code_grant_id_token_lifespan,omitempty"`
+
+	// +kubebuilder:validation:Pattern=[0-9]+(ns|us|ms|s|m|h)
+	//
+	// AuthorizationCodeGrantRefreshTokenLifespan is the refresh token lifespan
+	// issued on an authorization_code grant.
+	AuthorizationCodeGrantRefreshTokenLifespan string `json:"authorization_code_grant_refresh_token_lifespan,omitempty"`
+
+	// +kubebuilder:validation:Pattern=[0-9]+(ns|us|ms|s|m|h)
+	//
+	// AuthorizationCodeGrantRefreshTokenLifespan is the access token lifespan
+	// issued on a client_credentials grant.
+	ClientCredentialsGrantAccessTokenLifespan string `json:"client_credentials_grant_access_token_lifespan,omitempty"`
+
+	// +kubebuilder:validation:Pattern=[0-9]+(ns|us|ms|s|m|h)
+	//
+	// ImplicitGrantAccessTokenLifespan is the access token lifespan
+	// issued on an implicit grant.
+	ImplicitGrantAccessTokenLifespan string `json:"implicit_grant_access_token_lifespan,omitempty"`
+
+	// +kubebuilder:validation:Pattern=[0-9]+(ns|us|ms|s|m|h)
+	//
+	// ImplicitGrantIdTokenLifespan is the id token lifespan
+	// issued on an implicit grant.
+	ImplicitGrantIdTokenLifespan string `json:"implicit_grant_id_token_lifespan,omitempty"`
+
+	// +kubebuilder:validation:Pattern=[0-9]+(ns|us|ms|s|m|h)
+	//
+	// JwtBearerGrantAccessTokenLifespan is the access token lifespan
+	// issued on a jwt_bearer grant.
+	JwtBearerGrantAccessTokenLifespan string `json:"jwt_bearer_grant_access_token_lifespan,omitempty"`
+
+	// +kubebuilder:validation:Pattern=[0-9]+(ns|us|ms|s|m|h)
+	//
+	// RefreshTokenGrantAccessTokenLifespan is the access token lifespan
+	// issued on a refresh_token grant.
+	RefreshTokenGrantAccessTokenLifespan string `json:"refresh_token_grant_access_token_lifespan,omitempty"`
+
+	// +kubebuilder:validation:Pattern=[0-9]+(ns|us|ms|s|m|h)
+	//
+	// RefreshTokenGrantIdTokenLifespan is the id token lifespan
+	// issued on a refresh_token grant.
+	RefreshTokenGrantIdTokenLifespan string `json:"refresh_token_grant_id_token_lifespan,omitempty"`
+
+	// +kubebuilder:validation:Pattern=[0-9]+(ns|us|ms|s|m|h)
+	//
+	// RefreshTokenGrantRefreshTokenLifespan is the refresh token lifespan
+	// issued on a refresh_token grant.
+	RefreshTokenGrantRefreshTokenLifespan string `json:"refresh_token_grant_refresh_token_lifespan,omitempty"`
+}
+
 // OAuth2ClientSpec defines the desired state of OAuth2Client
 type OAuth2ClientSpec struct {
 
@@ -109,6 +172,10 @@ type OAuth2ClientSpec struct {
 	//
 	// Indication which authentication method shoud be used for the token endpoint
 	TokenEndpointAuthMethod TokenEndpointAuthMethod `json:"tokenEndpointAuthMethod,omitempty"`
+
+	// TokenLifespans is the configuration to use for managing different token lifespans
+	// depending on the used grant type.
+	TokenLifespans TokenLifespans `json:"tokenLifespans,omitempty"`
 
 	// +kubebuilder:validation:Type=object
 	// +nullable

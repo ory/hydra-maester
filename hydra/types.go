@@ -14,25 +14,35 @@ import (
 
 // OAuth2ClientJSON represents an OAuth2 client digestible by ORY Hydra
 type OAuth2ClientJSON struct {
-	ClientName                        string          `json:"client_name,omitempty"`
-	ClientID                          *string         `json:"client_id,omitempty"`
-	Secret                            *string         `json:"client_secret,omitempty"`
-	GrantTypes                        []string        `json:"grant_types"`
-	RedirectURIs                      []string        `json:"redirect_uris,omitempty"`
-	PostLogoutRedirectURIs            []string        `json:"post_logout_redirect_uris,omitempty"`
-	AllowedCorsOrigins                []string        `json:"allowed_cors_origins,omitempty"`
-	ResponseTypes                     []string        `json:"response_types,omitempty"`
-	Audience                          []string        `json:"audience,omitempty"`
-	Scope                             string          `json:"scope"`
-	SkipConsent                       bool            `json:"skip_consent,omitempty"`
-	Owner                             string          `json:"owner"`
-	TokenEndpointAuthMethod           string          `json:"token_endpoint_auth_method,omitempty"`
-	Metadata                          json.RawMessage `json:"metadata,omitempty"`
-	JwksUri                           string          `json:"jwks_uri,omitempty"`
-	FrontChannelLogoutSessionRequired bool            `json:"frontchannel_logout_session_required"`
-	FrontChannelLogoutURI             string          `json:"frontchannel_logout_uri"`
-	BackChannelLogoutSessionRequired  bool            `json:"backchannel_logout_session_required"`
-	BackChannelLogoutURI              string          `json:"backchannel_logout_uri"`
+	ClientName                                 string          `json:"client_name,omitempty"`
+	ClientID                                   *string         `json:"client_id,omitempty"`
+	Secret                                     *string         `json:"client_secret,omitempty"`
+	GrantTypes                                 []string        `json:"grant_types"`
+	RedirectURIs                               []string        `json:"redirect_uris,omitempty"`
+	PostLogoutRedirectURIs                     []string        `json:"post_logout_redirect_uris,omitempty"`
+	AllowedCorsOrigins                         []string        `json:"allowed_cors_origins,omitempty"`
+	ResponseTypes                              []string        `json:"response_types,omitempty"`
+	Audience                                   []string        `json:"audience,omitempty"`
+	Scope                                      string          `json:"scope"`
+	SkipConsent                                bool            `json:"skip_consent,omitempty"`
+	Owner                                      string          `json:"owner"`
+	TokenEndpointAuthMethod                    string          `json:"token_endpoint_auth_method,omitempty"`
+	Metadata                                   json.RawMessage `json:"metadata,omitempty"`
+	JwksUri                                    string          `json:"jwks_uri,omitempty"`
+	FrontChannelLogoutSessionRequired          bool            `json:"frontchannel_logout_session_required"`
+	FrontChannelLogoutURI                      string          `json:"frontchannel_logout_uri"`
+	BackChannelLogoutSessionRequired           bool            `json:"backchannel_logout_session_required"`
+	BackChannelLogoutURI                       string          `json:"backchannel_logout_uri"`
+	AuthorizationCodeGrantAccessTokenLifespan  string          `json:"authorization_code_grant_access_token_lifespan,omitempty"`
+	AuthorizationCodeGrantIdTokenLifespan      string          `json:"authorization_code_grant_id_token_lifespan,omitempty"`
+	AuthorizationCodeGrantRefreshTokenLifespan string          `json:"authorization_code_grant_refresh_token_lifespan,omitempty"`
+	ClientCredentialsGrantAccessTokenLifespan  string          `json:"client_credentials_grant_access_token_lifespan,omitempty"`
+	ImplicitGrantAccessTokenLifespan           string          `json:"implicit_grant_access_token_lifespan,omitempty"`
+	ImplicitGrantIdTokenLifespan               string          `json:"implicit_grant_id_token_lifespan,omitempty"`
+	JwtBearerGrantAccessTokenLifespan          string          `json:"jwt_bearer_grant_access_token_lifespan,omitempty"`
+	RefreshTokenGrantAccessTokenLifespan       string          `json:"refresh_token_grant_access_token_lifespan,omitempty"`
+	RefreshTokenGrantIdTokenLifespan           string          `json:"refresh_token_grant_id_token_lifespan,omitempty"`
+	RefreshTokenGrantRefreshTokenLifespan      string          `json:"refresh_token_grant_refresh_token_lifespan,omitempty"`
 }
 
 // Oauth2ClientCredentials represents client ID and password fetched from a
@@ -74,6 +84,16 @@ func FromOAuth2Client(c *hydrav1alpha1.OAuth2Client) (*OAuth2ClientJSON, error) 
 		FrontChannelLogoutSessionRequired: c.Spec.BackChannelLogoutSessionRequired,
 		BackChannelLogoutSessionRequired:  c.Spec.BackChannelLogoutSessionRequired,
 		BackChannelLogoutURI:              c.Spec.BackChannelLogoutURI,
+		AuthorizationCodeGrantAccessTokenLifespan:  c.Spec.TokenLifespans.AuthorizationCodeGrantAccessTokenLifespan,
+		AuthorizationCodeGrantIdTokenLifespan:      c.Spec.TokenLifespans.AuthorizationCodeGrantIdTokenLifespan,
+		AuthorizationCodeGrantRefreshTokenLifespan: c.Spec.TokenLifespans.AuthorizationCodeGrantRefreshTokenLifespan,
+		ClientCredentialsGrantAccessTokenLifespan:  c.Spec.TokenLifespans.ClientCredentialsGrantAccessTokenLifespan,
+		ImplicitGrantAccessTokenLifespan:           c.Spec.TokenLifespans.ImplicitGrantAccessTokenLifespan,
+		ImplicitGrantIdTokenLifespan:               c.Spec.TokenLifespans.ImplicitGrantIdTokenLifespan,
+		JwtBearerGrantAccessTokenLifespan:          c.Spec.TokenLifespans.JwtBearerGrantAccessTokenLifespan,
+		RefreshTokenGrantAccessTokenLifespan:       c.Spec.TokenLifespans.RefreshTokenGrantAccessTokenLifespan,
+		RefreshTokenGrantIdTokenLifespan:           c.Spec.TokenLifespans.RefreshTokenGrantIdTokenLifespan,
+		RefreshTokenGrantRefreshTokenLifespan:      c.Spec.TokenLifespans.RefreshTokenGrantRefreshTokenLifespan,
 	}, nil
 }
 
