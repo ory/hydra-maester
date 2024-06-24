@@ -7,8 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/stretchr/testify/mock"
@@ -23,8 +21,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"time"
 
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
 	"github.com/ory/hydra-maester/controllers"
@@ -58,7 +58,12 @@ var _ = Describe("OAuth2Client Controller", func() {
 
 				// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 				// channel when it is finished.
-				mgr, err := manager.New(cfg, manager.Options{Scheme: s, MetricsBindAddress: ":8080"})
+				mgr, err := manager.New(cfg, manager.Options{
+					Scheme: s,
+					Metrics: server.Options{
+						BindAddress: ":8080",
+					},
+				})
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
@@ -137,7 +142,11 @@ var _ = Describe("OAuth2Client Controller", func() {
 
 				// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 				// channel when it is finished.
-				mgr, err := manager.New(cfg, manager.Options{Scheme: s, MetricsBindAddress: ":8081"})
+				mgr, err := manager.New(cfg, manager.Options{Scheme: s,
+					Metrics: server.Options{
+						BindAddress: ":8081",
+					},
+				})
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
@@ -204,7 +213,10 @@ var _ = Describe("OAuth2Client Controller", func() {
 
 				// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 				// channel when it is finished.
-				mgr, err := manager.New(cfg, manager.Options{Scheme: s, MetricsBindAddress: ":8082"})
+				mgr, err := manager.New(cfg, manager.Options{Scheme: s,
+					Metrics: server.Options{
+						BindAddress: ":8082",
+					}})
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
@@ -296,7 +308,9 @@ var _ = Describe("OAuth2Client Controller", func() {
 
 				// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 				// channel when it is finished.
-				mgr, err := manager.New(cfg, manager.Options{Scheme: s, MetricsBindAddress: ":8083"})
+				mgr, err := manager.New(cfg, manager.Options{Scheme: s, Metrics: server.Options{
+					BindAddress: ":8083",
+				}})
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
@@ -366,7 +380,9 @@ var _ = Describe("OAuth2Client Controller", func() {
 
 				// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 				// channel when it is finished.
-				mgr, err := manager.New(cfg, manager.Options{Scheme: s, MetricsBindAddress: ":8085"})
+				mgr, err := manager.New(cfg, manager.Options{Scheme: s, Metrics: server.Options{
+					BindAddress: ":8085",
+				}})
 				Expect(err).NotTo(HaveOccurred())
 				c := mgr.GetClient()
 
@@ -453,7 +469,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to Api
-	err = c.Watch(source.Kind(mgr.GetCache(), &hydrav1alpha1.OAuth2Client{}), &handler.EnqueueRequestForObject{})
+	err = c.Watch(source.Kind(mgr.GetCache(), &hydrav1alpha1.OAuth2Client{}, &handler.TypedEnqueueRequestForObject[*hydrav1alpha1.OAuth2Client]{}))
 	if err != nil {
 		return err
 	}
