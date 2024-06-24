@@ -36,8 +36,8 @@ CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 
 ## Tool Versions
-CONTROLLER_TOOLS_VERSION ?= v0.11.3
-ENVTEST_K8S_VERSION = 1.26.1
+CONTROLLER_TOOLS_VERSION ?= v0.15.0
+ENVTEST_K8S_VERSION = 1.29.0
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest

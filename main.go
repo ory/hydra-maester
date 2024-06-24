@@ -7,6 +7,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"time"
 
 	"github.com/ory/hydra-maester/hydra"
@@ -62,11 +64,17 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                  scheme,
-		MetricsBindAddress:      metricsAddr,
-		LeaderElection:          enableLeaderElection,
-		SyncPeriod:              &syncPeriodParsed,
-		Namespace:               namespace,
+		Scheme: scheme,
+		Metrics: server.Options{
+			BindAddress: metricsAddr,
+		},
+		LeaderElection: enableLeaderElection,
+		Cache: cache.Options{
+			SyncPeriod: &syncPeriodParsed,
+			DefaultNamespaces: map[string]cache.Config{
+				namespace: {},
+			},
+		},
 		LeaderElectionNamespace: leaderElectorNs,
 	})
 	if err != nil {
