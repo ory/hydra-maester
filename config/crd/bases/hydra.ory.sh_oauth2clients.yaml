@@ -76,6 +76,14 @@ spec:
                     ClientName is the human-readable string name of the client
                     to be presented to the end-user during authorization.
                   type: string
+                deletionPolicy:
+                  description: |-
+                    Indicates if a deleted OAuth2Client custom resource should delete the database row or not.
+                    Value 0 means deletion of the OAuth2 client, value 1 means keep an orphan oauth2 client.
+                  enum:
+                    - 0
+                    - 1
+                  type: integer
                 frontChannelLogoutSessionRequired:
                   default: false
                   description:
@@ -238,8 +246,8 @@ spec:
                         - private_key_jwt
                         - none
                   description:
-                    Indication which authentication method shoud be used for the
-                    token endpoint
+                    Indication which authentication method should be used for
+                    the token endpoint
                   type: string
                 tokenLifespans:
                   description: |-

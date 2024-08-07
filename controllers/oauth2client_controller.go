@@ -328,7 +328,6 @@ func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Contex
 }
 
 func (r *OAuth2ClientReconciler) unregisterOAuth2Clients(ctx context.Context, c *hydrav1alpha1.OAuth2Client) error {
-
 	// if a required field is empty, that means this is deleted after
 	// the finalizers have done their job, so just return
 	if c.Spec.Scope == "" || c.Spec.SecretName == "" {
@@ -347,6 +346,11 @@ func (r *OAuth2ClientReconciler) unregisterOAuth2Clients(ctx context.Context, c 
 
 	for _, cJSON := range clients {
 		if cJSON.Owner == fmt.Sprintf("%s/%s", c.Name, c.Namespace) {
+			if c.Spec.DeletionPolicy == hydrav1alpha1.OAuth2ClientDeletionPolicyOrphan {
+				// Do not delete the OAuth2 client.
+				r.Log.Info("oauth2 client deletion, leave the row orphan")
+				return nil
+			}
 			if err := h.DeleteOAuth2Client(*cJSON.ClientID); err != nil {
 				return err
 			}
