@@ -202,8 +202,15 @@ spec:
                     Scope is a string containing a space-separated list of scope values (as
                     described in Section 3.3 of OAuth 2.0 [RFC6749]) that the client
                     can use when requesting access tokens.
-                  pattern: ([a-zA-Z0-9\.\*]+\s?)+
+                  pattern: ([a-zA-Z0-9\.\*]+\s?)*
                   type: string
+                scopeArray:
+                  description: |-
+                    ScopeArray is an array of scope values that the client can use when requesting access tokens.
+                    It overrides the property Scope.
+                  items:
+                    type: string
+                  type: array
                 secretName:
                   description:
                     SecretName points to the K8s secret that contains this
@@ -301,7 +308,6 @@ spec:
                   type: object
               required:
                 - grantTypes
-                - scope
                 - secretName
               type: object
             status:

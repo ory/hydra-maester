@@ -145,12 +145,16 @@ type OAuth2ClientSpec struct {
 	// Audience is a whitelist defining the audiences this client is allowed to request tokens for
 	Audience []string `json:"audience,omitempty"`
 
-	// +kubebuilder:validation:Pattern=([a-zA-Z0-9\.\*]+\s?)+
+	// +kubebuilder:validation:Pattern=([a-zA-Z0-9\.\*]+\s?)*
 	//
 	// Scope is a string containing a space-separated list of scope values (as
 	// described in Section 3.3 of OAuth 2.0 [RFC6749]) that the client
 	// can use when requesting access tokens.
-	Scope string `json:"scope"`
+	Scope string `json:"scope,omitempty"`
+
+	// ScopeArray is an array of scope values that the client can use when requesting access tokens.
+	// It overrides the property Scope.
+	ScopeArray []string `json:"scopeArray,omitempty"`
 
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=253

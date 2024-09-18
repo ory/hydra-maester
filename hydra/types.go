@@ -6,6 +6,7 @@ package hydra
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"k8s.io/utils/ptr"
 
@@ -67,6 +68,15 @@ func FromOAuth2Client(c *hydrav1alpha1.OAuth2Client) (*OAuth2ClientJSON, error) 
 		return nil, fmt.Errorf("unable to encode `metadata` property value to json: %w", err)
 	}
 
+	var scope = c.Spec.Scope
+	if c.Spec.ScopeArray != nil && c.Spec.Scope != "" {
+		fmt.Println("Warning: both `scope` and `scopeArray` are set. Using `scopeArray`")
+	}
+
+	if c.Spec.ScopeArray != nil {
+		scope = strings.Join(c.Spec.ScopeArray, " ")
+	}
+
 	return &OAuth2ClientJSON{
 		ClientName:                        c.Spec.ClientName,
 		GrantTypes:                        grantToStringSlice(c.Spec.GrantTypes),
@@ -75,7 +85,7 @@ func FromOAuth2Client(c *hydrav1alpha1.OAuth2Client) (*OAuth2ClientJSON, error) 
 		PostLogoutRedirectURIs:            redirectToStringSlice(c.Spec.PostLogoutRedirectURIs),
 		AllowedCorsOrigins:                redirectToStringSlice(c.Spec.AllowedCorsOrigins),
 		Audience:                          c.Spec.Audience,
-		Scope:                             c.Spec.Scope,
+		Scope:                             scope,
 		SkipConsent:                       c.Spec.SkipConsent,
 		Owner:                             fmt.Sprintf("%s/%s", c.Name, c.Namespace),
 		TokenEndpointAuthMethod:           string(c.Spec.TokenEndpointAuthMethod),

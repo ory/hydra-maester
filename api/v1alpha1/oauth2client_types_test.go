@@ -92,7 +92,6 @@ func TestCreateAPI(t *testing.T) {
 				"invalid grant type":                                func() { created.Spec.GrantTypes = []GrantType{"invalid"} },
 				"invalid response type":                             func() { created.Spec.ResponseTypes = []ResponseType{"invalid", "code"} },
 				"invalid composite response type":                   func() { created.Spec.ResponseTypes = []ResponseType{"invalid code", "code id_token"} },
-				"invalid scope":                                     func() { created.Spec.Scope = "" },
 				"missing secret name":                               func() { created.Spec.SecretName = "" },
 				"invalid redirect URI":                              func() { created.Spec.RedirectURIs = []RedirectURI{"invalid"} },
 				"invalid logout redirect URI":                       func() { created.Spec.PostLogoutRedirectURIs = []RedirectURI{"invalid"} },

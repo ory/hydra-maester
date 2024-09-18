@@ -90,6 +90,7 @@ func StartTestManager(mgr manager.Manager) context.Context {
 	ctx := context.Background()
 
 	go func() {
+		defer GinkgoRecover()
 		defer ctx.Done()
 		Expect(mgr.Start(ctx)).NotTo(HaveOccurred())
 	}()
