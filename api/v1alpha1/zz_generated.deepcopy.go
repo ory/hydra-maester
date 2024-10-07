@@ -147,6 +147,11 @@ func (in *OAuth2ClientSpec) DeepCopyInto(out *OAuth2ClientSpec) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.ScopeArray != nil {
+		in, out := &in.ScopeArray, &out.ScopeArray
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	out.HydraAdmin = in.HydraAdmin
 	out.TokenLifespans = in.TokenLifespans
 	in.Metadata.DeepCopyInto(&out.Metadata)
