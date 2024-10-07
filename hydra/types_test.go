@@ -26,4 +26,20 @@ func TestTypes(t *testing.T) {
 
 		assert.Equal(t, parsedClient.Scope, "scope1 scope2")
 	})
+
+	t.Run("Test having both Scope and ScopeArray", func(t *testing.T) {
+		c := hydrav1alpha1.OAuth2Client{
+			Spec: hydrav1alpha1.OAuth2ClientSpec{
+				Scope:      "scope3",
+				ScopeArray: []string{"scope1", "scope2"},
+			},
+		}
+
+		var parsedClient, err = hydra.FromOAuth2Client(&c)
+		if err != nil {
+			assert.Fail(t, "unexpected error: %s", err)
+		}
+
+		assert.Equal(t, parsedClient.Scope, "scope1 scope2 scope3")
+	})
 }

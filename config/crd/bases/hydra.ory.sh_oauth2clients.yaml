@@ -199,15 +199,16 @@ spec:
                   type: array
                 scope:
                   description: |-
-                    Scope is a string containing a space-separated list of scope values (as
+                    [DEPRECATED] Scope is a string containing a space-separated list of scope values (as
                     described in Section 3.3 of OAuth 2.0 [RFC6749]) that the client
                     can use when requesting access tokens.
+                    Use scopeArray instead.
                   pattern: ([a-zA-Z0-9\.\*]+\s?)*
                   type: string
                 scopeArray:
                   description: |-
-                    ScopeArray is an array of scope values that the client can use when requesting access tokens.
-                    It overrides the property Scope.
+                    Scope is an array of scope values (as described in Section 3.3 of OAuth 2.0 [RFC6749])
+                    that the client can use when requesting access tokens.
                   items:
                     type: string
                   type: array
