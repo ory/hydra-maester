@@ -147,13 +147,14 @@ type OAuth2ClientSpec struct {
 
 	// +kubebuilder:validation:Pattern=([a-zA-Z0-9\.\*]+\s?)*
 	//
-	// Scope is a string containing a space-separated list of scope values (as
+	// [DEPRECATED] Scope is a string containing a space-separated list of scope values (as
 	// described in Section 3.3 of OAuth 2.0 [RFC6749]) that the client
 	// can use when requesting access tokens.
+	// Use scopeArray instead.
 	Scope string `json:"scope,omitempty"`
 
-	// ScopeArray is an array of scope values that the client can use when requesting access tokens.
-	// It overrides the property Scope.
+	// Scope is an array of scope values (as described in Section 3.3 of OAuth 2.0 [RFC6749])
+	// that the client can use when requesting access tokens.
 	ScopeArray []string `json:"scopeArray,omitempty"`
 
 	// +kubebuilder:validation:MinLength=1

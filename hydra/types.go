@@ -68,13 +68,13 @@ func FromOAuth2Client(c *hydrav1alpha1.OAuth2Client) (*OAuth2ClientJSON, error) 
 		return nil, fmt.Errorf("unable to encode `metadata` property value to json: %w", err)
 	}
 
-	var scope = c.Spec.Scope
-	if c.Spec.ScopeArray != nil && c.Spec.Scope != "" {
-		fmt.Println("Warning: both `scope` and `scopeArray` are set. Using `scopeArray`")
+	if c.Spec.Scope != "" {
+		fmt.Println("Property `scope` in client '" + c.Name + "' is deprecated. Rather use scopeArray.")
 	}
 
+	var scope = c.Spec.Scope
 	if c.Spec.ScopeArray != nil {
-		scope = strings.Join(c.Spec.ScopeArray, " ")
+		scope = strings.Trim(strings.Join(c.Spec.ScopeArray, " ")+" "+scope, " ")
 	}
 
 	return &OAuth2ClientJSON{
