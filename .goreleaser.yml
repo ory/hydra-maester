@@ -1,7 +1,7 @@
 # This is an example goreleaser.yaml file with some sane defaults.
 # Make sure to check the documentation at http://goreleaser.com
 project_name: hydra-maester
-
+version: 2
 before:
   hooks:
     - "go mod download"
@@ -59,7 +59,7 @@ builds:
       - darwin
 
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 
 changelog:
   sort: asc
@@ -69,7 +69,6 @@ dockers:
   - image_templates:
       - "oryd/hydra-maester:{{ .Tag }}-amd64"
       - "oryd/hydra-maester:{{ .ShortCommit }}-amd64"
-      - "oryd/hydra-maester:latest"
     goarch: amd64
     build_flag_templates:
       - "--platform=linux/amd64"
@@ -85,6 +84,18 @@ dockers:
     dockerfile: ".docker/Dockerfile-release"
     ids:
       - "linux-arm64"
+
+docker_manifests:
+  - name_template: "oryd/hydra-maester:{{ .Tag }}"
+    id: "tag"
+    image_templates:
+      - "oryd/hydra-maester:{{ .Tag }}-amd64"
+      - "oryd/hydra-maester:{{ .Tag }}-arm64"
+  - name_template: "oryd/hydra-maester:latests"
+    id: "latests"
+    image_templates:
+      - "oryd/hydra-maester:{{ .Tag }}-amd64"
+      - "oryd/hydra-maester:{{ .Tag }}-arm64"
 
 release:
   prerelease: auto
