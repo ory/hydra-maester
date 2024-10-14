@@ -146,8 +146,9 @@ type OAuth2ClientSpec struct {
 	Audience []string `json:"audience,omitempty"`
 
 	// +kubebuilder:validation:Pattern=([a-zA-Z0-9\.\*]+\s?)*
+	// +kubebuilder:deprecatedversion:warning="Property scope is deprecated. Use scopeArray instead."
 	//
-	// [DEPRECATED] Scope is a string containing a space-separated list of scope values (as
+	// Scope is a string containing a space-separated list of scope values (as
 	// described in Section 3.3 of OAuth 2.0 [RFC6749]) that the client
 	// can use when requesting access tokens.
 	// Use scopeArray instead.
