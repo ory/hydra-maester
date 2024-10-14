@@ -91,8 +91,8 @@ docker_manifests:
     image_templates:
       - "oryd/hydra-maester:{{ .Tag }}-amd64"
       - "oryd/hydra-maester:{{ .Tag }}-arm64"
-  - name_template: "oryd/hydra-maester:latests"
-    id: "latests"
+  - name_template: "oryd/hydra-maester:latest"
+    id: "latest"
     image_templates:
       - "oryd/hydra-maester:{{ .Tag }}-amd64"
       - "oryd/hydra-maester:{{ .Tag }}-arm64"
