@@ -447,6 +447,180 @@ var _ = Describe("OAuth2Client Controller", func() {
 				//Ensure manager is stopped properly
 				stopMgr.Done()
 			})
+
+			It("not delete OAuth2 clients with Orphan deletion policy", func() {
+				tstName, tstClientID, tstSecretName := "test-orphan", "testClientID-orphan", "my-secret-orphan"
+				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
+
+				s := runtime.NewScheme()
+				err := hydrav1alpha1.AddToScheme(s)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = apiv1.AddToScheme(s)
+				Expect(err).NotTo(HaveOccurred())
+
+				// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
+				// channel when it is finished.
+				mgr, err := manager.New(cfg, manager.Options{
+					Scheme: s,
+					Metrics: server.Options{
+						BindAddress: ":8086",
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				c := mgr.GetClient()
+
+				deleteHasHappened := false
+				mch := &mocks.Client{}
+				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
+				mch.On("DeleteOAuth2Client", Anything).Return(func(id string) error {
+					deleteHasHappened = true
+					return nil
+				})
+				mch.On("ListOAuth2Client", Anything).Return(func() []*hydra.OAuth2ClientJSON {
+					return []*hydra.OAuth2ClientJSON{
+						{
+							ClientID: &tstClientID,
+							Secret:   ptr.To(tstSecret),
+							Owner:    fmt.Sprintf("%s/%s", tstName, tstNamespace),
+						},
+					}
+				}, nil)
+				mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
+					return &hydra.OAuth2ClientJSON{
+						ClientID:      &tstClientID,
+						Secret:        ptr.To(tstSecret),
+						GrantTypes:    o.GrantTypes,
+						ResponseTypes: o.ResponseTypes,
+						RedirectURIs:  o.RedirectURIs,
+						Scope:         o.Scope,
+						Audience:      o.Audience,
+						Owner:         o.Owner,
+					}
+				}, func(o *hydra.OAuth2ClientJSON) error {
+					return nil
+				})
+
+				recFn, requests := SetupTestReconcile(getAPIReconciler(mgr, mch))
+				Expect(add(mgr, recFn)).To(Succeed())
+
+				//Start the manager and the controller
+				stopMgr := StartTestManager(mgr)
+
+				// Create OAuth2 client with 'Orphan' policy
+				instance := testInstance(tstName, tstSecretName)
+				instance.Spec.DeletionPolicy = hydrav1alpha1.OAuth2ClientDeletionPolicyOrphan
+
+				// Call creation API, to actually create the CRD.
+				err = c.Create(context.TODO(), instance)
+				if apierrors.IsInvalid(err) {
+					Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
+					return
+				}
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+				// Call deletion API, which should not really delete the CRD because we are in orphan mode.
+				err = c.Delete(context.TODO(), instance)
+				if apierrors.IsInvalid(err) {
+					Fail(fmt.Sprintf("failed to delete object, got an invalid object error: %v", err))
+					return
+				}
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+				Expect(deleteHasHappened).To(BeFalse())
+
+				//Ensure manager is stopped properly
+				stopMgr.Done()
+			})
+
+			It("delete OAuth2 clients with Delete deletion policy", func() {
+				tstName, tstClientID, tstSecretName := "test-delete", "testClientID-delete", "my-secret-delete"
+				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
+
+				s := runtime.NewScheme()
+				err := hydrav1alpha1.AddToScheme(s)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = apiv1.AddToScheme(s)
+				Expect(err).NotTo(HaveOccurred())
+
+				// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
+				// channel when it is finished.
+				mgr, err := manager.New(cfg, manager.Options{
+					Scheme: s,
+					Metrics: server.Options{
+						BindAddress: ":8087",
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				c := mgr.GetClient()
+
+				deleteHasHappened := false
+				mch := &mocks.Client{}
+				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
+				mch.On("DeleteOAuth2Client", AnythingOfType("string")).Return(func(id string) error {
+					deleteHasHappened = true
+					return nil
+				})
+				mch.On("ListOAuth2Client", Anything).Return(func() []*hydra.OAuth2ClientJSON {
+					return []*hydra.OAuth2ClientJSON{
+						{
+							ClientID: &tstClientID,
+							Secret:   ptr.To(tstSecret),
+							Owner:    fmt.Sprintf("%s/%s", tstName, tstNamespace),
+						},
+					}
+				}, nil)
+				mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
+					return &hydra.OAuth2ClientJSON{
+						ClientID:      &tstClientID,
+						Secret:        ptr.To(tstSecret),
+						GrantTypes:    o.GrantTypes,
+						ResponseTypes: o.ResponseTypes,
+						RedirectURIs:  o.RedirectURIs,
+						Scope:         o.Scope,
+						Audience:      o.Audience,
+						Owner:         o.Owner,
+					}
+				}, func(o *hydra.OAuth2ClientJSON) error {
+					return nil
+				})
+
+				recFn, requests := SetupTestReconcile(getAPIReconciler(mgr, mch))
+				Expect(add(mgr, recFn)).To(Succeed())
+
+				//Start the manager and the controller
+				stopMgr := StartTestManager(mgr)
+
+				// Create OAuth2 client with 'Delete' policy
+				instance := testInstance(tstName, tstSecretName)
+				instance.Spec.DeletionPolicy = hydrav1alpha1.OAuth2ClientDeletionPolicyDelete
+
+				// Call creation API, to actually create the CRD.
+				err = c.Create(context.TODO(), instance)
+				if apierrors.IsInvalid(err) {
+					Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
+					return
+				}
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+				// Call deletion API, which should really delete the CRD because we are in orphan mode.
+				err = c.Delete(context.TODO(), instance)
+				if apierrors.IsInvalid(err) {
+					Fail(fmt.Sprintf("failed to delete object, got an invalid object error: %v", err))
+					return
+				}
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+				Expect(deleteHasHappened).To(BeTrue())
+
+				// Ensure manager is stopped properly.
+				stopMgr.Done()
+			})
 		})
 	})
 })

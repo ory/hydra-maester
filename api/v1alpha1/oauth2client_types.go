@@ -176,7 +176,7 @@ type OAuth2ClientSpec struct {
 
 	// +kubebuilder:validation:Enum=client_secret_basic;client_secret_post;private_key_jwt;none
 	//
-	// Indication which authentication method shoud be used for the token endpoint
+	// Indication which authentication method should be used for the token endpoint
 	TokenEndpointAuthMethod TokenEndpointAuthMethod `json:"tokenEndpointAuthMethod,omitempty"`
 
 	// TokenLifespans is the configuration to use for managing different token lifespans
@@ -219,6 +219,12 @@ type OAuth2ClientSpec struct {
 	//
 	// BackChannelLogoutURI RP URL that will cause the RP to log itself out when sent a Logout Token by the OP
 	BackChannelLogoutURI string `json:"backChannelLogoutURI,omitempty"`
+
+	// +kubebuilder:validation:Enum=1;2
+	//
+	// Indicates if a deleted OAuth2Client custom resource should delete the database row or not.
+	// Value 1 means deletion of the OAuth2 client, value 2 means keep an orphan oauth2 client.
+	DeletionPolicy OAuth2ClientDeletionPolicy `json:"deletionPolicy,omitempty"`
 }
 
 // GrantType represents an OAuth 2.0 grant type
@@ -263,6 +269,14 @@ type OAuth2ClientConditionType string
 
 const (
 	OAuth2ClientConditionReady = "Ready"
+)
+
+// OAuth2ClientDeletionPolicy represents if a deleted oauth2 client object should delete the database row or not.
+type OAuth2ClientDeletionPolicy int
+
+const (
+	OAuth2ClientDeletionPolicyDelete = iota + 1
+	OAuth2ClientDeletionPolicyOrphan
 )
 
 // +kubebuilder:validation:Enum=True;False;Unknown
