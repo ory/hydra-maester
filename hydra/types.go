@@ -44,6 +44,7 @@ type OAuth2ClientJSON struct {
 	RefreshTokenGrantAccessTokenLifespan       string          `json:"refresh_token_grant_access_token_lifespan,omitempty"`
 	RefreshTokenGrantIdTokenLifespan           string          `json:"refresh_token_grant_id_token_lifespan,omitempty"`
 	RefreshTokenGrantRefreshTokenLifespan      string          `json:"refresh_token_grant_refresh_token_lifespan,omitempty"`
+	UserInfoSignedResponseAlg                  string          `json:"userinfo_signed_response_alg,omitempty"`
 }
 
 // Oauth2ClientCredentials represents client ID and password fetched from a
@@ -104,6 +105,7 @@ func FromOAuth2Client(c *hydrav1alpha1.OAuth2Client) (*OAuth2ClientJSON, error) 
 		RefreshTokenGrantAccessTokenLifespan:       c.Spec.TokenLifespans.RefreshTokenGrantAccessTokenLifespan,
 		RefreshTokenGrantIdTokenLifespan:           c.Spec.TokenLifespans.RefreshTokenGrantIdTokenLifespan,
 		RefreshTokenGrantRefreshTokenLifespan:      c.Spec.TokenLifespans.RefreshTokenGrantRefreshTokenLifespan,
+		UserInfoSignedResponseAlg:                  c.Spec.UserInfoSignedResponseAlg,
 	}, nil
 }
 

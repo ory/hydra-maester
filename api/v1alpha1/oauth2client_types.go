@@ -225,6 +225,11 @@ type OAuth2ClientSpec struct {
 	// Indicates if a deleted OAuth2Client custom resource should delete the database row or not.
 	// Value 1 means deletion of the OAuth2 client, value 2 means keep an orphan oauth2 client.
 	DeletionPolicy OAuth2ClientDeletionPolicy `json:"deletionPolicy,omitempty"`
+
+	// +kubebuilder:validation:type=string
+	//
+	// UserInfoSignedResponseAlg value specifying the JWS alg algorithm for signing UserInfo Responses
+	UserInfoSignedResponseAlg string `json:"userInfoSignedResponseAlg,omitempty"`
 }
 
 // GrantType represents an OAuth 2.0 grant type
