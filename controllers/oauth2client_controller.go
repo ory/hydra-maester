@@ -181,7 +181,7 @@ func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	var secret apiv1.Secret
 	if err := r.Get(ctx, types.NamespacedName{Name: oauth2client.Spec.SecretName, Namespace: req.Namespace}, &secret); err != nil {
 		if apierrs.IsNotFound(err) {
-			if registerErr := r.registerOAuth2Client(ctx, &oauth2client); registerErr != nil {
+			if registerErr := r.registerOAuth2Client(ctx, &oauth2client, nil); registerErr != nil {
 				return ctrl.Result{}, registerErr
 			}
 			return ctrl.Result{}, nil
@@ -215,8 +215,6 @@ func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	fetched, found, err := hydraClient.GetOAuth2Client(string(credentials.ID))
 	if err != nil {
 		return ctrl.Result{}, err
-	} else if !found {
-		return ctrl.Result{}, fmt.Errorf("oauth2 client %s not found", credentials.ID)
 	}
 
 	if found {
@@ -239,6 +237,10 @@ func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, nil
 	}
 
+	if registerErr := r.registerOAuth2Client(ctx, &oauth2client, credentials); registerErr != nil {
+		return ctrl.Result{}, registerErr
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -248,7 +250,7 @@ func (r *OAuth2ClientReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hydrav1alpha1.OAuth2Client) error {
+func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hydrav1alpha1.OAuth2Client, credentials *hydra.Oauth2ClientCredentials) error {
 	if err := r.unregisterOAuth2Clients(ctx, c); err != nil {
 		return err
 	}
@@ -265,6 +267,15 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 		}
 
 		return fmt.Errorf("failed to construct hydra client for object: %w", err)
+	}
+
+	if credentials != nil {
+		if _, err := hydraClient.PostOAuth2Client(oauth2client.WithCredentials(credentials)); err != nil {
+			if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusRegistrationFailed, err); updateErr != nil {
+				return updateErr
+			}
+		}
+		return r.ensureEmptyStatusError(ctx, c)
 	}
 
 	created, err := hydraClient.PostOAuth2Client(oauth2client)

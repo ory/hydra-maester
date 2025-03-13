@@ -621,6 +621,95 @@ var _ = Describe("OAuth2Client Controller", func() {
 				// Ensure manager is stopped properly.
 				stopMgr.Done()
 			})
+
+			It("create OAuth2 client with the provided credentials", func() {
+				tstName, tstClientID, tstSecretName := "test-create-with-credentials", "test-client-id-with-credentials", "my-secret-with-credentials"
+				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
+
+				s := runtime.NewScheme()
+				err := hydrav1alpha1.AddToScheme(s)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = apiv1.AddToScheme(s)
+				Expect(err).NotTo(HaveOccurred())
+
+				// Setup the Manager and Controller.
+				// Wrap the Controller Reconcile function so it writes each request to a channel when it is finished.
+				mgr, err := manager.New(cfg, manager.Options{
+					Scheme: s,
+					Metrics: server.Options{
+						BindAddress: ":8088",
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				c := mgr.GetClient()
+
+				var createdClient *hydra.OAuth2ClientJSON
+				mch := mocks.Client{}
+				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
+				mch.On("ListOAuth2Client", Anything).Return(nil, nil)
+				mch.On("DeleteOAuth2Client", Anything).Return(nil)
+				mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
+					createdClient = &hydra.OAuth2ClientJSON{
+						ClientID:      o.ClientID,
+						Secret:        o.Secret,
+						GrantTypes:    o.GrantTypes,
+						ResponseTypes: o.ResponseTypes,
+						RedirectURIs:  o.RedirectURIs,
+						Audience:      o.Audience,
+						Scope:         o.Scope,
+						Owner:         o.Owner,
+					}
+					return createdClient
+				}, func(o *hydra.OAuth2ClientJSON) error {
+					return nil
+				})
+
+				recFn, requests := SetupTestReconcile(getAPIReconciler(mgr, &mch))
+				Expect(add(mgr, recFn)).To(Succeed())
+
+				// Start the manager and the controller
+				stopMgr := StartTestManager(mgr)
+
+				// Create the secret
+				secret := apiv1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      tstSecretName,
+						Namespace: tstNamespace,
+					},
+					Data: map[string][]byte{
+						controllers.ClientIDKey:     []byte(tstClientID),
+						controllers.ClientSecretKey: []byte(tstSecret),
+					},
+				}
+				err = c.Create(context.TODO(), &secret)
+				Expect(err).NotTo(HaveOccurred())
+
+				instance := testInstance(tstName, tstSecretName)
+				err = c.Create(context.TODO(), instance)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+				// Verify the created CR instance status
+				var retrieved hydrav1alpha1.OAuth2Client
+				ok := client.ObjectKey{Name: tstName, Namespace: tstNamespace}
+				err = c.Get(context.TODO(), ok, &retrieved)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(retrieved.Status.ReconciliationError.Code).To(BeEmpty())
+				Expect(retrieved.Status.ReconciliationError.Description).To(BeEmpty())
+
+				// Ensure the created client has the expected client ID and client secret
+				Expect(createdClient.ClientID).ShouldNot(BeNil())
+				Expect(createdClient.Secret).ShouldNot(BeNil())
+				Expect(*createdClient.ClientID).To(Equal(tstClientID))
+				Expect(*createdClient.Secret).To(Equal(tstSecret))
+
+				// Delete instance
+				c.Delete(context.TODO(), instance)
+
+				// Ensure manager is stopped properly
+				stopMgr.Done()
+			})
 		})
 	})
 })
