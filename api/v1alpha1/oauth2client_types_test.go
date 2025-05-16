@@ -109,7 +109,7 @@ func TestCreateAPI(t *testing.T) {
 				"invalid lifespan refresh token access token":       func() { created.Spec.TokenLifespans.RefreshTokenGrantAccessTokenLifespan = "invalid" },
 				"invalid lifespan refresh token id token":           func() { created.Spec.TokenLifespans.RefreshTokenGrantIdTokenLifespan = "invalid" },
 				"invalid lifespan refresh token refresh token":      func() { created.Spec.TokenLifespans.RefreshTokenGrantRefreshTokenLifespan = "invalid" },
-				"invalid deletion policy":                           func() { created.Spec.DeletionPolicy = -1 },
+				"invalid deletion policy":                           func() { created.Spec.DeletionPolicy = "invalid" },
 			} {
 				t.Run(fmt.Sprintf("case=%s", desc), func(t *testing.T) {
 					resetTestClient()

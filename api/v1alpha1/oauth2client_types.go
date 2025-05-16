@@ -220,10 +220,10 @@ type OAuth2ClientSpec struct {
 	// BackChannelLogoutURI RP URL that will cause the RP to log itself out when sent a Logout Token by the OP
 	BackChannelLogoutURI string `json:"backChannelLogoutURI,omitempty"`
 
-	// +kubebuilder:validation:Enum=1;2
+	// +kubebuilder:validation:Enum=delete;orphan
 	//
 	// Indicates if a deleted OAuth2Client custom resource should delete the database row or not.
-	// Value 1 means deletion of the OAuth2 client, value 2 means keep an orphan oauth2 client.
+	// Values can be 'delete' to delete the OAuth2 client, value 'orphan' to keep an orphan oauth2 client.
 	DeletionPolicy OAuth2ClientDeletionPolicy `json:"deletionPolicy,omitempty"`
 }
 
@@ -272,11 +272,11 @@ const (
 )
 
 // OAuth2ClientDeletionPolicy represents if a deleted oauth2 client object should delete the database row or not.
-type OAuth2ClientDeletionPolicy int
+type OAuth2ClientDeletionPolicy string
 
 const (
-	OAuth2ClientDeletionPolicyDelete = iota + 1
-	OAuth2ClientDeletionPolicyOrphan
+	OAuth2ClientDeletionPolicyDelete = "delete"
+	OAuth2ClientDeletionPolicyOrphan = "orphan"
 )
 
 // +kubebuilder:validation:Enum=True;False;Unknown
