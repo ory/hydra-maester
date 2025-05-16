@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/stretchr/testify/mock"
@@ -725,8 +726,9 @@ func getOwnerReferenceTo(c hydrav1alpha1.OAuth2Client) []metav1.OwnerReference {
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
+	name := fmt.Sprintf("controller-%s", uuid.NewString())
 	// Create a new controller
-	c, err := controller.New("api-gateway-controller", mgr, controller.Options{Reconciler: r})
+	c, err := controller.New(name, mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
 	}
