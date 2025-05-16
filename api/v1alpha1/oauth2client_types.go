@@ -20,7 +20,7 @@ const (
 
 // HydraAdmin defines the desired hydra admin instance to use for OAuth2Client
 type HydraAdmin struct {
-	// +kubebuilder:validation:MaxLength=64
+	// +kubebuilder:validation:MaxLength=256
 	// +kubebuilder:validation:Pattern=`(^$|^https?://.*)`
 	//
 	// URL is the URL for the hydra instance on

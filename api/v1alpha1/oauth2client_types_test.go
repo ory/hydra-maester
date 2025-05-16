@@ -6,6 +6,7 @@ package v1alpha1
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -96,6 +97,7 @@ func TestCreateAPI(t *testing.T) {
 				"invalid redirect URI":                              func() { created.Spec.RedirectURIs = []RedirectURI{"invalid"} },
 				"invalid logout redirect URI":                       func() { created.Spec.PostLogoutRedirectURIs = []RedirectURI{"invalid"} },
 				"invalid hydra url":                                 func() { created.Spec.HydraAdmin.URL = "invalid" },
+				"invalid hydra url too long":                        func() { created.Spec.HydraAdmin.URL = "https://" + strings.Repeat("a", 260) },
 				"invalid hydra port high":                           func() { created.Spec.HydraAdmin.Port = 65536 },
 				"invalid hydra endpoint":                            func() { created.Spec.HydraAdmin.Endpoint = "invalid" },
 				"invalid hydra forwarded proto":                     func() { created.Spec.HydraAdmin.ForwardedProto = "invalid" },
