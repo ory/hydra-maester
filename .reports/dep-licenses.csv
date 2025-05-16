@@ -13,6 +13,7 @@
 "go.mongodb.org/mongo-driver","Apache-2.0"
 "golang.org/x/sync/errgroup","BSD-3-Clause"
 "gopkg.in/yaml.v3","MIT"
+"github.com/google/uuid","BSD-3-Clause"
 "github.com/fsnotify/fsnotify","BSD-3-Clause"
 "github.com/nxadm/tail","MIT"
 "github.com/nxadm/tail/ratelimiter","MIT"
