@@ -24,7 +24,7 @@ func TestTypes(t *testing.T) {
 			assert.Fail(t, "unexpected error: %s", err)
 		}
 
-		assert.Equal(t, parsedClient.Scope, "scope1 scope2")
+		assert.Equal(t, "scope1 scope2", parsedClient.Scope)
 	})
 
 	t.Run("Test having both Scope and ScopeArray", func(t *testing.T) {
@@ -40,7 +40,7 @@ func TestTypes(t *testing.T) {
 			assert.Fail(t, "unexpected error: %s", err)
 		}
 
-		assert.Equal(t, parsedClient.Scope, "scope1 scope2 scope3")
+		assert.Equal(t, "scope1 scope2 scope3", parsedClient.Scope)
 	})
 
 	t.Run("Test having jwks uri", func(t *testing.T) {
@@ -55,7 +55,7 @@ func TestTypes(t *testing.T) {
 			assert.Fail(t, "unexpected error: %s", err)
 		}
 
-		assert.Equal(t, parsedClient.JwksUri, "https://ory.sh/jwks.json")
+		assert.Equal(t, "https://ory.sh/jwks.json", parsedClient.JwksUri)
 	})
 
 	t.Run("Test jwks uri is required when token endpoint auth method is private_key_jwt", func(t *testing.T) {
