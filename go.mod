@@ -5,7 +5,7 @@ go 1.23.2
 require (
 	github.com/go-logr/logr v1.4.3
 	github.com/go-openapi/runtime v0.28.0
-	github.com/go-playground/validator/v10 v10.26.0
+	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/uuid v1.6.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.37.0
