@@ -225,6 +225,14 @@ type OAuth2ClientSpec struct {
 	// Indicates if a deleted OAuth2Client custom resource should delete the database row or not.
 	// Values can be 'delete' to delete the OAuth2 client, value 'orphan' to keep an orphan oauth2 client.
 	DeletionPolicy OAuth2ClientDeletionPolicy `json:"deletionPolicy,omitempty"`
+
+	// +kubebuilder:validation:type=string
+	// +kubebuilder:validation:Pattern=`(^$|^https?://.*)`
+	//
+	// LogoUri is the URI to the logo of the client.
+	// This is used to display the logo in the consent screen.
+	// It should be a valid URL pointing to an image.
+	LogoUri string `json:"logoUri,omitempty"`
 }
 
 // GrantType represents an OAuth 2.0 grant type

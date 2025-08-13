@@ -6,8 +6,9 @@ package hydra
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"strings"
+
+	"github.com/go-playground/validator/v10"
 
 	"k8s.io/utils/ptr"
 
@@ -45,6 +46,7 @@ type OAuth2ClientJSON struct {
 	RefreshTokenGrantAccessTokenLifespan       string          `json:"refresh_token_grant_access_token_lifespan,omitempty"`
 	RefreshTokenGrantIdTokenLifespan           string          `json:"refresh_token_grant_id_token_lifespan,omitempty"`
 	RefreshTokenGrantRefreshTokenLifespan      string          `json:"refresh_token_grant_refresh_token_lifespan,omitempty"`
+	LogoUri                                    string          `json:"logo_uri,omitempty"`
 }
 
 // Oauth2ClientCredentials represents client ID and password fetched from a
@@ -106,6 +108,7 @@ func FromOAuth2Client(c *hydrav1alpha1.OAuth2Client) (*OAuth2ClientJSON, error) 
 		RefreshTokenGrantAccessTokenLifespan:       c.Spec.TokenLifespans.RefreshTokenGrantAccessTokenLifespan,
 		RefreshTokenGrantIdTokenLifespan:           c.Spec.TokenLifespans.RefreshTokenGrantIdTokenLifespan,
 		RefreshTokenGrantRefreshTokenLifespan:      c.Spec.TokenLifespans.RefreshTokenGrantRefreshTokenLifespan,
+		LogoUri:                                    c.Spec.LogoUri,
 	}
 
 	validate := validator.New()
