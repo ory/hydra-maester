@@ -8,6 +8,13 @@ else
 	ifeq ($(UNAME_S),Linux)
 		OS=linux
 		ARCH=amd64
+		ifneq ($(TERM),)
+			export TERM := xterm
+		endif
+		ifndef TERM
+			export TERM := xterm
+		endif
+
 	endif
 	ifeq ($(UNAME_S),Darwin)
 		OS=darwin
@@ -16,6 +23,16 @@ else
 		endif
 		ifeq ($(shell uname -m),arm64)
 			ARCH=arm64
+		endif
+		ifneq ("$(wildcard .bin/with_brew)","")
+			BREW=true
+		endif
+		ifeq ($(BREW),true)
+			ifeq ($(shell which brew),brew not found)
+				BREW=false
+			else
+				BREW_FORMULA:=$(shell brew list --formula -1)
+			endif
 		endif
 	endif
 endif
@@ -30,14 +47,14 @@ SHELL=/bin/bash -euo pipefail
 
 export PATH := .bin:${PATH}
 export PWD := $(shell pwd)
-export K3SIMAGE := docker.io/rancher/k3s:v1.26.1-k3s1
+export K3SIMAGE := docker.io/rancher/k3s:v1.32.2-k3s1
 ## Tool Binaries
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 
 ## Tool Versions
-CONTROLLER_TOOLS_VERSION ?= v0.15.0
-ENVTEST_K8S_VERSION = 1.29.0
+CONTROLLER_TOOLS_VERSION ?= v0.19.0
+ENVTEST_K8S_VERSION = 1.30.0
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
@@ -81,7 +98,7 @@ $(ENVTEST): $(LOCALBIN)
 	chmod +x .bin/k3d;
 
 .PHONY: deps
-deps: .bin/ory .bin/k3d .bin/kubectl .bin/kustomize
+deps: .bin/ory .bin/k3d .bin/kubectl .bin/kustomize envtest controller-gen
 
 .PHONY: all
 all: manager
