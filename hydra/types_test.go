@@ -69,4 +69,65 @@ func TestTypes(t *testing.T) {
 
 		assert.ErrorContains(t, err, "JwksUri")
 	})
+
+	t.Run("Test RequestURIs conversion", func(t *testing.T) {
+		c := hydrav1alpha1.OAuth2Client{
+			Spec: hydrav1alpha1.OAuth2ClientSpec{
+				RequestURIs: []hydrav1alpha1.RedirectURI{
+					"https://example.com/request1",
+					"https://example.com/request2",
+				},
+			},
+		}
+
+		var parsedClient, err = hydra.FromOAuth2Client(&c)
+		if err != nil {
+			assert.Fail(t, "unexpected error: %s", err)
+		}
+
+		expected := []string{"https://example.com/request1", "https://example.com/request2"}
+		assert.Equal(t, expected, parsedClient.RequestURIs)
+	})
+
+	t.Run("Test AccessTokenStrategy field", func(t *testing.T) {
+		c := hydrav1alpha1.OAuth2Client{
+			Spec: hydrav1alpha1.OAuth2ClientSpec{
+				AccessTokenStrategy: "jwt",
+			},
+		}
+
+		var parsedClient, err = hydra.FromOAuth2Client(&c)
+		if err != nil {
+			assert.Fail(t, "unexpected error: %s", err)
+		}
+
+		assert.Equal(t, "jwt", parsedClient.AccessTokenStrategy)
+	})
+
+	t.Run("Test multiple new fields", func(t *testing.T) {
+		c := hydrav1alpha1.OAuth2Client{
+			Spec: hydrav1alpha1.OAuth2ClientSpec{
+				ClientUri:                   "https://example.com",
+				Contacts:                    []string{"admin@example.com", "support@example.com"},
+				PolicyUri:                   "https://example.com/privacy",
+				TosUri:                      "https://example.com/terms",
+				SubjectType:                 "public",
+				SkipLogoutConsent:           true,
+				ClientSecretExpiresAt:       1234567890,
+			},
+		}
+
+		var parsedClient, err = hydra.FromOAuth2Client(&c)
+		if err != nil {
+			assert.Fail(t, "unexpected error: %s", err)
+		}
+
+		assert.Equal(t, "https://example.com", parsedClient.ClientUri)
+		assert.Equal(t, []string{"admin@example.com", "support@example.com"}, parsedClient.Contacts)
+		assert.Equal(t, "https://example.com/privacy", parsedClient.PolicyUri)
+		assert.Equal(t, "https://example.com/terms", parsedClient.TosUri)
+		assert.Equal(t, "public", parsedClient.SubjectType)
+		assert.Equal(t, true, parsedClient.SkipLogoutConsent)
+		assert.Equal(t, int64(1234567890), parsedClient.ClientSecretExpiresAt)
+	})
 }
