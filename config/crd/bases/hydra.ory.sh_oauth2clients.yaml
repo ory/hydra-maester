@@ -315,6 +315,10 @@ spec:
                       pattern: "[0-9]+(ns|us|ms|s|m|h)"
                       type: string
                   type: object
+                logoUri:
+                  type: string
+                  description: LogoURI is the URL for the client's logo
+                  pattern: (^$|^https?://.*)
               required:
                 - grantTypes
                 - secretName
