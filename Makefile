@@ -98,7 +98,7 @@ $(ENVTEST): $(LOCALBIN)
 	chmod +x .bin/k3d;
 
 .PHONY: deps
-deps: .bin/ory .bin/k3d .bin/kubectl .bin/kustomize
+deps: .bin/ory .bin/k3d .bin/kubectl .bin/kustomize envtest controller-gen
 
 .PHONY: all
 all: manager
