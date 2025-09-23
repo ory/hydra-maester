@@ -85,6 +85,10 @@ jobs:
         uses: actions/checkout@v5
       - name: Checkout dependencies
         uses: ./.github/actions/deps-setup
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache: false
       - name: Build
         run: make manager
       - name: Test
