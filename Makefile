@@ -54,7 +54,7 @@ ENVTEST ?= $(LOCALBIN)/setup-envtest
 
 ## Tool Versions
 CONTROLLER_TOOLS_VERSION ?= v0.19.0
-ENVTEST_K8S_VERSION = 1.32.2
+ENVTEST_K8S_VERSION = 1.30.0
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
