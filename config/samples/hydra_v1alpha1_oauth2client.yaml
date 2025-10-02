@@ -23,6 +23,9 @@ spec:
   redirectUris:
     - https://client/account
     - http://localhost:8080
+  requestUris:
+    - https://client/request
+    - https://client/par-request
   postLogoutRedirectUris:
     - https://client/logout
   audience:
@@ -36,3 +39,13 @@ spec:
     endpoint: /clients
     forwardedProto: https
   tokenEndpointAuthMethod: client_secret_basic
+  # Additional optional fields
+  accessTokenStrategy: jwt
+  clientUri: https://example.com
+  contacts:
+    - admin@example.com
+    - support@example.com
+  policyUri: https://example.com/privacy
+  tosUri: https://example.com/terms
+  subjectType: public
+  skipLogoutConsent: false

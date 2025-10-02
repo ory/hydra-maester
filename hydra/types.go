@@ -22,6 +22,7 @@ type OAuth2ClientJSON struct {
 	Secret                                     *string         `json:"client_secret,omitempty"`
 	GrantTypes                                 []string        `json:"grant_types"`
 	RedirectURIs                               []string        `json:"redirect_uris,omitempty"`
+	RequestURIs                                []string        `json:"request_uris,omitempty"`
 	PostLogoutRedirectURIs                     []string        `json:"post_logout_redirect_uris,omitempty"`
 	AllowedCorsOrigins                         []string        `json:"allowed_cors_origins,omitempty"`
 	ResponseTypes                              []string        `json:"response_types,omitempty"`
@@ -47,6 +48,22 @@ type OAuth2ClientJSON struct {
 	RefreshTokenGrantIdTokenLifespan           string          `json:"refresh_token_grant_id_token_lifespan,omitempty"`
 	RefreshTokenGrantRefreshTokenLifespan      string          `json:"refresh_token_grant_refresh_token_lifespan,omitempty"`
 	LogoUri                                    string          `json:"logo_uri,omitempty"`
+	AccessTokenStrategy                        string          `json:"access_token_strategy,omitempty"`
+	ClientSecretExpiresAt                      int64           `json:"client_secret_expires_at,omitempty"`
+	ClientUri                                  string          `json:"client_uri,omitempty"`
+	Contacts                                   []string        `json:"contacts,omitempty"`
+	CreatedAt                                  string          `json:"created_at,omitempty"`
+	PolicyUri                                  string          `json:"policy_uri,omitempty"`
+	RegistrationAccessToken                    string          `json:"registration_access_token,omitempty"`
+	RegistrationClientUri                      string          `json:"registration_client_uri,omitempty"`
+	RequestObjectSigningAlg                    string          `json:"request_object_signing_alg,omitempty"`
+	SectorIdentifierUri                        string          `json:"sector_identifier_uri,omitempty"`
+	SkipLogoutConsent                          bool            `json:"skip_logout_consent,omitempty"`
+	SubjectType                                string          `json:"subject_type,omitempty"`
+	TokenEndpointAuthSigningAlg                string          `json:"token_endpoint_auth_signing_alg,omitempty"`
+	TosUri                                     string          `json:"tos_uri,omitempty"`
+	UpdatedAt                                  string          `json:"updated_at,omitempty"`
+	UserinfoSignedResponseAlg                  string          `json:"userinfo_signed_response_alg,omitempty"`
 }
 
 // Oauth2ClientCredentials represents client ID and password fetched from a
@@ -85,6 +102,7 @@ func FromOAuth2Client(c *hydrav1alpha1.OAuth2Client) (*OAuth2ClientJSON, error) 
 		GrantTypes:                        grantToStringSlice(c.Spec.GrantTypes),
 		ResponseTypes:                     responseToStringSlice(c.Spec.ResponseTypes),
 		RedirectURIs:                      redirectToStringSlice(c.Spec.RedirectURIs),
+		RequestURIs:                       redirectToStringSlice(c.Spec.RequestURIs),
 		PostLogoutRedirectURIs:            redirectToStringSlice(c.Spec.PostLogoutRedirectURIs),
 		AllowedCorsOrigins:                redirectToStringSlice(c.Spec.AllowedCorsOrigins),
 		Audience:                          c.Spec.Audience,
@@ -109,6 +127,18 @@ func FromOAuth2Client(c *hydrav1alpha1.OAuth2Client) (*OAuth2ClientJSON, error) 
 		RefreshTokenGrantIdTokenLifespan:           c.Spec.TokenLifespans.RefreshTokenGrantIdTokenLifespan,
 		RefreshTokenGrantRefreshTokenLifespan:      c.Spec.TokenLifespans.RefreshTokenGrantRefreshTokenLifespan,
 		LogoUri:                                    c.Spec.LogoUri,
+		AccessTokenStrategy:                        c.Spec.AccessTokenStrategy,
+		ClientSecretExpiresAt:                      c.Spec.ClientSecretExpiresAt,
+		ClientUri:                                  c.Spec.ClientUri,
+		Contacts:                                   c.Spec.Contacts,
+		PolicyUri:                                  c.Spec.PolicyUri,
+		RequestObjectSigningAlg:                    c.Spec.RequestObjectSigningAlg,
+		SectorIdentifierUri:                        c.Spec.SectorIdentifierUri,
+		SkipLogoutConsent:                          c.Spec.SkipLogoutConsent,
+		SubjectType:                                c.Spec.SubjectType,
+		TokenEndpointAuthSigningAlg:                c.Spec.TokenEndpointAuthSigningAlg,
+		TosUri:                                     c.Spec.TosUri,
+		UserinfoSignedResponseAlg:                  c.Spec.UserinfoSignedResponseAlg,
 	}
 
 	validate := validator.New()

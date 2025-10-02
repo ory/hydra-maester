@@ -136,6 +136,9 @@ type OAuth2ClientSpec struct {
 	// RedirectURIs is an array of the redirect URIs allowed for the application
 	RedirectURIs []RedirectURI `json:"redirectUris,omitempty"`
 
+	// RequestURIs is an array of request URIs that can be used in authorization requests
+	RequestURIs []RedirectURI `json:"requestUris,omitempty"`
+
 	// PostLogoutRedirectURIs is an array of the post logout redirect URIs allowed for the application
 	PostLogoutRedirectURIs []RedirectURI `json:"postLogoutRedirectUris,omitempty"`
 
@@ -233,6 +236,70 @@ type OAuth2ClientSpec struct {
 	// This is used to display the logo in the consent screen.
 	// It should be a valid URL pointing to an image.
 	LogoUri string `json:"logoUri,omitempty"`
+
+	// +kubebuilder:validation:Enum=jwt;opaque
+	//
+	// AccessTokenStrategy is the OAuth 2.0 Access Token Strategy
+	AccessTokenStrategy string `json:"accessTokenStrategy,omitempty"`
+
+	// +kubebuilder:validation:type=integer
+	// +kubebuilder:validation:Minimum=0
+	//
+	// ClientSecretExpiresAt is the timestamp when the client secret expires (currently always 0)
+	ClientSecretExpiresAt int64 `json:"clientSecretExpiresAt,omitempty"`
+
+	// +kubebuilder:validation:type=string
+	// +kubebuilder:validation:Pattern=`(^$|^https?://.*)`
+	//
+	// ClientUri is a URL string of a web page providing information about the client
+	ClientUri string `json:"clientUri,omitempty"`
+
+	// Contacts is an array of strings representing ways to contact people responsible for this client
+	Contacts []string `json:"contacts,omitempty"`
+
+	// +kubebuilder:validation:type=string
+	// +kubebuilder:validation:Pattern=`(^$|^https?://.*)`
+	//
+	// PolicyUri is a URL string that points to a human-readable privacy policy document
+	PolicyUri string `json:"policyUri,omitempty"`
+
+	// +kubebuilder:validation:type=string
+	//
+	// RequestObjectSigningAlg is the algorithm that must be used for signing request objects
+	RequestObjectSigningAlg string `json:"requestObjectSigningAlg,omitempty"`
+
+	// +kubebuilder:validation:type=string
+	// +kubebuilder:validation:Pattern=`(^$|^https?://.*)`
+	//
+	// SectorIdentifierUri is a URL using the https scheme to be used in calculating Pseudonymous Identifiers
+	SectorIdentifierUri string `json:"sectorIdentifierUri,omitempty"`
+
+	// +kubebuilder:validation:type=bool
+	// +kubebuilder:default=false
+	//
+	// SkipLogoutConsent skips asking the user to confirm the logout request
+	SkipLogoutConsent bool `json:"skipLogoutConsent,omitempty"`
+
+	// +kubebuilder:validation:Enum=public;pairwise
+	//
+	// SubjectType is the requested subject type
+	SubjectType string `json:"subjectType,omitempty"`
+
+	// +kubebuilder:validation:type=string
+	//
+	// TokenEndpointAuthSigningAlg is the algorithm used to sign JWT tokens for client authentication
+	TokenEndpointAuthSigningAlg string `json:"tokenEndpointAuthSigningAlg,omitempty"`
+
+	// +kubebuilder:validation:type=string
+	// +kubebuilder:validation:Pattern=`(^$|^https?://.*)`
+	//
+	// TosUri is a URL string that points to a human-readable terms of service document
+	TosUri string `json:"tosUri,omitempty"`
+
+	// +kubebuilder:validation:type=string
+	//
+	// UserinfoSignedResponseAlg is the algorithm used to sign UserInfo responses
+	UserinfoSignedResponseAlg string `json:"userinfoSignedResponseAlg,omitempty"`
 }
 
 // GrantType represents an OAuth 2.0 grant type
