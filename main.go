@@ -7,9 +7,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
+
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
-	"time"
 
 	"github.com/ory/hydra-maester/hydra"
 
@@ -72,7 +73,7 @@ func main() {
 		Cache: cache.Options{
 			SyncPeriod: &syncPeriodParsed,
 			DefaultNamespaces: map[string]cache.Config{
-				namespace: {},
+				os.Getenv("NAMESPACE"): {},
 			},
 		},
 		LeaderElectionNamespace: leaderElectorNs,
