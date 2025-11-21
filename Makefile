@@ -49,7 +49,7 @@ export PATH := .bin:${PATH}
 export PWD := $(shell pwd)
 
 # renovate: datasource=docker depName=docker.io/rancher/k3s
-K3SIMAGE_VERSION ?= v1.34.1-k3s1
+K3SIMAGE_VERSION ?= v1.34.2-k3s1
 export K3SIMAGE := ${K3SIMAGE_VERSION}
 
 ## Tool Binaries
