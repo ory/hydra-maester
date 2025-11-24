@@ -1,3 +1,3 @@
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-version: v1.34.1
+version: v1.34.2
 url: https://dl.k8s.io/release/{{.Version}}/bin/{{.Os}}/{{.Architecture}}/kubectl
