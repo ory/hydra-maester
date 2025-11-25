@@ -54,6 +54,7 @@ jobs:
             cicd-definitions:
               - '.github/workflows/**'
               - '.github/actions/**'
+              - 'Makefile'
 
   gha-lint:
     name: Lint GithubAction files
@@ -76,6 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       needs.detect-repo-changes.outputs.code-changed == 'true' ||
+      needs.detect-repo-changes.outputs.cicd-definition-changed == 'true' ||
       github.ref_type == 'tag'
     needs:
       - detect-repo-changes
@@ -100,6 +102,7 @@ jobs:
     if: |
       needs.detect-repo-changes.outputs.code-changed == 'true' ||
       needs.detect-repo-changes.outputs.dockerfile-changed == 'true' ||
+      needs.detect-repo-changes.outputs.cicd-definition-changed == 'true' ||
       github.ref_type == 'tag'
     needs:
       - detect-repo-changes
@@ -121,6 +124,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       needs.detect-repo-changes.outputs.dockerfile-changed == 'true' ||
+      needs.detect-repo-changes.outputs.cicd-definition-changed == 'true' ||
       github.ref_type == 'tag'
     needs:
       - detect-repo-changes
