@@ -60,7 +60,7 @@ ENVTEST ?= $(LOCALBIN)/setup-envtest
 # renovate: datasource=github-releases depName=kubernetes-sigs/controller-tools
 CONTROLLER_TOOLS_VERSION ?= v0.20.1
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-ENVTEST_K8S_VERSION ?= 1.35.0
+ENVTEST_K8S_VERSION ?= 1.35.2
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
