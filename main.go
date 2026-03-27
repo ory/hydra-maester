@@ -73,7 +73,7 @@ func main() {
 		Cache: cache.Options{
 			SyncPeriod: &syncPeriodParsed,
 			DefaultNamespaces: map[string]cache.Config{
-				os.Getenv("NAMESPACE"): {},
+				namespace: {},
 			},
 		},
 		LeaderElectionNamespace: leaderElectorNs,
