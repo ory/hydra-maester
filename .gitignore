@@ -29,3 +29,5 @@ config/default/manager_image_patch.yaml-e
 
 node_modules/
 dist/
+
+tmp.d
