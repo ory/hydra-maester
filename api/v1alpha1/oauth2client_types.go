@@ -4,6 +4,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -119,6 +120,12 @@ type OAuth2ClientSpec struct {
 
 	// ClientName is the human-readable string name of the client to be presented to the end-user during authorization.
 	ClientName string `json:"clientName,omitempty"`
+
+	// ClientSecret defines the client secret value. Use either `value` for a
+	// plain string or `secretKeyRef` to reference a key in a Kubernetes Secret.
+	// If set, the controller will use this value instead of auto-generating one.
+	// +optional
+	ClientSecret *ClientSecretSource `json:"clientSecret,omitempty"`
 
 	// +kubebuilder:validation:MaxItems=4
 	// +kubebuilder:validation:MinItems=1
@@ -362,6 +369,22 @@ const (
 	ConditionFalse   ConditionStatus = "False"
 	ConditionUnknown ConditionStatus = "Unknown"
 )
+
+// ClientSecretSource defines where to get the client secret value.
+// Exactly one of `value` or `secretKeyRef` must be set.
+type ClientSecretSource struct {
+	// Value is a plain-text client secret.
+	// +optional
+	Value string `json:"value,omitempty"`
+
+	// SecretKeyRef selects a key of a Secret in the same namespace.
+	// +optional
+	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
+}
+
+func (css ClientSecretSource) Has() bool {
+	return css.Value != "" || css.SecretKeyRef != nil
+}
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status

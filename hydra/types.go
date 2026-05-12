@@ -146,6 +146,14 @@ func FromOAuth2Client(c *hydrav1alpha1.OAuth2Client) (*OAuth2ClientJSON, error) 
 		return nil, err
 	}
 
+	if c.Spec.ClientSecret != nil {
+		if c.Spec.ClientSecret.Has() {
+			if c.Spec.ClientSecret.Value != "" {
+				client.Secret = &c.Spec.ClientSecret.Value
+			}
+		}
+	}
+
 	return client, nil
 }
 
