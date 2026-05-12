@@ -122,6 +122,7 @@ func New(c client.Client, hydraClient hydra.Client, log logr.Logger, opts ...Opt
 
 func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("oauth2client", req.NamespacedName)
+	r.Log.Info("DEBUG, Reconcile") //TODO remove pre merge
 
 	var oauth2client hydrav1alpha1.OAuth2Client
 	if err := r.Get(ctx, req.NamespacedName, &oauth2client); err != nil {
@@ -250,7 +251,33 @@ func (r *OAuth2ClientReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+// resolveClientSecret resolves the client secret from a SecretKeyRef.
+// Returns the secret string and true if resolved, or empty and false otherwise.
+func (r *OAuth2ClientReconciler) resolveClientSecret(ctx context.Context, c *hydrav1alpha1.OAuth2Client) (string, bool, error) {
+	if c.Spec.ClientSecret == nil || c.Spec.ClientSecret.SecretKeyRef == nil {
+		return "", false, nil
+	}
+
+	secret := &apiv1.Secret{}
+	if err := r.Get(ctx, types.NamespacedName{
+		Name:      c.Spec.ClientSecret.SecretKeyRef.Name,
+		Namespace: c.Namespace,
+	}, secret); err != nil {
+		return "", false, fmt.Errorf("failed to get secret %q: %w", c.Spec.ClientSecret.SecretKeyRef.Name, err)
+	}
+
+	val, ok := secret.Data[c.Spec.ClientSecret.SecretKeyRef.Key]
+	if !ok {
+		return "", false, fmt.Errorf("key %q not found in secret %q", c.Spec.ClientSecret.SecretKeyRef.Key, c.Spec.ClientSecret.SecretKeyRef.Name)
+	}
+
+	return string(val), true, nil
+}
+
 func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hydrav1alpha1.OAuth2Client, credentials *hydra.Oauth2ClientCredentials) error {
+
+	r.Log.Info("DEBUG", "clientSecret", c.Spec.ClientSecret) //TODO remove pre merge
+
 	if err := r.unregisterOAuth2Clients(ctx, c); err != nil {
 		return err
 	}
@@ -268,6 +295,17 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 
 		return fmt.Errorf("failed to construct hydra client for object: %w", err)
 	}
+
+	// Resolve clientSecret from SecretKeyRef if configured
+	if secretVal, ok, err := r.resolveClientSecret(ctx, c); err != nil {
+		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusInvalidSecret, err); updateErr != nil {
+			return updateErr
+		}
+		return err
+	} else if ok {
+		oauth2client.Secret = &secretVal
+	}
+	r.Log.Info("DEBUG", "oauth2client.secret", oauth2client.Secret) //TODO remove pre merge
 
 	if credentials != nil {
 		if _, err := hydraClient.PostOAuth2Client(oauth2client.WithCredentials(credentials)); err != nil {
@@ -328,6 +366,16 @@ func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Contex
 		}
 
 		return fmt.Errorf("failed to construct hydra client for object: %w", err)
+	}
+
+	// Resolve clientSecret from SecretKeyRef if configured
+	if secretVal, ok, err := r.resolveClientSecret(ctx, c); err != nil {
+		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusInvalidSecret, err); updateErr != nil {
+			return updateErr
+		}
+		return err
+	} else if ok {
+		oauth2client.Secret = &secretVal
 	}
 
 	if _, err := hydraClient.PutOAuth2Client(oauth2client.WithCredentials(credentials)); err != nil {
