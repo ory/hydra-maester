@@ -368,7 +368,10 @@ func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Contex
 		return fmt.Errorf("failed to construct hydra client for object: %w", err)
 	}
 
-	// Resolve clientSecret from SecretKeyRef if configured
+	// Apply existing credentials first, then override with resolved clientSecret
+	oauth2client.WithCredentials(credentials)
+
+	// Resolve clientSecret from SecretKeyRef if configured (takes precedence)
 	if secretVal, ok, err := r.resolveClientSecret(ctx, c); err != nil {
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusInvalidSecret, err); updateErr != nil {
 			return updateErr
@@ -378,11 +381,25 @@ func (r *OAuth2ClientReconciler) updateRegisteredOAuth2Client(ctx context.Contex
 		oauth2client.Secret = &secretVal
 	}
 
-	if _, err := hydraClient.PutOAuth2Client(oauth2client.WithCredentials(credentials)); err != nil {
+	if _, err := hydraClient.PutOAuth2Client(oauth2client); err != nil {
 		if updateErr := r.updateReconciliationStatusError(ctx, c, hydrav1alpha1.StatusUpdateFailed, err); updateErr != nil {
 			return updateErr
 		}
+		return r.ensureEmptyStatusError(ctx, c)
 	}
+
+	// Update the K8s Secret with the new client secret value
+	if oauth2client.Secret != nil {
+		existingSecret := &apiv1.Secret{}
+		if err := r.Get(ctx, types.NamespacedName{Name: c.Spec.SecretName, Namespace: c.Namespace}, existingSecret); err != nil {
+			return err
+		}
+		existingSecret.Data[ClientSecretKey] = []byte(*oauth2client.Secret)
+		if err := r.Update(ctx, existingSecret); err != nil {
+			return err
+		}
+	}
+
 	return r.ensureEmptyStatusError(ctx, c)
 }
 
