@@ -122,7 +122,6 @@ func New(c client.Client, hydraClient hydra.Client, log logr.Logger, opts ...Opt
 
 func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("oauth2client", req.NamespacedName)
-	r.Log.Info("DEBUG, Reconcile") //TODO remove pre merge
 
 	var oauth2client hydrav1alpha1.OAuth2Client
 	if err := r.Get(ctx, req.NamespacedName, &oauth2client); err != nil {
@@ -276,8 +275,6 @@ func (r *OAuth2ClientReconciler) resolveClientSecret(ctx context.Context, c *hyd
 
 func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hydrav1alpha1.OAuth2Client, credentials *hydra.Oauth2ClientCredentials) error {
 
-	r.Log.Info("DEBUG", "clientSecret", c.Spec.ClientSecret) //TODO remove pre merge
-
 	if err := r.unregisterOAuth2Clients(ctx, c); err != nil {
 		return err
 	}
@@ -305,7 +302,6 @@ func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hy
 	} else if ok {
 		oauth2client.Secret = &secretVal
 	}
-	r.Log.Info("DEBUG", "oauth2client.secret", oauth2client.Secret) //TODO remove pre merge
 
 	if credentials != nil {
 		if _, err := hydraClient.PostOAuth2Client(oauth2client.WithCredentials(credentials)); err != nil {
