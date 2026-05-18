@@ -58,7 +58,7 @@ ENVTEST ?= $(LOCALBIN)/setup-envtest
 
 ## Tool Versions
 # renovate: datasource=github-releases depName=kubernetes-sigs/controller-tools
-CONTROLLER_TOOLS_VERSION ?= v0.20.1
+CONTROLLER_TOOLS_VERSION ?= v0.21.0
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 ENVTEST_K8S_VERSION ?= 1.35.0
 
