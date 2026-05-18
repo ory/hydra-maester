@@ -623,6 +623,93 @@ var _ = Describe("OAuth2Client Controller", func() {
 				stopMgr.Done()
 			})
 
+			It("delete OAuth2 clients when only scopeArray is set", func() {
+				// Regression test: when Spec.Scope is empty but Spec.ScopeArray is
+				// populated, the controller must still unregister the client from
+				// Hydra on deletion (previously the guard short-circuited).
+				tstName, tstClientID, tstSecretName := "test-delete-scopearray", "testClientID-delete-scopearray", "my-secret-delete-scopearray"
+				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
+
+				s := runtime.NewScheme()
+				err := hydrav1alpha1.AddToScheme(s)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = apiv1.AddToScheme(s)
+				Expect(err).NotTo(HaveOccurred())
+
+				mgr, err := manager.New(cfg, manager.Options{
+					Scheme: s,
+					Metrics: server.Options{
+						BindAddress: ":8089",
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				c := mgr.GetClient()
+
+				deleteHasHappened := false
+				mch := &mocks.Client{}
+				mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
+				mch.On("DeleteOAuth2Client", AnythingOfType("string")).Return(func(id string) error {
+					deleteHasHappened = true
+					return nil
+				})
+				mch.On("ListOAuth2Client", Anything).Return(func() []*hydra.OAuth2ClientJSON {
+					return []*hydra.OAuth2ClientJSON{
+						{
+							ClientID: &tstClientID,
+							Secret:   ptr.To(tstSecret),
+							Owner:    fmt.Sprintf("%s/%s", tstName, tstNamespace),
+						},
+					}
+				}, nil)
+				mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
+					return &hydra.OAuth2ClientJSON{
+						ClientID:      &tstClientID,
+						Secret:        ptr.To(tstSecret),
+						GrantTypes:    o.GrantTypes,
+						ResponseTypes: o.ResponseTypes,
+						RedirectURIs:  o.RedirectURIs,
+						Scope:         o.Scope,
+						Audience:      o.Audience,
+						Owner:         o.Owner,
+					}
+				}, func(o *hydra.OAuth2ClientJSON) error {
+					return nil
+				})
+
+				recFn, requests := SetupTestReconcile(getAPIReconciler(mgr, mch))
+				Expect(add(mgr, recFn)).To(Succeed())
+
+				stopMgr := StartTestManager(mgr)
+
+				// Create OAuth2 client with only ScopeArray (Scope left empty)
+				// and 'Delete' policy.
+				instance := testInstance(tstName, tstSecretName)
+				instance.Spec.Scope = ""
+				instance.Spec.ScopeArray = []string{"a", "b", "c"}
+				instance.Spec.DeletionPolicy = hydrav1alpha1.OAuth2ClientDeletionPolicyDelete
+
+				err = c.Create(context.TODO(), instance)
+				if apierrors.IsInvalid(err) {
+					Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
+					return
+				}
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+				err = c.Delete(context.TODO(), instance)
+				if apierrors.IsInvalid(err) {
+					Fail(fmt.Sprintf("failed to delete object, got an invalid object error: %v", err))
+					return
+				}
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+				Expect(deleteHasHappened).To(BeTrue())
+
+				stopMgr.Done()
+			})
+
 			It("create OAuth2 client with the provided credentials", func() {
 				tstName, tstClientID, tstSecretName := "test-create-with-credentials", "test-client-id-with-credentials", "my-secret-with-credentials"
 				expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
