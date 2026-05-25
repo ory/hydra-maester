@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"net/http"
 	"os"
+	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -16,7 +17,9 @@ import (
 func CreateHttpClient(insecureSkipVerify bool, tlsTrustStore string) (*http.Client, error) {
 	setupLog := ctrl.Log.WithName("setup")
 	tr := &http.Transport{}
-	httpClient := &http.Client{}
+	httpClient := &http.Client{
+		Timeout: 5 * time.Second,
+	}
 	if insecureSkipVerify {
 		setupLog.Info("configuring TLS with InsecureSkipVerify")
 		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
