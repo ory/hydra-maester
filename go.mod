@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/go-logr/logr v1.4.3
-	github.com/go-openapi/runtime v0.31.0
+	github.com/go-openapi/runtime v0.32.2
 	github.com/go-playground/validator/v10 v10.30.2
 	github.com/google/uuid v1.6.0
 	github.com/onsi/ginkgo v1.16.5
