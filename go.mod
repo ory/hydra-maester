@@ -3,7 +3,7 @@ module github.com/ory/hydra-maester
 go 1.26.0
 
 require (
-	github.com/go-logr/logr v1.4.3
+	github.com/go-logr/logr v1.4.4
 	github.com/go-openapi/runtime v0.32.3
 	github.com/go-playground/validator/v10 v10.30.3
 	github.com/google/uuid v1.6.0
