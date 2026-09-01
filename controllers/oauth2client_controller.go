@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/go-logr/logr"
 	apiv1 "k8s.io/api/core/v1"
@@ -28,6 +29,12 @@ const (
 	FinalizerName    = "finalizer.ory.hydra.sh"
 
 	DefaultNamespace = "default"
+
+	// SecretWaitBaseInterval is the delay before the first re-check of a secret that
+	// does not exist yet. Every subsequent re-check doubles the delay, up to
+	// SecretWaitMaxInterval.
+	SecretWaitBaseInterval = 15 * time.Second
+	SecretWaitMaxInterval  = 5 * time.Minute
 )
 
 var (
@@ -58,15 +65,25 @@ type OAuth2ClientReconciler struct {
 	Log                 logr.Logger
 	ControllerNamespace string
 
+	// RequireExistingSecret is the controller-wide default for
+	// OAuth2ClientSpec.RequireExistingSecret.
+	RequireExistingSecret bool
+
 	oauth2Clients       map[clientKey]hydra.Client
 	oauth2ClientFactory OAuth2ClientFactory
 	mu                  sync.Mutex
+
+	// secretWaitAttempts counts, per object, how often we requeued because the
+	// referenced secret did not exist yet. It is only used to compute the backoff.
+	secretWaitAttempts map[types.NamespacedName]int
+	secretWaitMu       sync.Mutex
 }
 
 // Options represent options to pass to the oauth2 client reconciler.
 type Options struct {
-	Namespace           string
-	OAuth2ClientFactory OAuth2ClientFactory
+	Namespace             string
+	OAuth2ClientFactory   OAuth2ClientFactory
+	RequireExistingSecret bool
 }
 
 // Option is a functional option.
@@ -96,6 +113,16 @@ func WithClientFactory(factory OAuth2ClientFactory) Option {
 	}
 }
 
+// WithRequireExistingSecret sets the controller-wide default for whether the
+// controller waits for the secret referenced by an OAuth2Client instead of
+// registering the client with a generated secret and creating the secret itself.
+// Individual resources can override it via `spec.requireExistingSecret`.
+func WithRequireExistingSecret(require bool) Option {
+	return func(o *Options) {
+		o.RequireExistingSecret = require
+	}
+}
+
 // New returns a new Oauth2ClientReconciler.
 func New(c client.Client, hydraClient hydra.Client, log logr.Logger, opts ...Option) *OAuth2ClientReconciler {
 	options := &Options{
@@ -107,12 +134,14 @@ func New(c client.Client, hydraClient hydra.Client, log logr.Logger, opts ...Opt
 	}
 
 	return &OAuth2ClientReconciler{
-		Client:              c,
-		HydraClient:         hydraClient,
-		Log:                 log,
-		ControllerNamespace: options.Namespace,
-		oauth2Clients:       make(map[clientKey]hydra.Client, 0),
-		oauth2ClientFactory: options.OAuth2ClientFactory,
+		Client:                c,
+		HydraClient:           hydraClient,
+		Log:                   log,
+		ControllerNamespace:   options.Namespace,
+		RequireExistingSecret: options.RequireExistingSecret,
+		oauth2Clients:         make(map[clientKey]hydra.Client, 0),
+		oauth2ClientFactory:   options.OAuth2ClientFactory,
+		secretWaitAttempts:    make(map[types.NamespacedName]int),
 	}
 }
 
@@ -126,6 +155,7 @@ func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	var oauth2client hydrav1alpha1.OAuth2Client
 	if err := r.Get(ctx, req.NamespacedName, &oauth2client); err != nil {
 		if apierrs.IsNotFound(err) {
+			r.resetSecretWait(req.NamespacedName)
 			if registerErr := r.unregisterOAuth2Clients(ctx, &oauth2client); registerErr != nil {
 				return ctrl.Result{}, registerErr
 			}
@@ -159,6 +189,7 @@ func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 	} else {
 		// The object is being deleted
+		r.resetSecretWait(req.NamespacedName)
 		if containsString(oauth2client.ObjectMeta.Finalizers, FinalizerName) {
 			// our finalizer is present, so lets handle any external dependency
 			if err := r.unregisterOAuth2Clients(ctx, &oauth2client); err != nil {
@@ -181,6 +212,12 @@ func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	var secret apiv1.Secret
 	if err := r.Get(ctx, types.NamespacedName{Name: oauth2client.Spec.SecretName, Namespace: req.Namespace}, &secret); err != nil {
 		if apierrs.IsNotFound(err) {
+			if r.requireExistingSecret(&oauth2client) {
+				// The secret is managed outside of this controller and has not been
+				// created yet. Wait for it instead of registering the client with a
+				// generated secret and creating the secret ourselves.
+				return r.waitForSecret(ctx, &oauth2client, req.NamespacedName)
+			}
 			if registerErr := r.registerOAuth2Client(ctx, &oauth2client, nil); registerErr != nil {
 				return ctrl.Result{}, registerErr
 			}
@@ -188,6 +225,7 @@ func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 		return ctrl.Result{}, err
 	}
+	r.resetSecretWait(req.NamespacedName)
 
 	credentials, err := parseSecret(secret, oauth2client.Spec.TokenEndpointAuthMethod)
 	if err != nil {
@@ -248,6 +286,68 @@ func (r *OAuth2ClientReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&hydrav1alpha1.OAuth2Client{}).
 		Complete(r)
+}
+
+// requireExistingSecret reports whether the referenced secret has to exist before
+// the client is registered in hydra. The value on the resource takes precedence
+// over the controller-wide default.
+func (r *OAuth2ClientReconciler) requireExistingSecret(c *hydrav1alpha1.OAuth2Client) bool {
+	if c.Spec.RequireExistingSecret != nil {
+		return *c.Spec.RequireExistingSecret
+	}
+	return r.RequireExistingSecret
+}
+
+// waitForSecret marks the client as not ready and requeues it with an exponential
+// backoff, so that reconciliation resumes once the referenced secret shows up.
+func (r *OAuth2ClientReconciler) waitForSecret(ctx context.Context, c *hydrav1alpha1.OAuth2Client, key types.NamespacedName) (ctrl.Result, error) {
+	requeueAfter := r.nextSecretWaitInterval(key)
+
+	r.Log.Info(
+		fmt.Sprintf("secret %s/%s does not exist yet, waiting for it before registering the client", c.Namespace, c.Spec.SecretName),
+		"oauth2client", fmt.Sprintf("%s/%s", c.Namespace, c.Name),
+		"requeueAfter", requeueAfter.String(),
+	)
+
+	err := fmt.Errorf("secret %s/%s does not exist", c.Namespace, c.Spec.SecretName)
+	if updateErr := r.updateReconciliationStatusPending(ctx, c, hydrav1alpha1.StatusSecretNotFound, err); updateErr != nil {
+		return ctrl.Result{}, updateErr
+	}
+
+	return ctrl.Result{RequeueAfter: requeueAfter}, nil
+}
+
+// nextSecretWaitInterval returns the backoff for the next re-check of a missing
+// secret, doubling on every consecutive attempt up to SecretWaitMaxInterval.
+func (r *OAuth2ClientReconciler) nextSecretWaitInterval(key types.NamespacedName) time.Duration {
+	r.secretWaitMu.Lock()
+	defer r.secretWaitMu.Unlock()
+
+	if r.secretWaitAttempts == nil {
+		r.secretWaitAttempts = make(map[types.NamespacedName]int)
+	}
+
+	attempt := r.secretWaitAttempts[key]
+	r.secretWaitAttempts[key] = attempt + 1
+
+	interval := SecretWaitBaseInterval
+	for i := 0; i < attempt; i++ {
+		interval *= 2
+		if interval >= SecretWaitMaxInterval {
+			return SecretWaitMaxInterval
+		}
+	}
+
+	return interval
+}
+
+// resetSecretWait drops the backoff state for a client that is no longer waiting
+// for its secret.
+func (r *OAuth2ClientReconciler) resetSecretWait(key types.NamespacedName) {
+	r.secretWaitMu.Lock()
+	defer r.secretWaitMu.Unlock()
+
+	delete(r.secretWaitAttempts, key)
 }
 
 func (r *OAuth2ClientReconciler) registerOAuth2Client(ctx context.Context, c *hydrav1alpha1.OAuth2Client, credentials *hydra.Oauth2ClientCredentials) error {
@@ -394,6 +494,32 @@ func (r *OAuth2ClientReconciler) updateReconciliationStatusError(ctx context.Con
 	}
 
 	return err
+}
+
+// updateReconciliationStatusPending reports that reconciliation has not finished
+// yet and will be retried. Unlike updateReconciliationStatusError it leaves
+// ObservedGeneration untouched, so the current generation is still reconciled
+// from scratch once the blocker is gone.
+func (r *OAuth2ClientReconciler) updateReconciliationStatusPending(ctx context.Context, c *hydrav1alpha1.OAuth2Client, code hydrav1alpha1.StatusCode, err error) error {
+	_, updateErr := controllerutil.CreateOrPatch(ctx, r.Client, c, func() error {
+		c.Status.ReconciliationError = hydrav1alpha1.ReconciliationError{
+			Code:        code,
+			Description: err.Error(),
+		}
+		c.Status.Conditions = []hydrav1alpha1.OAuth2ClientCondition{
+			{
+				Type:   hydrav1alpha1.OAuth2ClientConditionReady,
+				Status: hydrav1alpha1.ConditionFalse,
+			},
+		}
+
+		return nil
+	})
+	if updateErr != nil {
+		r.Log.Error(updateErr, fmt.Sprintf("status update failed for client %s/%s ", c.Name, c.Namespace), "oauth2client", "update status")
+	}
+
+	return updateErr
 }
 
 func (r *OAuth2ClientReconciler) ensureEmptyStatusError(ctx context.Context, c *hydrav1alpha1.OAuth2Client) error {
