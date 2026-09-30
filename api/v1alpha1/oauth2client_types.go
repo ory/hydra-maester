@@ -16,6 +16,7 @@ const (
 	StatusUpdateFailed        StatusCode = "CLIENT_UPDATE_FAILED"
 	StatusInvalidSecret       StatusCode = "INVALID_SECRET"
 	StatusInvalidHydraAddress StatusCode = "INVALID_HYDRA_ADDRESS"
+	StatusSecretNotFound      StatusCode = "SECRET_NOT_FOUND"
 )
 
 // HydraAdmin defines the desired hydra admin instance to use for OAuth2Client
@@ -167,6 +168,16 @@ type OAuth2ClientSpec struct {
 	//
 	// SecretName points to the K8s secret that contains this client's ID and password
 	SecretName string `json:"secretName"`
+
+	// +kubebuilder:validation:type=bool
+	// +optional
+	//
+	// RequireExistingSecret makes the controller wait for the secret referenced by
+	// secretName instead of registering the client with a Hydra-generated secret and
+	// creating that secret itself. Use this when the secret is provisioned by another
+	// controller, e.g. the External Secrets Operator. If unset, the controller-wide
+	// `--require-existing-secret` flag applies.
+	RequireExistingSecret *bool `json:"requireExistingSecret,omitempty"`
 
 	// SkipConsent skips the consent screen for this client.
 	// +kubebuilder:validation:type=bool

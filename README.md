@@ -6,6 +6,8 @@
   - [Design](#design)
   - [How to use it](#how-to-use-it)
     - [Command-line flags](#command-line-flags)
+    - [Environmental Variables](#environmental-variables)
+    - [Externally managed secrets](#externally-managed-secrets)
   - [Development](#development)
     - [Testing](#testing)
 
@@ -66,21 +68,66 @@ To deploy the controller, edit the value of the `--hydra-url` argument in the
 
 ### Command-line flags
 
-| Name                         | Required | Description                                                                                                      | Default value | Example values                           |
-| ---------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------- | ------------- | ---------------------------------------- |
-| **hydra-url**                | yes      | ORY Hydra's service address                                                                                      | -             | ` ory-hydra-admin.ory.svc.cluster.local` |
-| **hydra-port**               | no       | ORY Hydra's service port                                                                                         | `4445`        | `4445`                                   |
-| **tls-trust-store**          | no       | TLS cert path for hydra client                                                                                   | `""`          | `/etc/ssl/certs/ca-certificates.crt`     |
-| **insecure-skip-verify**     | no       | Skip http client insecure verification                                                                           | `false`       | `true` or `false`                        |
-| **namespace**                | no       | Namespace in which the controller should operate. Setting this will make the controller ignore other namespaces. | `""`          | `"my-namespace"`                         |
-| **leader-elector-namespace** | no       | Leader elector namespace where controller should be set.                                                         | `""`          | `"my-namespace"`                         |
+| Name                         | Required | Description                                                                                                                                 | Default value | Example values                           |
+| ---------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ---------------------------------------- |
+| **hydra-url**                | yes      | ORY Hydra's service address                                                                                                                 | -             | ` ory-hydra-admin.ory.svc.cluster.local` |
+| **hydra-port**               | no       | ORY Hydra's service port                                                                                                                    | `4445`        | `4445`                                   |
+| **tls-trust-store**          | no       | TLS cert path for hydra client                                                                                                              | `""`          | `/etc/ssl/certs/ca-certificates.crt`     |
+| **insecure-skip-verify**     | no       | Skip http client insecure verification                                                                                                      | `false`       | `true` or `false`                        |
+| **namespace**                | no       | Namespace in which the controller should operate. Setting this will make the controller ignore other namespaces.                            | `""`          | `"my-namespace"`                         |
+| **leader-elector-namespace** | no       | Leader elector namespace where controller should be set.                                                                                    | `""`          | `"my-namespace"`                         |
+| **require-existing-secret**  | no       | Wait for the secret referenced by an OAuth2Client instead of generating one. See [Externally managed secrets](#externally-managed-secrets). | `false`       | `true` or `false`                        |
 
 ### Environmental Variables
 
-| Variable name           | Default value       | Example value         |
-| :---------------------- | ------------------- | --------------------- |
-| `**CLIENT_ID_KEY**`     | `**CLIENT_ID**`     | `**MY_SECRET_NAME**`  |
-| `**CLIENT_SECRET_KEY**` | `**CLIENT_SECRET**` | `**MY_SECRET_VALUE**` |
+| Variable name                 | Default value       | Example value         |
+| :---------------------------- | ------------------- | --------------------- |
+| `**CLIENT_ID_KEY**`           | `**CLIENT_ID**`     | `**MY_SECRET_NAME**`  |
+| `**CLIENT_SECRET_KEY**`       | `**CLIENT_SECRET**` | `**MY_SECRET_VALUE**` |
+| `**REQUIRE_EXISTING_SECRET**` | `**false**`         | `**true**`            |
+
+### Externally managed secrets
+
+By default, when the secret referenced by `spec.secretName` does not exist, the
+controller registers a new OAuth2 client with a Hydra-generated secret and
+creates that Kubernetes secret itself, owned by the `OAuth2Client` resource.
+
+That is the wrong behaviour when the secret is provisioned by something else,
+for example the External Secrets Operator, sealed-secrets, or any other
+controller syncing it from an external vault. If the `OAuth2Client` reconciles
+before the secret has been materialized, hydra-maester wins the race and the two
+controllers end up fighting over the same secret.
+
+Set `--require-existing-secret` (or `REQUIRE_EXISTING_SECRET=true`) to make the
+controller wait for the secret instead. While the secret is missing, the client
+is not registered in Hydra, no secret is created, and the resource reports:
+
+```yaml
+status:
+  conditions:
+    - type: Ready
+      status: "False"
+  reconciliationError:
+    statusCode: SECRET_NOT_FOUND
+    description: secret my-namespace/hydra-client-oauth2-secret does not exist
+```
+
+The resource is requeued with an exponential backoff, starting at 15 seconds and
+capped at 5 minutes, and reconciles normally as soon as the secret appears.
+
+Individual resources can override the controller-wide default through
+`spec.requireExistingSecret`:
+
+```yaml
+apiVersion: hydra.ory.sh/v1alpha1
+kind: OAuth2Client
+metadata:
+  name: my-oauth2-client
+spec:
+  secretName: hydra-client-oauth2-secret
+  requireExistingSecret: true
+  # ...
+```
 
 ## Development
 

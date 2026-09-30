@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -36,11 +37,28 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
+// envBool reads a boolean environment variable, falling back to def if the
+// variable is unset or cannot be parsed.
+func envBool(name string, def bool) bool {
+	value, ok := os.LookupEnv(name)
+	if !ok {
+		return def
+	}
+
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		setupLog.Error(err, "cannot parse environment variable, using default", "variable", name, "value", value, "default", def)
+		return def
+	}
+
+	return parsed
+}
+
 func main() {
 	var (
 		metricsAddr, hydraURL, endpoint, forwardedProto, syncPeriod, tlsTrustStore, namespace, leaderElectorNs string
 		hydraPort                                                                                              int
-		enableLeaderElection, insecureSkipVerify                                                               bool
+		enableLeaderElection, insecureSkipVerify, requireExistingSecret                                        bool
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -54,6 +72,7 @@ func main() {
 	flag.BoolVar(&insecureSkipVerify, "insecure-skip-verify", false, "If set, http client will be configured to skip insecure verification to connect with hydra admin")
 	flag.StringVar(&namespace, "namespace", "", "Namespace in which the controller should operate. Setting this will make the controller ignore other namespaces.")
 	flag.StringVar(&leaderElectorNs, "leader-elector-namespace", "", "Leader elector namespace where controller should be set.")
+	flag.BoolVar(&requireExistingSecret, "require-existing-secret", envBool("REQUIRE_EXISTING_SECRET", false), "If set, the controller waits for the secret referenced by an OAuth2Client instead of registering the client with a generated secret and creating that secret itself. Can be overridden per resource with spec.requireExistingSecret.")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
@@ -115,6 +134,7 @@ func main() {
 		hydraClient,
 		ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
 		controllers.WithNamespace(namespace),
+		controllers.WithRequireExistingSecret(requireExistingSecret),
 	).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OAuth2Client")

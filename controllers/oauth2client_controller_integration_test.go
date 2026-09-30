@@ -800,6 +800,319 @@ var _ = Describe("OAuth2Client Controller", func() {
 			})
 		})
 	})
+
+	Context("when the referenced secret is managed externally", func() {
+
+		It("wait for the secret instead of creating the client, if requireExistingSecret is set on the resource", func() {
+			tstName, tstClientID, tstSecretName := "test-require-existing-secret", "testClientID-require-existing-secret", "my-secret-external"
+			expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
+
+			s := runtime.NewScheme()
+			err := hydrav1alpha1.AddToScheme(s)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = apiv1.AddToScheme(s)
+			Expect(err).NotTo(HaveOccurred())
+
+			mgr, err := manager.New(cfg, manager.Options{
+				Scheme: s,
+				Metrics: server.Options{
+					BindAddress: ":8090",
+				},
+			})
+			Expect(err).NotTo(HaveOccurred())
+			c := mgr.GetClient()
+
+			// The manager watches all namespaces, so it also reconciles the clients
+			// left behind by other specs. Only count posts for the client under test.
+			tstOwner := fmt.Sprintf("%s/%s", tstName, tstNamespace)
+			postHasHappened := false
+			mch := &mocks.Client{}
+			mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
+			mch.On("DeleteOAuth2Client", Anything).Return(nil)
+			mch.On("ListOAuth2Client", Anything).Return(nil, nil)
+			mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
+				if o.Owner == tstOwner {
+					postHasHappened = true
+				}
+				return &hydra.OAuth2ClientJSON{
+					ClientID:      &tstClientID,
+					Secret:        ptr.To(tstSecret),
+					GrantTypes:    o.GrantTypes,
+					ResponseTypes: o.ResponseTypes,
+					RedirectURIs:  o.RedirectURIs,
+					Scope:         o.Scope,
+					Audience:      o.Audience,
+					Owner:         o.Owner,
+				}
+			}, func(o *hydra.OAuth2ClientJSON) error {
+				return nil
+			})
+
+			recFn, requests := SetupTestReconcile(getAPIReconciler(mgr, mch))
+			Expect(add(mgr, recFn)).To(Succeed())
+
+			stopMgr := StartTestManager(mgr)
+
+			instance := testInstance(tstName, tstSecretName)
+			instance.Spec.RequireExistingSecret = ptr.To(true)
+			err = c.Create(context.TODO(), instance)
+			if apierrors.IsInvalid(err) {
+				Fail(fmt.Sprintf("failed to create object, got an invalid object error: %v", err))
+				return
+			}
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+			// The client must not have been registered in hydra ...
+			Expect(postHasHappened).To(BeFalse())
+
+			// ... and no secret must have been created for it.
+			var createdSecret apiv1.Secret
+			ok := client.ObjectKey{Name: tstSecretName, Namespace: tstNamespace}
+			err = k8sClient.Get(context.TODO(), ok, &createdSecret)
+			Expect(apierrors.IsNotFound(err)).To(BeTrue())
+
+			// The resource reports that it is waiting for the secret.
+			var retrieved hydrav1alpha1.OAuth2Client
+			ok = client.ObjectKey{Name: tstName, Namespace: tstNamespace}
+			Eventually(func() hydrav1alpha1.StatusCode {
+				if err := c.Get(context.TODO(), ok, &retrieved); err != nil {
+					return ""
+				}
+				return retrieved.Status.ReconciliationError.Code
+			}, timeout).Should(Equal(hydrav1alpha1.StatusSecretNotFound))
+			Expect(retrieved.Status.Conditions).To(ContainElement(hydrav1alpha1.OAuth2ClientCondition{
+				Type:   hydrav1alpha1.OAuth2ClientConditionReady,
+				Status: hydrav1alpha1.ConditionFalse,
+			}))
+			// ObservedGeneration stays behind, so the generation is reconciled in
+			// full once the secret shows up.
+			Expect(retrieved.Status.ObservedGeneration).NotTo(Equal(retrieved.Generation))
+
+			c.Delete(context.TODO(), instance)
+			stopMgr.Done()
+		})
+
+		It("use the externally provided secret once it appears", func() {
+			tstName, tstClientID, tstSecretName := "test-external-secret-appears", "testClientID-external-appears", "my-secret-external-appears"
+			expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
+
+			s := runtime.NewScheme()
+			err := hydrav1alpha1.AddToScheme(s)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = apiv1.AddToScheme(s)
+			Expect(err).NotTo(HaveOccurred())
+
+			mgr, err := manager.New(cfg, manager.Options{
+				Scheme: s,
+				Metrics: server.Options{
+					BindAddress: ":8091",
+				},
+			})
+			Expect(err).NotTo(HaveOccurred())
+			c := mgr.GetClient()
+
+			// The manager watches all namespaces, so it also reconciles the clients
+			// left behind by other specs. Only record the client under test.
+			tstOwner := fmt.Sprintf("%s/%s", tstName, tstNamespace)
+			var createdClient *hydra.OAuth2ClientJSON
+			mch := &mocks.Client{}
+			mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
+			mch.On("DeleteOAuth2Client", Anything).Return(nil)
+			mch.On("ListOAuth2Client", Anything).Return(nil, nil)
+			mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
+				posted := &hydra.OAuth2ClientJSON{
+					ClientID:      o.ClientID,
+					Secret:        o.Secret,
+					GrantTypes:    o.GrantTypes,
+					ResponseTypes: o.ResponseTypes,
+					RedirectURIs:  o.RedirectURIs,
+					Scope:         o.Scope,
+					Audience:      o.Audience,
+					Owner:         o.Owner,
+				}
+				if o.Owner == tstOwner {
+					createdClient = posted
+				}
+				return posted
+			}, func(o *hydra.OAuth2ClientJSON) error {
+				return nil
+			})
+
+			recFn, requests := SetupTestReconcile(getAPIReconciler(mgr, mch))
+			Expect(add(mgr, recFn)).To(Succeed())
+
+			stopMgr := StartTestManager(mgr)
+
+			instance := testInstance(tstName, tstSecretName)
+			instance.Spec.RequireExistingSecret = ptr.To(true)
+			err = c.Create(context.TODO(), instance)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+			Expect(createdClient).To(BeNil())
+
+			// The external controller materializes the secret.
+			secret := apiv1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      tstSecretName,
+					Namespace: tstNamespace,
+				},
+				Data: map[string][]byte{
+					controllers.ClientIDKey:     []byte(tstClientID),
+					controllers.ClientSecretKey: []byte(tstSecret),
+				},
+			}
+			err = c.Create(context.TODO(), &secret)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Touch the resource so the pending client is reconciled again without
+			// having to wait for the backoff to elapse.
+			var pending hydrav1alpha1.OAuth2Client
+			ok := client.ObjectKey{Name: tstName, Namespace: tstNamespace}
+			Expect(c.Get(context.TODO(), ok, &pending)).To(Succeed())
+			pending.Spec.ClientName = "triggers-a-new-reconciliation"
+			Expect(c.Update(context.TODO(), &pending)).To(Succeed())
+			Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+			// The client is registered with the externally provided credentials.
+			Eventually(func() *hydra.OAuth2ClientJSON {
+				return createdClient
+			}, timeout).ShouldNot(BeNil())
+			Expect(*createdClient.ClientID).To(Equal(tstClientID))
+			Expect(*createdClient.Secret).To(Equal(tstSecret))
+
+			var retrieved hydrav1alpha1.OAuth2Client
+			Eventually(func() hydrav1alpha1.StatusCode {
+				if err := c.Get(context.TODO(), ok, &retrieved); err != nil {
+					return "unknown"
+				}
+				return retrieved.Status.ReconciliationError.Code
+			}, timeout).Should(BeEmpty())
+
+			// The secret is left alone, in particular no owner reference is added.
+			secretKey := client.ObjectKey{Name: tstSecretName, Namespace: tstNamespace}
+			Expect(k8sClient.Get(context.TODO(), secretKey, &secret)).To(Succeed())
+			Expect(secret.OwnerReferences).To(BeEmpty())
+
+			c.Delete(context.TODO(), instance)
+			stopMgr.Done()
+		})
+
+		It("wait for the secret if the controller-wide default is set", func() {
+			tstName, tstSecretName := "test-require-existing-secret-global", "my-secret-external-global"
+			expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
+
+			s := runtime.NewScheme()
+			err := hydrav1alpha1.AddToScheme(s)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = apiv1.AddToScheme(s)
+			Expect(err).NotTo(HaveOccurred())
+
+			mgr, err := manager.New(cfg, manager.Options{
+				Scheme: s,
+				Metrics: server.Options{
+					BindAddress: ":8092",
+				},
+			})
+			Expect(err).NotTo(HaveOccurred())
+			c := mgr.GetClient()
+
+			tstOwner := fmt.Sprintf("%s/%s", tstName, tstNamespace)
+			postHasHappened := false
+			mch := &mocks.Client{}
+			mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
+			mch.On("DeleteOAuth2Client", Anything).Return(nil)
+			mch.On("ListOAuth2Client", Anything).Return(nil, nil)
+			mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
+				if o.Owner == tstOwner {
+					postHasHappened = true
+				}
+				return &hydra.OAuth2ClientJSON{ClientID: o.ClientID, Secret: o.Secret, Owner: o.Owner}
+			}, func(o *hydra.OAuth2ClientJSON) error {
+				return nil
+			})
+
+			recFn, requests := SetupTestReconcile(getAPIReconciler(mgr, mch, controllers.WithRequireExistingSecret(true)))
+			Expect(add(mgr, recFn)).To(Succeed())
+
+			stopMgr := StartTestManager(mgr)
+
+			// No spec.requireExistingSecret, so the controller-wide default applies.
+			instance := testInstance(tstName, tstSecretName)
+			err = c.Create(context.TODO(), instance)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+			Expect(postHasHappened).To(BeFalse())
+
+			var createdSecret apiv1.Secret
+			ok := client.ObjectKey{Name: tstSecretName, Namespace: tstNamespace}
+			err = k8sClient.Get(context.TODO(), ok, &createdSecret)
+			Expect(apierrors.IsNotFound(err)).To(BeTrue())
+
+			c.Delete(context.TODO(), instance)
+			stopMgr.Done()
+		})
+
+		It("create the secret if requireExistingSecret opts out of the controller-wide default", func() {
+			tstName, tstClientID, tstSecretName := "test-require-existing-secret-optout", "testClientID-optout", "my-secret-optout"
+			expectedRequest := &reconcile.Request{NamespacedName: types.NamespacedName{Name: tstName, Namespace: tstNamespace}}
+
+			s := runtime.NewScheme()
+			err := hydrav1alpha1.AddToScheme(s)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = apiv1.AddToScheme(s)
+			Expect(err).NotTo(HaveOccurred())
+
+			mgr, err := manager.New(cfg, manager.Options{
+				Scheme: s,
+				Metrics: server.Options{
+					BindAddress: ":8093",
+				},
+			})
+			Expect(err).NotTo(HaveOccurred())
+			c := mgr.GetClient()
+
+			mch := &mocks.Client{}
+			mch.On("GetOAuth2Client", Anything).Return(nil, false, nil)
+			mch.On("DeleteOAuth2Client", Anything).Return(nil)
+			mch.On("ListOAuth2Client", Anything).Return(nil, nil)
+			mch.On("PostOAuth2Client", AnythingOfType("*hydra.OAuth2ClientJSON")).Return(func(o *hydra.OAuth2ClientJSON) *hydra.OAuth2ClientJSON {
+				return &hydra.OAuth2ClientJSON{
+					ClientID: &tstClientID,
+					Secret:   ptr.To(tstSecret),
+					Owner:    o.Owner,
+				}
+			}, func(o *hydra.OAuth2ClientJSON) error {
+				return nil
+			})
+
+			recFn, requests := SetupTestReconcile(getAPIReconciler(mgr, mch, controllers.WithRequireExistingSecret(true)))
+			Expect(add(mgr, recFn)).To(Succeed())
+
+			stopMgr := StartTestManager(mgr)
+
+			instance := testInstance(tstName, tstSecretName)
+			instance.Spec.RequireExistingSecret = ptr.To(false)
+			err = c.Create(context.TODO(), instance)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(requests, timeout).Should(Receive(Equal(*expectedRequest)))
+
+			var createdSecret apiv1.Secret
+			ok := client.ObjectKey{Name: tstSecretName, Namespace: tstNamespace}
+			Eventually(func() error {
+				return k8sClient.Get(context.TODO(), ok, &createdSecret)
+			}, timeout).Should(Succeed())
+			Expect(createdSecret.Data[controllers.ClientIDKey]).To(Equal([]byte(tstClientID)))
+
+			c.Delete(context.TODO(), instance)
+			stopMgr.Done()
+		})
+	})
 })
 
 func getOwnerReferenceTo(c hydrav1alpha1.OAuth2Client) []metav1.OwnerReference {
@@ -829,7 +1142,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-func getAPIReconciler(mgr ctrl.Manager, mock hydra.Client) reconcile.Reconciler {
+func getAPIReconciler(mgr ctrl.Manager, mock hydra.Client, opts ...controllers.Option) reconcile.Reconciler {
 	clientMocker := func(spec hydrav1alpha1.OAuth2ClientSpec, tlsTrustStore string, insecureSkipVerify bool) (hydra.Client, error) {
 		return mock, nil
 	}
@@ -838,7 +1151,7 @@ func getAPIReconciler(mgr ctrl.Manager, mock hydra.Client) reconcile.Reconciler 
 		mgr.GetClient(),
 		mock,
 		ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
-		controllers.WithClientFactory(clientMocker),
+		append([]controllers.Option{controllers.WithClientFactory(clientMocker)}, opts...)...,
 	)
 }
 
