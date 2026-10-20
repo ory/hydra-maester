@@ -120,7 +120,7 @@ type OAuth2ClientSpec struct {
 	// ClientName is the human-readable string name of the client to be presented to the end-user during authorization.
 	ClientName string `json:"clientName,omitempty"`
 
-	// +kubebuilder:validation:MaxItems=4
+	// +kubebuilder:validation:MaxItems=5
 	// +kubebuilder:validation:MinItems=1
 	//
 	// GrantTypes is an array of grant types the client is allowed to use.
@@ -303,7 +303,7 @@ type OAuth2ClientSpec struct {
 }
 
 // GrantType represents an OAuth 2.0 grant type
-// +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token
+// +kubebuilder:validation:Enum=client_credentials;authorization_code;implicit;refresh_token;"urn:ietf:params:oauth:grant-type:device_code"
 type GrantType string
 
 // ResponseType represents an OAuth 2.0 response type strings
