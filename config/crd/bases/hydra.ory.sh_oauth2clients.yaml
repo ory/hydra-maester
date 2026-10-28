@@ -141,8 +141,9 @@ spec:
                       - authorization_code
                       - implicit
                       - refresh_token
+                      - urn:ietf:params:oauth:grant-type:device_code
                     type: string
-                  maxItems: 4
+                  maxItems: 5
                   minItems: 1
                   type: array
                 hydraAdmin:

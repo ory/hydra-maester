@@ -170,7 +170,7 @@ func resetTestClient() {
 			Namespace: "default",
 		},
 		Spec: OAuth2ClientSpec{
-			GrantTypes:     []GrantType{"implicit", "client_credentials", "authorization_code", "refresh_token"},
+			GrantTypes:     []GrantType{"implicit", "client_credentials", "authorization_code", "refresh_token", "urn:ietf:params:oauth:grant-type:device_code"},
 			ResponseTypes:  []ResponseType{"id_token", "code", "token"},
 			Scope:          "read,write",
 			SecretName:     "secret-name",
