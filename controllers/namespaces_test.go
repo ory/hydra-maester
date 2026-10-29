@@ -8,14 +8,16 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr"
+	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	hydrav1alpha1 "github.com/ory/hydra-maester/api/v1alpha1"
+	mocks "github.com/ory/hydra-maester/controllers/mocks/hydra"
+	"github.com/ory/hydra-maester/hydra"
 )
 
 func TestWithNamespaces(t *testing.T) {
@@ -62,21 +64,20 @@ func TestReconcileNamespaceFilter(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			obj := &hydrav1alpha1.OAuth2Client{ObjectMeta: metav1.ObjectMeta{Name: "c", Namespace: tc.namespace}}
 			c := fake.NewClientBuilder().WithScheme(scheme.Scheme).WithObjects(obj).Build()
-			// the hydra client is nil, so only the finalizer is checked to tell filtered from reconciled requests
-			r := New(c, nil, logr.Discard(), WithNamespaces(tc.watch...))
 
-			req := ctrl.Request{NamespacedName: types.NamespacedName{Name: "c", Namespace: tc.namespace}}
-			func() {
-				defer func() { _ = recover() }()
-				_, _ = r.Reconcile(context.Background(), req)
-			}()
+			id, secret := "id", "secret"
+			mch := &mocks.Client{}
+			mch.On("GetOAuth2Client", mock.Anything).Return(nil, false, nil)
+			mch.On("DeleteOAuth2Client", mock.Anything).Return(nil)
+			mch.On("ListOAuth2Client").Return(nil, nil)
+			mch.On("PostOAuth2Client", mock.Anything).Return(&hydra.OAuth2ClientJSON{ClientID: &id, Secret: &secret}, nil)
 
-			var got hydrav1alpha1.OAuth2Client
-			if err := c.Get(context.Background(), client.ObjectKeyFromObject(obj), &got); err != nil {
-				t.Fatal(err)
-			}
-			if touched := len(got.Finalizers) > 0; touched == tc.ignored {
-				t.Fatalf("ignored=%v but finalizers=%v", tc.ignored, got.Finalizers)
+			r := New(c, mch, logr.Discard(), WithNamespaces(tc.watch...))
+			_, _ = r.Reconcile(context.Background(), ctrl.Request{NamespacedName: types.NamespacedName{Name: "c", Namespace: tc.namespace}})
+
+			// an ignored request must not touch hydra, a handled one must
+			if called := len(mch.Calls) > 0; called == tc.ignored {
+				t.Fatalf("ignored=%v but hydra calls=%v", tc.ignored, mch.Calls)
 			}
 		})
 	}
