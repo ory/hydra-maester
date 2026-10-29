@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"sync"
 
 	"github.com/go-logr/logr"
@@ -54,9 +55,9 @@ type OAuth2ClientFactory func(
 // OAuth2ClientReconciler reconciles a OAuth2Client object.
 type OAuth2ClientReconciler struct {
 	client.Client
-	HydraClient         hydra.Client
-	Log                 logr.Logger
-	ControllerNamespace string
+	HydraClient          hydra.Client
+	Log                  logr.Logger
+	ControllerNamespaces []string
 
 	oauth2Clients       map[clientKey]hydra.Client
 	oauth2ClientFactory OAuth2ClientFactory
@@ -65,7 +66,7 @@ type OAuth2ClientReconciler struct {
 
 // Options represent options to pass to the oauth2 client reconciler.
 type Options struct {
-	Namespace           string
+	Namespaces          []string
 	OAuth2ClientFactory OAuth2ClientFactory
 }
 
@@ -84,8 +85,19 @@ func init() {
 // WithNamespace sets the kubernetes namespace for the controller.
 // The default is "default".
 func WithNamespace(ns string) Option {
+	return WithNamespaces(ns)
+}
+
+// WithNamespaces sets the kubernetes namespaces the controller operates in.
+// Empty entries are ignored. If no namespaces are given, all namespaces are watched.
+func WithNamespaces(ns ...string) Option {
 	return func(o *Options) {
-		o.Namespace = ns
+		o.Namespaces = nil
+		for _, n := range ns {
+			if n != "" {
+				o.Namespaces = append(o.Namespaces, n)
+			}
+		}
 	}
 }
 
@@ -99,7 +111,7 @@ func WithClientFactory(factory OAuth2ClientFactory) Option {
 // New returns a new Oauth2ClientReconciler.
 func New(c client.Client, hydraClient hydra.Client, log logr.Logger, opts ...Option) *OAuth2ClientReconciler {
 	options := &Options{
-		Namespace:           DefaultNamespace,
+		Namespaces:          []string{DefaultNamespace},
 		OAuth2ClientFactory: hydra.New,
 	}
 	for _, opt := range opts {
@@ -107,12 +119,12 @@ func New(c client.Client, hydraClient hydra.Client, log logr.Logger, opts ...Opt
 	}
 
 	return &OAuth2ClientReconciler{
-		Client:              c,
-		HydraClient:         hydraClient,
-		Log:                 log,
-		ControllerNamespace: options.Namespace,
-		oauth2Clients:       make(map[clientKey]hydra.Client, 0),
-		oauth2ClientFactory: options.OAuth2ClientFactory,
+		Client:               c,
+		HydraClient:          hydraClient,
+		Log:                  log,
+		ControllerNamespaces: options.Namespaces,
+		oauth2Clients:        make(map[clientKey]hydra.Client, 0),
+		oauth2ClientFactory:  options.OAuth2ClientFactory,
 	}
 }
 
@@ -135,12 +147,9 @@ func (r *OAuth2ClientReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	// Check request namespace
-	if r.ControllerNamespace != "" {
-		r.Log.Info(fmt.Sprintf("ControllerNamespace is set to: %s, working only on items in this namespace. Other namespaces are ignored.", r.ControllerNamespace))
-		if req.NamespacedName.Namespace != r.ControllerNamespace {
-			r.Log.Info(fmt.Sprintf("Requested resource %s is not in namespace: %s and will be ignored", req.String(), r.ControllerNamespace))
-			return ctrl.Result{}, nil
-		}
+	if len(r.ControllerNamespaces) > 0 && !slices.Contains(r.ControllerNamespaces, req.Namespace) {
+		r.Log.Info(fmt.Sprintf("Requested resource %s is not in namespaces: %v and will be ignored", req.String(), r.ControllerNamespaces))
+		return ctrl.Result{}, nil
 	}
 
 	// examine DeletionTimestamp to determine if object is under deletion

@@ -12,9 +12,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
+	"github.com/ory/hydra-maester/helpers"
 	"github.com/ory/hydra-maester/hydra"
 
 	apiv1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -52,11 +54,23 @@ func main() {
 	flag.StringVar(&syncPeriod, "sync-period", "10h", "Determines the minimum frequency at which watched resources are reconciled")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.BoolVar(&insecureSkipVerify, "insecure-skip-verify", false, "If set, http client will be configured to skip insecure verification to connect with hydra admin")
-	flag.StringVar(&namespace, "namespace", "", "Namespace in which the controller should operate. Setting this will make the controller ignore other namespaces.")
+	flag.StringVar(&namespace, "namespace", "", "Namespace(s) in which the controller should operate, comma-separated for multiple. Setting this will make the controller ignore other namespaces. Falls back to the NAMESPACE env var.")
 	flag.StringVar(&leaderElectorNs, "leader-elector-namespace", "", "Leader elector namespace where controller should be set.")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+
+	if namespace == "" {
+		namespace = os.Getenv("NAMESPACE")
+	}
+	namespaces := helpers.SplitNamespaces(namespace)
+	cacheNamespaces := map[string]cache.Config{}
+	for _, ns := range namespaces {
+		cacheNamespaces[ns] = cache.Config{}
+	}
+	if len(cacheNamespaces) == 0 {
+		cacheNamespaces[metav1.NamespaceAll] = cache.Config{}
+	}
 
 	syncPeriodParsed, err := time.ParseDuration(syncPeriod)
 	if err != nil {
@@ -71,10 +85,8 @@ func main() {
 		},
 		LeaderElection: enableLeaderElection,
 		Cache: cache.Options{
-			SyncPeriod: &syncPeriodParsed,
-			DefaultNamespaces: map[string]cache.Config{
-				os.Getenv("NAMESPACE"): {},
-			},
+			SyncPeriod:        &syncPeriodParsed,
+			DefaultNamespaces: cacheNamespaces,
 		},
 		LeaderElectionNamespace: leaderElectorNs,
 	})
@@ -114,7 +126,7 @@ func main() {
 		mgr.GetClient(),
 		hydraClient,
 		ctrl.Log.WithName("controllers").WithName("OAuth2Client"),
-		controllers.WithNamespace(namespace),
+		controllers.WithNamespaces(namespaces...),
 	).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OAuth2Client")
